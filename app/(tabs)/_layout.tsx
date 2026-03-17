@@ -1,10 +1,11 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import React, {useEffect} from 'react';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { HapticTab } from '@/src/components/haptic-tab';
+import { IconSymbol } from '@/src/components/ui/icon-symbol';
+import { Colors } from '@/src/constants/theme';
+import { useColorScheme } from '@/src/hooks/use-color-scheme';
+import {initializeMMKVStorage} from "@/src/hooks/use-mmkv-storage";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -24,10 +25,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="exercises"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Exercices',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="dumbbell.fill" color={color} />,
         }}
       />
     </Tabs>
