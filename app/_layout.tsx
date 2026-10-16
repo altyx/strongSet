@@ -32,6 +32,8 @@ export default function RootLayout() {
       try {
         // Initialiser MMKV en premier (nécessaire pour le chiffrement)
         await initializeMMKVStorage();
+        // Crée la base locale et applique les migrations avant d'afficher le moindre écran
+        await initializeDatabase();
 
         const user = read<UserSettings>(STORAGE_KEYS.USER_PREFERENCES);
         console.log(user);

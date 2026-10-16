@@ -1,16 +1,8 @@
 /**
- * SQL Schema for the database.
+ * SQL Schema for the database (version 1).
+ * Ne pas modifier : toute évolution du schéma passe par une nouvelle migration dans migrations.ts.
  */
 export const DATABASE_SCHEMA = `
-DROP TABLE IF EXISTS templates;
-DROP TABLE IF EXISTS workouts;
-DROP TABLE IF EXISTS exercises;
-DROP TABLE IF EXISTS template_exercises;
-DROP TABLE IF EXISTS workout_exercises;
-DROP TABLE IF EXISTS muscles;
-DROP TABLE IF EXISTS exercise_muscles;
-DROP TABLE IF EXISTS sets;
-
 CREATE TABLE IF NOT EXISTS templates (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
