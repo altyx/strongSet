@@ -64,6 +64,12 @@ function getStorage(): ReturnType<typeof createMMKV> | null {
 }
 
 export function useMMKVStorage() {
+  return storageApi;
+}
+
+// Créées une seule fois : ces fonctions ne dépendent d'aucun état React, et une référence stable
+// évite de relancer à chaque rendu les useEffect qui les ont en dépendance (ex. app/_layout.tsx).
+function createStorageApi() {
   const read = <T = string>(key: string): T | undefined => {
     try {
       const store = getStorage();
@@ -155,6 +161,8 @@ export function useMMKVStorage() {
     getAllKeys,
   };
 }
+
+const storageApi = createStorageApi();
 
 export function getMMKVInstance(): ReturnType<typeof createMMKV> | null {
   return getStorage();

@@ -13,7 +13,6 @@ import * as Notifications from 'expo-notifications';
 import {ThemedText} from "@/src/components/themed-text";
 import {ThemedView} from "@/src/components/themed-view";
 import { ArrowRight } from "lucide-react-native";
-import {initializeDatabase} from "@/src/db/database";
 // Handler au niveau module (pas dans une fonction)
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -41,7 +40,6 @@ export default function Onboarding() {
   const handleSave = async () => {
     setIsLoading(true);
     savePreferences({...userPref, isOnboarded: true, name: userPref.name.trim() ?? ''});
-    await initializeDatabase()
     setIsLoading(false);
     router.replace('/(tabs)');
   };
