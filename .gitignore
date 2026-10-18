@@ -1,0 +1,21 @@
+# Règles communes au monorepo. Chaque app garde son propre .gitignore pour ses spécificités
+# (ex. apps/mobile/.gitignore pour Expo et les dossiers natifs générés).
+
+# dependencies
+node_modules/
+
+# IDE
+.idea
+.vscode
+
+# macOS
+.DS_Store
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# debug
+npm-debug.*

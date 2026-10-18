@@ -1,0 +1,14 @@
+{
+  "name": "my-fitness",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "mobile": "npm run start -w @my-fitness/mobile --",
+    "mobile:ios": "npm run ios -w @my-fitness/mobile --",
+    "mobile:android": "npm run android -w @my-fitness/mobile --",
+    "lint": "npm run lint --workspaces --if-present"
+  }
+}
