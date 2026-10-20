@@ -16,6 +16,14 @@ export const DEFAULT_VALUES_DATABASE = `
     VALUES (6, 'Quadriceps', 1609459200, '#DDA0DD');
     INSERT OR IGNORE INTO muscles (id, name, created_at, color)
     VALUES (7, 'Calves', 1609459200, '#98D8C8');
+    INSERT OR IGNORE INTO muscles (id, name, created_at, color)
+    VALUES (8, 'Glutes', 1609459200, '#F7A072');
+    INSERT OR IGNORE INTO muscles (id, name, created_at, color)
+    VALUES (9, 'Hamstrings', 1609459200, '#C3A6E0');
+    INSERT OR IGNORE INTO muscles (id, name, created_at, color)
+    VALUES (10, 'Abs', 1609459200, '#F6D365');
+    INSERT OR IGNORE INTO muscles (id, name, created_at, color)
+    VALUES (11, 'Forearms', 1609459200, '#8FB8DE');
 
     INSERT OR IGNORE INTO exercises (id, name, created_at)
     VALUES (1, 'Bench Press', 1609459200);

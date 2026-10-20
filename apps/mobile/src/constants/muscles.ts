@@ -7,6 +7,10 @@ const MUSCLE_LABELS: Record<string, string> = {
   Shoulders: 'Épaules',
   Quadriceps: 'Quadriceps',
   Calves: 'Mollets',
+  Glutes: 'Fessiers',
+  Hamstrings: 'Ischios',
+  Abs: 'Abdominaux',
+  Forearms: 'Avant-bras',
 };
 
 // Un muscle ajouté par l'utilisateur garde son nom tel quel

@@ -3,17 +3,63 @@ import {getDatabase} from "@/src/db/database";
 export interface ExerciseListItem {
   id: number;
   name: string;
+  equipment: string | null;
+  // Noms des muscles (en anglais en base, voir muscleLabel)
   muscles: string[];
 }
+
+export interface Muscle {
+  id: number;
+  name: string;
+}
+
+export interface NewExercise {
+  name: string;
+  equipment: string | null;
+  muscleIds: number[];
+}
+
+const now = () => Math.floor(Date.now() / 1000);
 
 export const ExerciseRepository = {
   // Bibliothèque complète, par ordre alphabétique, avec les muscles de chaque exercice
   getAll: (): ExerciseListItem[] => {
-    const exercises = getDatabase().getAllSync<{ id: number; name: string }>(
-      'SELECT id, name FROM exercises ORDER BY name COLLATE NOCASE',
+    const exercises = getDatabase().getAllSync<{ id: number; name: string; equipment: string | null }>(
+      'SELECT id, name, equipment FROM exercises ORDER BY name COLLATE NOCASE',
     );
     const muscles = ExerciseRepository.getMusclesByExercise(exercises.map((exercise) => exercise.id));
     return exercises.map((exercise) => ({ ...exercise, muscles: muscles[exercise.id] ?? [] }));
+  },
+
+  getMuscles: (): Muscle[] => {
+    return getDatabase().getAllSync<Muscle>('SELECT id, name FROM muscles ORDER BY id');
+  },
+
+  // Nom déjà pris, sans tenir compte de la casse ni des espaces autour
+  existsByName: (name: string): boolean => {
+    return (
+      getDatabase().getFirstSync<{ found: number }>('SELECT 1 AS found FROM exercises WHERE name = ? COLLATE NOCASE', [
+        name.trim(),
+      ]) !== null
+    );
+  },
+
+  // @returns l'id de l'exercice créé
+  create: (exercise: NewExercise): number => {
+    const db = getDatabase();
+    const timestamp = now();
+    let exerciseId = 0;
+    db.withTransactionSync(() => {
+      exerciseId = db.runSync('INSERT INTO exercises (name, equipment, created_at) VALUES (?, ?, ?)', [
+        exercise.name.trim(),
+        exercise.equipment,
+        timestamp,
+      ]).lastInsertRowId;
+      exercise.muscleIds.forEach((muscleId) => {
+        db.runSync('INSERT INTO exercise_muscles (exercise_id, muscle_id) VALUES (?, ?)', [exerciseId, muscleId]);
+      });
+    });
+    return exerciseId;
   },
 
   count: (): number => {
