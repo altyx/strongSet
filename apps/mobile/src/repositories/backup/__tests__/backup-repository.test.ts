@@ -58,6 +58,18 @@ it('restaure une sauvegarde vide en effaçant toutes les données', () => {
   Object.values(ExportRepository.getBackup(NOW).tables).forEach((rows) => expect(rows).toEqual([]));
 });
 
+it("accepte une sauvegarde sans une colonne qui a une valeur par défaut (sauvegarde d'avant l'ajout de la colonne)", () => {
+  seedWorkouts();
+  const backup = JSON.parse(backupJson());
+  backup.tables.workouts.forEach((row: Record<string, unknown>) => delete row.sync_status);
+
+  BackupRepository.restore(BackupRepository.parse(JSON.stringify(backup)));
+
+  expect(ExportRepository.getBackup(NOW).tables.workouts).toEqual(
+    backup.tables.workouts.map((row: object) => ({ ...row, sync_status: 'local' })),
+  );
+});
+
 describe('fichier invalide refusé sans rien modifier', () => {
   const variants: [string, (backup: any) => unknown, RegExp][] = [
     ['format_version inconnu', (b) => ({ ...b, format_version: 2 }), /format de sauvegarde/],
@@ -69,6 +81,11 @@ describe('fichier invalide refusé sans rien modifier', () => {
       'colonne inconnue',
       (b) => ({ ...b, tables: { ...b.tables, workouts: [{ ...b.tables.workouts[0], hacked: 1 }] } }),
       /colonne « hacked »/,
+    ],
+    [
+      'colonne obligatoire absente',
+      (b) => ({ ...b, tables: { ...b.tables, workouts: b.tables.workouts.map(({ started_at, ...row }: any) => row) } }),
+      /colonne « started_at » manque/,
     ],
     [
       'valeur non scalaire',
