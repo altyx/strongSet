@@ -12,6 +12,16 @@ const now = () => Math.floor(Date.now() / 1000);
 
 type SetRow = WorkoutSet & { workout_exercise_id: number };
 
+// Résumé d'une séance (WorkoutSummary) : à compléter par WHERE / GROUP BY w.id / ORDER BY
+const SUMMARY_SELECT = `
+  SELECT w.id, w.name, w.started_at, w.finished_at,
+         COUNT(DISTINCT we.id) AS exercise_count,
+         COUNT(s.id) AS completed_set_count,
+         COALESCE(SUM(s.weight * s.reps), 0) AS volume
+  FROM workouts w
+  LEFT JOIN workout_exercises we ON we.workout_id = w.id
+  LEFT JOIN sets s ON s.workout_exercise_id = we.id AND s.completed_at IS NOT NULL`;
+
 export const WorkoutRepository = {
   /**
    * Démarre une séance et crée ses exercices (dans l'ordre donné) et leurs séries initiales.
@@ -201,19 +211,53 @@ export const WorkoutRepository = {
   // Séances terminées, de la plus récente à la plus ancienne
   getHistory: (limit = 20): WorkoutSummary[] => {
     return getDatabase().getAllSync<WorkoutSummary>(
-      `SELECT w.id, w.name, w.started_at, w.finished_at,
-              COUNT(DISTINCT we.id) AS exercise_count,
-              COUNT(s.id) AS completed_set_count,
-              COALESCE(SUM(s.weight * s.reps), 0) AS volume
-       FROM workouts w
-       LEFT JOIN workout_exercises we ON we.workout_id = w.id
-       LEFT JOIN sets s ON s.workout_exercise_id = we.id AND s.completed_at IS NOT NULL
+      `${SUMMARY_SELECT}
        WHERE w.finished_at IS NOT NULL
        GROUP BY w.id
        ORDER BY w.started_at DESC
        LIMIT ?`,
       [limit],
     );
+  },
+
+  // Dernière séance terminée du même programme, commencée avant `before` (pour comparer)
+  getPreviousOfTemplate: (templateId: number, before: number): WorkoutSummary | null => {
+    return getDatabase().getFirstSync<WorkoutSummary>(
+      `${SUMMARY_SELECT}
+       WHERE w.finished_at IS NOT NULL AND w.template_id = ? AND w.started_at < ?
+       GROUP BY w.id
+       ORDER BY w.started_at DESC
+       LIMIT 1`,
+      [templateId, before],
+    );
+  },
+
+  /**
+   * Charge maximale validée par exercice, sur les séances terminées commencées avant `before`.
+   * Les exercices jamais faits (ou sans charge) sont absents du résultat.
+   */
+  getBestWeightsBefore: (exerciseIds: number[], before: number): Record<number, number> => {
+    if (exerciseIds.length === 0) {
+      return {};
+    }
+    const rows = getDatabase().getAllSync<{ exercise_id: number; best: number }>(
+      `SELECT we.exercise_id, MAX(s.weight) AS best
+       FROM sets s
+       JOIN workout_exercises we ON we.id = s.workout_exercise_id
+       JOIN workouts w ON w.id = we.workout_id
+       WHERE w.finished_at IS NOT NULL
+         AND w.started_at < ?
+         AND s.completed_at IS NOT NULL
+         AND s.weight IS NOT NULL
+         AND we.exercise_id IN (${exerciseIds.map(() => '?').join(', ')})
+       GROUP BY we.exercise_id`,
+      [before, ...exerciseIds],
+    );
+    return Object.fromEntries(rows.map((row) => [row.exercise_id, row.best]));
+  },
+
+  updateNote: (workoutId: number, note: string | null): void => {
+    getDatabase().runSync('UPDATE workouts SET note = ?, updated_at = ? WHERE id = ?', [note, now(), workoutId]);
   },
 
   // Séries validées de la dernière séance terminée contenant cet exercice (colonne « Précédent »)

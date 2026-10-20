@@ -1,9 +1,10 @@
 import { router, useFocusEffect } from 'expo-router';
 import { Activity, Play } from 'lucide-react-native/icons';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { WorkoutHistoryRow } from '@/src/components/history/workout-history-row';
 import { ProgramRow } from '@/src/components/home/program-row';
 import { WeekStrip, type WeekDay } from '@/src/components/home/week-strip';
 import { ThemedText } from '@/src/components/themed-text';
@@ -19,7 +20,7 @@ import { ExerciseRepository } from '@/src/repositories/exercise/exercise-reposit
 import { TemplateRepository } from '@/src/repositories/template/template-repository';
 import { Template } from '@/src/repositories/template/template-type';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
-import { Workout } from '@/src/repositories/workout/workout-type';
+import { Workout, WorkoutSummary } from '@/src/repositories/workout/workout-type';
 import { formatLongDate, getWeekDays, isSameDay, startOfWeek, toTimestamp } from '@/src/utils/date';
 
 type HomeData = {
@@ -27,6 +28,7 @@ type HomeData = {
   weekDays: WeekDay[];
   templates: Template[];
   activeWorkout: Workout | null;
+  recentWorkouts: WorkoutSummary[];
   workoutCount: number;
   exerciseCount: number;
 };
@@ -48,6 +50,7 @@ function loadHomeData(): HomeData {
     })),
     templates: TemplateRepository.getAllTemplates(),
     activeWorkout: WorkoutRepository.getActiveWorkout(),
+    recentWorkouts: WorkoutRepository.getHistory(3),
     workoutCount: WorkoutRepository.count(),
     exerciseCount: ExerciseRepository.count(),
   };
@@ -157,6 +160,20 @@ export default function HomeScreen() {
           <StatTile label="Exercices" value={String(data.exerciseCount)} />
         </View>
 
+        {data.recentWorkouts.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <ThemedText type="heading">Dernières séances</ThemedText>
+              <Pressable onPress={() => router.push('/history')} accessibilityRole="link" hitSlop={8}>
+                <ThemedText type="link">Tout voir</ThemedText>
+              </Pressable>
+            </View>
+            {data.recentWorkouts.map((workout) => (
+              <WorkoutHistoryRow key={workout.id} workout={workout} />
+            ))}
+          </View>
+        )}
+
         {otherTemplates.length > 0 && (
           <View style={styles.section}>
             <ThemedText type="heading">Mes programmes</ThemedText>
@@ -236,6 +253,11 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: spacing.md,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
   },
   teaser: {
     flexDirection: 'row',

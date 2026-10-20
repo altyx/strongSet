@@ -186,6 +186,35 @@ describe('lectures', () => {
   });
 });
 
+describe('récap', () => {
+  it('getBestWeightsBefore renvoie la charge max validée par exercice avant une date', () => {
+    recordWorkout(T0, [{ ...BENCH, sets: [{ weight: 70, reps: 8 }, { weight: 75, reps: 6 }] }]);
+    recordWorkout(T0 + DAY, [{ ...BENCH, sets: [{ weight: 80, reps: 5 }] }]);
+    recordWorkout(T0 + 2 * DAY, [{ ...SQUAT, sets: [{ weight: null, reps: 20 }] }]);
+
+    expect(WorkoutRepository.getBestWeightsBefore([BENCH.exercise_id, SQUAT.exercise_id], T0 + DAY)).toEqual({ 1: 75 });
+    expect(WorkoutRepository.getBestWeightsBefore([BENCH.exercise_id], T0 + 3 * DAY)).toEqual({ 1: 80 });
+    expect(WorkoutRepository.getBestWeightsBefore([], T0)).toEqual({});
+  });
+
+  it('getPreviousOfTemplate renvoie la séance précédente du même programme', () => {
+    setNow(T0);
+    const first = WorkoutRepository.startWorkout({ template_id: 1, name: 'Full Body', exercises: [{ ...BENCH, sets: [{ weight: 60, reps: 10 }] }] });
+    WorkoutRepository.setCompleted(WorkoutRepository.getWorkout(first)!.exercises[0].sets[0].id, true);
+    WorkoutRepository.finishWorkout(first);
+    recordWorkout(T0 + DAY, [{ ...SQUAT, sets: [{ weight: 100, reps: 5 }] }]);
+
+    expect(WorkoutRepository.getPreviousOfTemplate(1, T0 + 2 * DAY)).toMatchObject({ id: first, volume: 600 });
+    expect(WorkoutRepository.getPreviousOfTemplate(1, T0)).toBeNull();
+  });
+
+  it('updateNote enregistre la note de la séance', () => {
+    const id = recordWorkout(T0, [{ ...BENCH, sets: [{ weight: 60, reps: 10 }] }]);
+    WorkoutRepository.updateNote(id, 'Épaule un peu raide');
+    expect(WorkoutRepository.getWorkout(id)!.note).toBe('Épaule un peu raide');
+  });
+});
+
 it('garde le nom de l’exercice dans l’historique s’il est supprimé de la bibliothèque', () => {
   const id = recordWorkout(T0, [{ ...BENCH, sets: [{ weight: 60, reps: 10 }] }]);
 
