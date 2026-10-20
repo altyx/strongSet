@@ -23,6 +23,50 @@ const SUMMARY_SELECT = `
   LEFT JOIN workout_exercises we ON we.workout_id = w.id
   LEFT JOIN sets s ON s.workout_exercise_id = we.id AND s.completed_at IS NOT NULL`;
 
+/**
+ * Retire les séries non validées et les exercices restés vides, supprime la séance si plus rien n'est validé.
+ * `finishedAt` : date de fin à enregistrer, ou null pour garder celle de la séance.
+ * @returns true si la séance est gardée
+ */
+function closeWorkout(workoutId: number, finishedAt: number | null): boolean {
+  const db = getDatabase();
+  let saved = false;
+
+  db.withTransactionSync(() => {
+    db.runSync(
+      `DELETE FROM sets
+       WHERE completed_at IS NULL
+         AND workout_exercise_id IN (SELECT id FROM workout_exercises WHERE workout_id = ?)`,
+      [workoutId],
+    );
+    db.runSync(
+      `DELETE FROM workout_exercises
+       WHERE workout_id = ?
+         AND NOT EXISTS (SELECT 1 FROM sets WHERE sets.workout_exercise_id = workout_exercises.id)`,
+      [workoutId],
+    );
+
+    const remaining = db.getFirstSync<{ count: number }>(
+      'SELECT COUNT(*) AS count FROM workout_exercises WHERE workout_id = ?',
+      [workoutId],
+    );
+    if (!remaining?.count) {
+      db.runSync('DELETE FROM workouts WHERE id = ?', [workoutId]);
+      return;
+    }
+
+    const timestamp = now();
+    db.runSync('UPDATE workouts SET finished_at = COALESCE(?, finished_at), updated_at = ? WHERE id = ?', [
+      finishedAt,
+      timestamp,
+      workoutId,
+    ]);
+    saved = true;
+  });
+
+  return saved;
+}
+
 export const WorkoutRepository = {
   /**
    * Démarre une séance et crée ses exercices (dans l'ordre donné) et leurs séries initiales.
@@ -78,10 +122,11 @@ export const WorkoutRepository = {
     }
 
     const exercises = db.getAllSync<Omit<WorkoutExercise, 'sets'>>(
-      `SELECT id, exercise_id, exercise_name AS name, position, rest_seconds
-       FROM workout_exercises
-       WHERE workout_id = ?
-       ORDER BY position, id`,
+      `SELECT we.id, we.exercise_id, we.exercise_name AS name, we.position, we.rest_seconds, e.note AS exercise_note
+       FROM workout_exercises we
+       LEFT JOIN exercises e ON e.id = we.exercise_id
+       WHERE we.workout_id = ?
+       ORDER BY we.position, we.id`,
       [id],
     );
     const sets = db.getAllSync<SetRow>(
@@ -191,6 +236,32 @@ export const WorkoutRepository = {
     return replacementId;
   },
 
+  // Échange un exercice de séance avec son voisin du dessus (-1) ou du dessous (+1) ; sans effet en bout de liste
+  moveExercise: (workoutExerciseId: number, direction: -1 | 1): void => {
+    const db = getDatabase();
+    db.withTransactionSync(() => {
+      const ids = db
+        .getAllSync<{ id: number }>(
+          `SELECT id FROM workout_exercises
+           WHERE workout_id = (SELECT workout_id FROM workout_exercises WHERE id = ?)
+           ORDER BY position, id`,
+          [workoutExerciseId],
+        )
+        .map((row) => row.id);
+      const from = ids.indexOf(workoutExerciseId);
+      const to = from + direction;
+      if (from === -1 || to < 0 || to >= ids.length) {
+        return;
+      }
+      [ids[from], ids[to]] = [ids[to], ids[from]];
+      // Positions réécrites de 0 à n - 1 : efface les trous laissés par les retraits
+      const timestamp = now();
+      ids.forEach((id, position) =>
+        db.runSync('UPDATE workout_exercises SET position = ?, updated_at = ? WHERE id = ?', [position, timestamp, id]),
+      );
+    });
+  },
+
   // Retire un exercice de la séance, avec toutes ses séries
   removeExercise: (workoutExerciseId: number): void => {
     getDatabase().runSync('DELETE FROM workout_exercises WHERE id = ?', [workoutExerciseId]);
@@ -236,42 +307,16 @@ export const WorkoutRepository = {
    * Une séance sans aucune série validée n'est pas gardée.
    * @returns true si la séance est enregistrée dans l'historique, false si elle a été supprimée car vide
    */
-  finishWorkout: (workoutId: number): boolean => {
-    const db = getDatabase();
-    let saved = false;
+  finishWorkout: (workoutId: number): boolean => closeWorkout(workoutId, now()),
 
-    db.withTransactionSync(() => {
-      db.runSync(
-        `DELETE FROM sets
-         WHERE completed_at IS NULL
-           AND workout_exercise_id IN (SELECT id FROM workout_exercises WHERE workout_id = ?)`,
-        [workoutId],
-      );
-      db.runSync(
-        `DELETE FROM workout_exercises
-         WHERE workout_id = ?
-           AND NOT EXISTS (SELECT 1 FROM sets WHERE sets.workout_exercise_id = workout_exercises.id)`,
-        [workoutId],
-      );
+  /**
+   * Enregistre une séance terminée qui vient d'être modifiée : même nettoyage que finishWorkout, la date de fin
+   * d'origine est gardée.
+   * @returns false si la séance a été supprimée car plus aucune série n'est validée
+   */
+  saveEditedWorkout: (workoutId: number): boolean => closeWorkout(workoutId, null),
 
-      const remaining = db.getFirstSync<{ count: number }>(
-        'SELECT COUNT(*) AS count FROM workout_exercises WHERE workout_id = ?',
-        [workoutId],
-      );
-      if (!remaining?.count) {
-        db.runSync('DELETE FROM workouts WHERE id = ?', [workoutId]);
-        return;
-      }
-
-      const timestamp = now();
-      db.runSync('UPDATE workouts SET finished_at = ?, updated_at = ? WHERE id = ?', [timestamp, timestamp, workoutId]);
-      saved = true;
-    });
-
-    return saved;
-  },
-
-  // Abandonne une séance : elle est supprimée avec ses exercices et séries
+  // Abandonne une séance en cours, ou supprime une séance de l'historique, avec ses exercices et séries
   discardWorkout: (workoutId: number): void => {
     getDatabase().runSync('DELETE FROM workouts WHERE id = ?', [workoutId]);
   },
@@ -368,8 +413,11 @@ export const WorkoutRepository = {
     getDatabase().runSync('UPDATE workouts SET note = ?, updated_at = ? WHERE id = ?', [note, now(), workoutId]);
   },
 
-  // Séries validées de la dernière séance terminée contenant cet exercice (colonne « Précédent »)
-  getLastPerformance: (exerciseId: number): SetValues[] => {
+  /**
+   * Séries validées de la dernière séance terminée contenant cet exercice (colonne « Précédent »).
+   * `before` : ne regarde que les séances commencées avant (modification d'une séance passée).
+   */
+  getLastPerformance: (exerciseId: number, before = Number.MAX_SAFE_INTEGER): SetValues[] => {
     return getDatabase().getAllSync<SetValues>(
       `SELECT s.weight, s.reps
        FROM sets s
@@ -378,12 +426,12 @@ export const WorkoutRepository = {
            SELECT we.id
            FROM workout_exercises we
            JOIN workouts w ON w.id = we.workout_id
-           WHERE we.exercise_id = ? AND w.finished_at IS NOT NULL
+           WHERE we.exercise_id = ? AND w.finished_at IS NOT NULL AND w.started_at < ?
            ORDER BY w.started_at DESC, we.id DESC
            LIMIT 1
          )
        ORDER BY s.position, s.id`,
-      [exerciseId],
+      [exerciseId, before],
     );
   },
 

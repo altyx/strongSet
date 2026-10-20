@@ -20,7 +20,9 @@ import {
 import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { formatShortDate } from '@/src/utils/date';
+import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
 import { formatDecimal } from '@/src/utils/number';
+import { formatWeight, formatWeightValue, WeightUnit } from '@/src/utils/weight';
 
 const WEEKS = 8;
 
@@ -43,13 +45,14 @@ function loadProgress(exerciseId: number) {
 }
 
 const dateLabel = (timestamp: number) => formatShortDate(new Date(timestamp * 1000));
-const formatSet = (weight: number | null, reps: number | null) =>
-  weight === null ? `${reps} reps` : `${formatDecimal(weight)} × ${reps}`;
+const formatSet = (weight: number | null, reps: number | null, unit: WeightUnit) =>
+  weight === null ? `${reps} reps` : `${formatWeightValue(weight, unit)} × ${reps}`;
 
 // Progression d'un exercice : courbe sur 8 semaines, records personnels et historique des séances
 export default function ExerciseProgressScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
+  const unit = useWeightUnit();
   const [data] = useState(() => loadProgress(Number(id)));
   const [metric, setMetric] = useState<Metric>('force');
 
@@ -95,13 +98,13 @@ export default function ExerciseProgressScreen() {
       : {
           label: '1RM estimé (dernière séance)',
           values: weeks.map((week) => week.oneRepMax),
-          value: lastOneRepMax === null ? '—' : `${formatDecimal(lastOneRepMax)} kg`,
-          delta: change === null ? null : `${change >= 0 ? '+' : ''}${formatDecimal(change)} kg en ${WEEKS} semaines`,
+          value: lastOneRepMax === null ? '—' : formatWeight(lastOneRepMax, unit),
+          delta: change === null ? null : `${change >= 0 ? '+' : ''}${formatWeight(change, unit)} en ${WEEKS} semaines`,
         },
     volume: {
       label: 'Volume cette semaine',
       values: weeks.map((week) => week.volume),
-      value: `${formatDecimal(latest.volume)} kg`,
+      value: formatWeight(latest.volume, unit),
       delta: null,
     },
     series: {
@@ -112,6 +115,10 @@ export default function ExerciseProgressScreen() {
     },
   }[metric];
 
+  // Valeur d'une barre lue par le lecteur d'écran : charge dans l'unité choisie, sinon nombre de reps ou de séries
+  const spokenChartValue = (value: number) =>
+    metric === 'volume' || (metric === 'force' && !bodyweight) ? formatWeight(value, unit) : formatDecimal(value);
+
   const tabs: { key: Metric; label: string }[] = [
     { key: 'force', label: bodyweight ? 'Reps' : 'Force' },
     ...(bodyweight ? [] : [{ key: 'volume' as const, label: 'Volume' }]),
@@ -119,9 +126,9 @@ export default function ExerciseProgressScreen() {
   ];
 
   const recordTiles = [
-    records.bestOneRepMax && { label: '1RM estimé', value: `${formatDecimal(records.bestOneRepMax.value)} kg`, at: records.bestOneRepMax.at },
-    records.heaviestSet && { label: 'Charge max', value: `${formatSet(records.heaviestSet.weight, records.heaviestSet.reps)}`, at: records.heaviestSet.at },
-    records.bestVolume && { label: 'Volume max (séance)', value: `${formatDecimal(records.bestVolume.value)} kg`, at: records.bestVolume.at },
+    records.bestOneRepMax && { label: '1RM estimé', value: formatWeight(records.bestOneRepMax.value, unit), at: records.bestOneRepMax.at },
+    records.heaviestSet && { label: 'Charge max', value: formatSet(records.heaviestSet.weight, records.heaviestSet.reps, unit), at: records.heaviestSet.at },
+    records.bestVolume && { label: 'Volume max (séance)', value: formatWeight(records.bestVolume.value, unit), at: records.bestVolume.at },
     records.maxReps && { label: 'Répétitions max', value: `${records.maxReps.reps}`, at: records.maxReps.at },
   ].filter((tile): tile is { label: string; value: string; at: number } => Boolean(tile));
 
@@ -168,7 +175,7 @@ export default function ExerciseProgressScreen() {
             accessibilityLabel={`${chart.label} par semaine : ${chart.values
               .map(
                 (value, index) =>
-                  `${weekSpokenLabel(weeks[index].weekStart, now)}, ${value === null ? 'aucune séance' : formatDecimal(value)}`,
+                  `${weekSpokenLabel(weeks[index].weekStart, now)}, ${value === null ? 'aucune séance' : spokenChartValue(value)}`,
               )
               .join(' ; ')}`}
           />
@@ -200,11 +207,11 @@ export default function ExerciseProgressScreen() {
                 <View style={styles.flex}>
                   <ThemedText type="defaultSemiBold">{dateLabel(session.started_at)}</ThemedText>
                   <ThemedText type="caption" numberOfLines={1}>
-                    {session.sets.map((set) => formatSet(set.weight, set.reps)).join(' · ')}
+                    {session.sets.map((set) => formatSet(set.weight, set.reps, unit)).join(' · ')}
                   </ThemedText>
                 </View>
                 <ThemedText type="metric" style={styles.historyBest}>
-                  {stats.topSet ? formatSet(stats.topSet.weight, stats.topSet.reps) : `${stats.maxReps} reps`}
+                  {stats.topSet ? formatSet(stats.topSet.weight, stats.topSet.reps, unit) : `${stats.maxReps} reps`}
                 </ThemedText>
               </View>
             );

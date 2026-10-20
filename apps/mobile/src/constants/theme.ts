@@ -18,6 +18,8 @@ export const palette = {
   accentSoft: 'rgba(255, 90, 31, 0.14)',
   // Texte posé sur l'accent : foncé, le blanc ne passe pas le contraste 4.5:1
   onAccent: '#0B0C0E',
+  // Actions destructives (supprimer, retirer) : rouge distinct de l'accent orange
+  danger: '#FF6B6B',
   run: '#5AB8FF',
   runSoft: 'rgba(90, 184, 255, 0.14)',
 } as const;

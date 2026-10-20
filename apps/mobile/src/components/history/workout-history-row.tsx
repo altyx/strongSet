@@ -7,14 +7,16 @@ import { fontFamily, palette, radius } from '@/src/constants/theme';
 import { WorkoutSummary } from '@/src/repositories/workout/workout-type';
 import { formatShortDate } from '@/src/utils/date';
 import { formatMinutes } from '@/src/utils/duration';
-import { formatDecimal } from '@/src/utils/number';
+import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
+import { formatWeight } from '@/src/utils/weight';
 
 // Une séance terminée ; ouvre son récap
 export function WorkoutHistoryRow({ workout }: { workout: WorkoutSummary }) {
+  const unit = useWeightUnit();
   const date = new Date(workout.started_at * 1000);
   const details = [
     formatMinutes(workout.finished_at - workout.started_at),
-    workout.volume > 0 && `${formatDecimal(workout.volume)} kg`,
+    workout.volume > 0 && formatWeight(workout.volume, unit),
     `${workout.completed_set_count} ${workout.completed_set_count > 1 ? 'séries' : 'série'}`,
   ]
     .filter(Boolean)

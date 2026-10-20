@@ -4,8 +4,9 @@ import { ThemedText } from '@/src/components/themed-text';
 import { muscleLabel } from '@/src/constants/muscles';
 import { fontFamily, palette, radius } from '@/src/constants/theme';
 import { ExerciseListItem } from '@/src/repositories/exercise/exercise-repository';
-import { formatDecimal } from '@/src/utils/number';
+import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
 import { initials } from '@/src/utils/text';
+import { formatWeight, spokenWeight } from '@/src/utils/weight';
 
 type ExerciseRowProps = {
   exercise: ExerciseListItem;
@@ -14,6 +15,7 @@ type ExerciseRowProps = {
 };
 
 export function ExerciseRow({ exercise, bestWeight }: ExerciseRowProps) {
+  const unit = useWeightUnit();
   const meta = [exercise.equipment, exercise.muscles.map(muscleLabel).join(', ')].filter(Boolean).join(' · ');
 
   return (
@@ -34,8 +36,8 @@ export function ExerciseRow({ exercise, bestWeight }: ExerciseRowProps) {
         )}
       </View>
       {bestWeight !== undefined && (
-        <View style={styles.record} accessible accessibilityLabel={`Record : ${formatDecimal(bestWeight)} kilos`}>
-          <ThemedText style={styles.recordValue}>{formatDecimal(bestWeight)} kg</ThemedText>
+        <View style={styles.record} accessible accessibilityLabel={`Record : ${spokenWeight(bestWeight, unit)}`}>
+          <ThemedText style={styles.recordValue}>{formatWeight(bestWeight, unit)}</ThemedText>
           <ThemedText type="caption" tone="tertiary" style={styles.recordLabel}>
             record
           </ThemedText>

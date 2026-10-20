@@ -1,0 +1,49 @@
+// Une série validée d'une séance terminée, à plat (export CSV)
+export interface ExportedSet {
+  started_at: number;
+  workout_name: string | null;
+  workout_note: string | null;
+  exercise_name: string | null;
+  set_number: number;
+  // kg ; null pour une série au poids du corps sans charge saisie
+  weight: number | null;
+  reps: number | null;
+}
+
+// Séparateur « ; » et virgule décimale : le fichier s'ouvre directement en colonnes dans un tableur réglé en français
+const SEPARATOR = ';';
+const HEADER = ['Date', 'Heure', 'Séance', 'Exercice', 'Série', 'Charge (kg)', 'Répétitions', 'Note de séance'];
+
+function escapeCell(value: string) {
+  return /[;"\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+}
+
+const pad = (value: number) => String(value).padStart(2, '0');
+
+/**
+ * Séries au format CSV, une ligne par série, dans l'ordre donné. Dates en heure locale (AAAA-MM-JJ, HH:MM).
+ * Commence par un BOM UTF-8, sans quoi Excel affiche mal les accents.
+ */
+export function buildSetsCsv(sets: ExportedSet[]): string {
+  const lines = sets.map((set) => {
+    const date = new Date(set.started_at * 1000);
+    return [
+      `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+      `${pad(date.getHours())}:${pad(date.getMinutes())}`,
+      set.workout_name ?? '',
+      set.exercise_name ?? '',
+      String(set.set_number),
+      set.weight === null ? '' : String(set.weight).replace('.', ','),
+      set.reps === null ? '' : String(set.reps),
+      set.workout_note ?? '',
+    ]
+      .map(escapeCell)
+      .join(SEPARATOR);
+  });
+  return `﻿${[HEADER.join(SEPARATOR), ...lines].join('\r\n')}\r\n`;
+}
+
+// « my-fitness-2026-10-20.csv »
+export function exportFileName(date: Date, extension: 'csv' | 'json') {
+  return `my-fitness-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.${extension}`;
+}

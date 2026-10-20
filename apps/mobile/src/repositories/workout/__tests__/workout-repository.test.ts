@@ -1,3 +1,4 @@
+import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { createTestDatabase, type TestDatabase } from '@/src/test-utils/test-database';
 
@@ -195,6 +196,71 @@ describe('finishWorkout', () => {
     expect(WorkoutRepository.finishWorkout(id)).toBe(false);
     expect(WorkoutRepository.getWorkout(id)).toBeNull();
     expect(countRows('sets')).toBe(0);
+  });
+});
+
+describe('modifier une séance terminée', () => {
+  it('saveEditedWorkout garde la date de fin et retire les séries non validées ajoutées', () => {
+    const id = recordWorkout(T0, [{ ...BENCH, sets: [{ weight: 60, reps: 10 }] }]);
+    const finishedAt = WorkoutRepository.getWorkout(id)!.finished_at;
+    const bench = WorkoutRepository.getWorkout(id)!.exercises[0];
+    WorkoutRepository.updateSet(bench.sets[0].id, { weight: 65, reps: 10 });
+    WorkoutRepository.addSet(bench.id, { weight: 65, reps: 8 });
+
+    setNow(T0 + DAY);
+    expect(WorkoutRepository.saveEditedWorkout(id)).toBe(true);
+
+    const workout = WorkoutRepository.getWorkout(id)!;
+    expect(workout.finished_at).toBe(finishedAt);
+    expect(workout.exercises[0].sets).toEqual([expect.objectContaining({ weight: 65, reps: 10 })]);
+  });
+
+  it('saveEditedWorkout supprime la séance si plus rien n’est validé', () => {
+    const id = recordWorkout(T0, [{ ...BENCH, sets: [{ weight: 60, reps: 10 }] }]);
+    WorkoutRepository.setCompleted(WorkoutRepository.getWorkout(id)!.exercises[0].sets[0].id, false);
+
+    expect(WorkoutRepository.saveEditedWorkout(id)).toBe(false);
+    expect(WorkoutRepository.getWorkout(id)).toBeNull();
+  });
+
+  it('getLastPerformance avec `before` ignore la séance modifiée et les suivantes', () => {
+    recordWorkout(T0, [{ ...BENCH, sets: [{ weight: 60, reps: 10 }] }]);
+    const edited = recordWorkout(T0 + DAY, [{ ...BENCH, sets: [{ weight: 70, reps: 8 }] }]);
+    recordWorkout(T0 + 2 * DAY, [{ ...BENCH, sets: [{ weight: 80, reps: 5 }] }]);
+
+    const startedAt = WorkoutRepository.getWorkout(edited)!.started_at;
+    expect(WorkoutRepository.getLastPerformance(BENCH.exercise_id, startedAt)).toEqual([{ weight: 60, reps: 10 }]);
+    expect(WorkoutRepository.getLastPerformance(BENCH.exercise_id)).toEqual([{ weight: 80, reps: 5 }]);
+  });
+});
+
+describe('ordre et notes des exercices en séance', () => {
+  const DEADLIFT = { exercise_id: 3, name: 'Deadlift' };
+
+  it('moveExercise échange un exercice avec son voisin, sans effet en bout de liste', () => {
+    const id = WorkoutRepository.startWorkout({ name: 'Full', exercises: [BENCH, SQUAT, DEADLIFT] });
+    const names = () => WorkoutRepository.getWorkout(id)!.exercises.map((exercise) => [exercise.name, exercise.position]);
+    const [bench, , deadlift] = WorkoutRepository.getWorkout(id)!.exercises;
+
+    WorkoutRepository.moveExercise(deadlift.id, -1);
+    expect(names()).toEqual([['Bench Press', 0], ['Deadlift', 1], ['Squat', 2]]);
+
+    WorkoutRepository.moveExercise(bench.id, -1);
+    WorkoutRepository.moveExercise(deadlift.id, 1);
+    expect(names()).toEqual([['Bench Press', 0], ['Squat', 1], ['Deadlift', 2]]);
+  });
+
+  it('getWorkout renvoie la note personnelle de l’exercice de la bibliothèque', () => {
+    const id = WorkoutRepository.startWorkout({ name: 'Push', exercises: [BENCH, { exercise_id: null, name: 'Supprimé' }] });
+    ExerciseRepository.updateNote(BENCH.exercise_id, '  Siège cran 4  ');
+
+    expect(WorkoutRepository.getWorkout(id)!.exercises.map((exercise) => exercise.exercise_note)).toEqual([
+      'Siège cran 4',
+      null,
+    ]);
+
+    ExerciseRepository.updateNote(BENCH.exercise_id, '   ');
+    expect(WorkoutRepository.getWorkout(id)!.exercises[0].exercise_note).toBeNull();
   });
 });
 
