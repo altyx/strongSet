@@ -9,6 +9,11 @@ export interface ExerciseListItem {
   muscles: string[];
 }
 
+// Fiche d'un exercice : la ligne de bibliothèque et ses consignes d'exécution
+export interface ExerciseDetail extends ExerciseListItem {
+  description: string | null;
+}
+
 export interface Muscle {
   id: number;
   name: string;
@@ -18,6 +23,7 @@ export interface NewExercise {
   name: string;
   equipment: string | null;
   muscleIds: number[];
+  description?: string | null;
 }
 
 const now = () => Math.floor(Date.now() / 1000);
@@ -33,9 +39,9 @@ export const ExerciseRepository = {
     return exercises.map((exercise) => ({ ...exercise, muscles: muscles[exercise.id] ?? [] }));
   },
 
-  getById: (id: number): ExerciseListItem | null => {
-    const exercise = getDatabase().getFirstSync<{ id: number; name: string; equipment: string | null }>(
-      'SELECT id, name, equipment FROM exercises WHERE id = ?',
+  getById: (id: number): ExerciseDetail | null => {
+    const exercise = getDatabase().getFirstSync<Omit<ExerciseDetail, 'muscles'>>(
+      'SELECT id, name, equipment, description FROM exercises WHERE id = ?',
       [id],
     );
     if (!exercise) {
@@ -62,9 +68,11 @@ export const ExerciseRepository = {
     const timestamp = now();
     let exerciseId = 0;
     db.withTransactionSync(() => {
-      exerciseId = db.runSync('INSERT INTO exercises (name, equipment, created_at) VALUES (?, ?, ?)', [
+      const description = exercise.description?.trim() || null;
+      exerciseId = db.runSync('INSERT INTO exercises (name, equipment, description, created_at) VALUES (?, ?, ?, ?)', [
         exercise.name.trim(),
         exercise.equipment,
+        description,
         timestamp,
       ]).lastInsertRowId;
       exercise.muscleIds.forEach((muscleId) => {

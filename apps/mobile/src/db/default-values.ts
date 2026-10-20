@@ -1,3 +1,5 @@
+import { DEFAULT_DESCRIPTIONS_SQL } from './exercise-descriptions';
+
 /**
  * Default values for the database.
  */
@@ -244,4 +246,7 @@ export const DEFAULT_VALUES_DATABASE = `
            (2, 1, 2, 1, 1609459200),
            (3, 1, 3, 2, 1609459200),
            (4, 1, 5, 3, 1609459200);
+
+    -- Consignes d'exécution des exercices par défaut (exercise-descriptions.ts)
+    ${DEFAULT_DESCRIPTIONS_SQL}
 `;

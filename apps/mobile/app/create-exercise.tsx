@@ -34,6 +34,7 @@ export default function CreateExerciseModal() {
   const [name, setName] = useState('');
   const [muscleIds, setMuscleIds] = useState<number[]>([]);
   const [equipment, setEquipment] = useState<string | null>(null);
+  const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const toggleMuscle = (id: number) => {
@@ -47,7 +48,7 @@ export default function CreateExerciseModal() {
       setError(message);
       return;
     }
-    ExerciseRepository.create({ name, equipment, muscleIds });
+    ExerciseRepository.create({ name, equipment, muscleIds, description });
     router.back();
   };
 
@@ -103,6 +104,19 @@ export default function CreateExerciseModal() {
             ))}
           </View>
         </View>
+
+        <View style={styles.field}>
+          <ThemedText type="label">Description (facultatif)</ThemedText>
+          <TextInput
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Installation, exécution, points d'attention…"
+            placeholderTextColor={palette.textTertiary}
+            multiline
+            accessibilityLabel="Description de l'exercice"
+            style={[styles.input, styles.multiline]}
+          />
+        </View>
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
@@ -141,6 +155,13 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
     backgroundColor: palette.surface,
     color: palette.text,
+  },
+  multiline: {
+    height: undefined,
+    minHeight: 110,
+    paddingTop: 14,
+    paddingBottom: 14,
+    textAlignVertical: 'top',
   },
   chips: {
     flexDirection: 'row',

@@ -36,7 +36,10 @@ CREATE TABLE IF NOT EXISTS exercises (
     name         TEXT NOT NULL,
     created_at   INTEGER NOT NULL,
     updated_at   INTEGER,
+    -- Note personnelle de l'utilisateur
     note TEXT,
+    -- Consignes d'exécution (position, mouvement, conseil)
+    description  TEXT,
     equipment    TEXT,
     sync_status  TEXT DEFAULT 'local',
     version      INTEGER DEFAULT 1
