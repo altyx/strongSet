@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/src/components/themed-text';
 import { BarChart } from '@/src/components/ui/bar-chart';
+import { ExerciseDescription } from '@/src/components/exercises/exercise-description';
 import { Card } from '@/src/components/ui/card';
 import { muscleLabel } from '@/src/constants/muscles';
 import { palette, radius, spacing } from '@/src/constants/theme';
@@ -55,14 +56,26 @@ export default function ExerciseProgressScreen() {
   const { now, exercise, sessions, weeks, records, bodyweight, change } = data;
   const title = exercise?.name ?? 'Exercice';
 
+  const meta = exercise
+    ? [exercise.equipment, exercise.muscles.map(muscleLabel).join(', ')].filter(Boolean).join(' · ')
+    : '';
+  const description = exercise?.description ? <ExerciseDescription description={exercise.description} /> : null;
+
+  // Exercice jamais fait : la fiche montre seulement les consignes
   if (sessions.length === 0) {
     return (
-      <View style={[styles.screen, styles.empty]}>
+      <View style={styles.screen}>
         <Stack.Screen options={{ title }} />
-        <ThemedText type="heading">Pas encore de séance</ThemedText>
-        <ThemedText type="caption" style={styles.center}>
-          La progression de cet exercice apparaîtra après votre première séance terminée.
-        </ThemedText>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}>
+          {meta !== '' && <ThemedText type="caption">{meta}</ThemedText>}
+          {description}
+          <Card style={styles.emptyCard}>
+            <ThemedText type="heading">Pas encore de séance</ThemedText>
+            <ThemedText type="caption">
+              La progression de cet exercice apparaîtra après votre première séance terminée.
+            </ThemedText>
+          </Card>
+        </ScrollView>
       </View>
     );
   }
@@ -116,11 +129,7 @@ export default function ExerciseProgressScreen() {
     <View style={styles.screen}>
       <Stack.Screen options={{ title }} />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}>
-        {exercise && exercise.muscles.length > 0 && (
-          <ThemedText type="caption">
-            {[exercise.equipment, exercise.muscles.map(muscleLabel).join(', ')].filter(Boolean).join(' · ')}
-          </ThemedText>
-        )}
+        {meta !== '' && <ThemedText type="caption">{meta}</ThemedText>}
 
         {tabs.length > 1 && (
           <View style={styles.tabs} accessibilityRole="tablist">
@@ -180,6 +189,8 @@ export default function ExerciseProgressScreen() {
           </View>
         </View>
 
+        {description}
+
         <View style={styles.section}>
           <ThemedText type="heading">Historique</ThemedText>
           {sessions.map((session, index) => {
@@ -209,14 +220,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: palette.background,
   },
-  empty: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  emptyCard: {
     gap: spacing.sm,
-    padding: spacing.xxl,
-  },
-  center: {
-    textAlign: 'center',
+    padding: spacing.xl,
   },
   content: {
     gap: spacing.xxl,

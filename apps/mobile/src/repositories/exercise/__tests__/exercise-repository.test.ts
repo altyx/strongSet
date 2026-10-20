@@ -85,6 +85,7 @@ it('create ajoute un exercice avec son matériel et ses muscles', () => {
     id,
     name: 'Tirage maison',
     equipment: 'Autre',
+    description: null,
     muscles: ['Biceps', 'Back'],
   });
   expect(ExerciseRepository.count()).toBe(DEFAULT_EXERCISE_COUNT + 1);
@@ -98,6 +99,29 @@ it('existsByName ignore la casse, les accents et les espaces', () => {
 });
 
 it('getById renvoie un exercice avec ses muscles, ou null', () => {
-  expect(ExerciseRepository.getById(2)).toEqual({ id: 2, name: 'Squat', equipment: 'Barre', muscles: ['Quadriceps', 'Glutes'] });
+  expect(ExerciseRepository.getById(2)).toMatchObject({ id: 2, name: 'Squat', equipment: 'Barre', muscles: ['Quadriceps', 'Glutes'] });
   expect(ExerciseRepository.getById(999)).toBeNull();
+});
+
+describe('descriptions', () => {
+  it('chaque exercice par défaut a une description en trois étapes', () => {
+    ExerciseRepository.getAll().forEach(({ id, name }) => {
+      const lines = ExerciseRepository.getById(id)?.description?.split('\n') ?? [];
+      expect({ name, prefixes: lines.map((line) => line.split(' : ')[0]) }).toEqual({
+        name,
+        prefixes: ['Installation', 'Exécution', 'Conseil'],
+      });
+    });
+  });
+
+  it('garde les apostrophes intactes', () => {
+    expect(ExerciseRepository.getById(1)?.description).toContain('jusqu’au bas des pectoraux');
+  });
+
+  it('create enregistre la description facultative, sans texte vide', () => {
+    const withText = ExerciseRepository.create({ name: 'A', equipment: null, muscleIds: [1], description: '  Mon conseil  ' });
+    const empty = ExerciseRepository.create({ name: 'B', equipment: null, muscleIds: [1], description: '   ' });
+    expect(ExerciseRepository.getById(withText)?.description).toBe('Mon conseil');
+    expect(ExerciseRepository.getById(empty)?.description).toBeNull();
+  });
 });

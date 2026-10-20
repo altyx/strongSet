@@ -39,5 +39,7 @@ it('initials prend la première lettre des deux premiers mots, ou les deux premi
   expect(initials('Full Body')).toBe('FB');
   expect(initials('Chest')).toBe('CH');
   expect(initials('Développé incliné haltères')).toBe('DI');
+  expect(initials('Curl à la poulie')).toBe('CP');
+  expect(initials('Haussements d\'épaules haltères')).toBe('HÉ');
   expect(initials('  ')).toBe('');
 });
