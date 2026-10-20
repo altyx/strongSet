@@ -1,91 +1,232 @@
-import {ThemedText} from '@/src/components/themed-text';
-import {SafeAreaView} from "react-native-safe-area-context";
-import {ThemedView} from "@/src/components/themed-view";
-import {FlatList, Pressable, StyleSheet, Text, TouchableOpacity, View} from "react-native";
-import {Settings} from "lucide-react-native/icons";
-import {useEffect, useState} from "react";
-import {Template} from "@/src/repositories/template/template-type";
-import {TemplateRepository} from "@/src/repositories/template/template-repository";
-import {formatDate} from "@/src/utils/date";
+import { useFocusEffect } from 'expo-router';
+import { Activity, Play } from 'lucide-react-native/icons';
+import { useCallback, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function HomeScreen() {
-  const [templates, setTemplates] = useState<Template[]>([]);
+import { ProgramRow } from '@/src/components/home/program-row';
+import { WeekStrip, type WeekDay } from '@/src/components/home/week-strip';
+import { ThemedText } from '@/src/components/themed-text';
+import { Badge } from '@/src/components/ui/badge';
+import { Button } from '@/src/components/ui/button';
+import { Card } from '@/src/components/ui/card';
+import { StatTile } from '@/src/components/ui/stat-tile';
+import { fontFamily, palette, radius, spacing } from '@/src/constants/theme';
+import { useUserSettings } from '@/src/hooks/user/use-user-settings';
+import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
+import { TemplateRepository } from '@/src/repositories/template/template-repository';
+import { Template } from '@/src/repositories/template/template-type';
+import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
+import { formatLongDate, getWeekDays, isSameDay, startOfWeek, toTimestamp } from '@/src/utils/date';
 
-  useEffect(() => {
-    loadTemplates()
-  }, [])
+type HomeData = {
+  today: Date;
+  weekDays: WeekDay[];
+  templates: Template[];
+  workoutCount: number;
+  exerciseCount: number;
+};
 
-  async function loadTemplates() {
-    const t = TemplateRepository.getAllTemplates();
-    console.log(t);
-    setTemplates(t)
-  }
-
-  const header = (
-    <ThemedView>
-      <Pressable onPress={() => console.log(1)}>
-        <Settings size={32}/>
-      </Pressable>
-      <View>
-        <ThemedText type='title'>Mes Templates</ThemedText>
-        <ThemedText>voir tout</ThemedText>
-      </View>
-    </ThemedView>
+function loadHomeData(): HomeData {
+  const today = new Date();
+  const weekStart = startOfWeek(today);
+  const weekEnd = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 7);
+  const workoutDates = WorkoutRepository.getWorkoutTimestampsBetween(toTimestamp(weekStart), toTimestamp(weekEnd)).map(
+    (timestamp) => new Date(timestamp * 1000),
   );
 
+  return {
+    today,
+    weekDays: getWeekDays(today).map((date) => ({
+      date,
+      isToday: isSameDay(date, today),
+      hasWorkout: workoutDates.some((workoutDate) => isSameDay(workoutDate, date)),
+    })),
+    templates: TemplateRepository.getAllTemplates(),
+    workoutCount: WorkoutRepository.count(),
+    exerciseCount: ExerciseRepository.count(),
+  };
+}
+
+export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
+  const { getPreferences } = useUserSettings();
+  const [data, setData] = useState<HomeData | null>(null);
+
+  // Recharge à chaque retour sur l'onglet, pour refléter les séances et programmes ajoutés entre-temps
+  useFocusEffect(
+    useCallback(() => {
+      setData(loadHomeData());
+    }, []),
+  );
+
+  if (!data) {
+    return null;
+  }
+
+  const name = getPreferences()?.name?.trim();
+  // En attendant l'historique des séances, on propose le premier programme qui contient des exercices
+  const nextTemplate = data.templates.find((template) => template.exercises.length > 0) ?? data.templates[0];
+  const otherTemplates = data.templates.filter((template) => template !== nextTemplate);
+
+  const startWorkout = () => {
+    // TODO: ouvrir l'écran de séance en cours quand il existera
+    Alert.alert('Bientôt disponible', 'Le suivi de séance arrive dans une prochaine version.');
+  };
+
   return (
-    <SafeAreaView style={{flex: 1, padding: 16}}>
-      <FlatList
-        data={templates}
-        keyExtractor={(item) => String(item.id)}
-        ListHeaderComponent={header}
-        renderItem={({item}) => (
-          <ThemedView style={styles.template}>
-            <View style={styles.header}>
-              <View>
-                <ThemedText type='subtitle'>{item.name}</ThemedText>
-                <ThemedText>- {item.updated_at && formatDate(item.updated_at)}</ThemedText>
-              </View>
-              <View>
-                <ThemedText>{formatDate(item.created_at)}</ThemedText>
-              </View>
+    // La marge haute est sur le conteneur et non sur le contenu : le contenu ne défile pas sous la barre d'état
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <View style={styles.headerText}>
+            <ThemedText type="label">{formatLongDate(data.today)}</ThemedText>
+            <ThemedText type="title">{name ? `Bonjour ${name}` : 'Bonjour'}</ThemedText>
+          </View>
+          {name && (
+            <View style={styles.avatar} accessible accessibilityLabel={`Profil de ${name}`}>
+              <ThemedText style={styles.avatarText} tone="onAccent">
+                {name.charAt(0).toUpperCase()}
+              </ThemedText>
             </View>
-            <TouchableOpacity>
-              <View style={styles.button}>
-                <Text>Go</Text>
+          )}
+        </View>
+  
+        <WeekStrip days={data.weekDays} />
+  
+        {nextTemplate ? (
+          <Card variant="outlined" style={styles.hero}>
+            <View style={styles.heroGlow} pointerEvents="none" />
+            <Badge label="Prochaine séance" />
+            <View style={styles.heroTitle}>
+              <ThemedText type="display">{nextTemplate.name}</ThemedText>
+              {nextTemplate.exercises.length > 0 && (
+                <ThemedText type="caption" numberOfLines={2}>
+                  {nextTemplate.exercises.map((exercise) => exercise.name).join(' · ')}
+                </ThemedText>
+              )}
+            </View>
+            {nextTemplate.exercises.length > 0 && (
+              <View>
+                <ThemedText type="metric">{nextTemplate.exercises.length}</ThemedText>
+                <ThemedText type="caption">{nextTemplate.exercises.length > 1 ? 'exercices' : 'exercice'}</ThemedText>
               </View>
-            </TouchableOpacity>
-          </ThemedView>
+            )}
+            <Button title="Démarrer la séance" icon={Play} iconFilled onPress={startWorkout} />
+          </Card>
+        ) : (
+          <Card variant="outlined" style={styles.hero}>
+            <ThemedText type="heading">Aucun programme</ThemedText>
+            <ThemedText type="caption">Créez un programme pour démarrer votre première séance.</ThemedText>
+          </Card>
         )}
-      />
-    </SafeAreaView>
+  
+        <View style={styles.stats}>
+          <StatTile label="Séances" value={String(data.workoutCount)} />
+          <StatTile label="Programmes" value={String(data.templates.length)} />
+          <StatTile label="Exercices" value={String(data.exerciseCount)} />
+        </View>
+  
+        {otherTemplates.length > 0 && (
+          <View style={styles.section}>
+            <ThemedText type="heading">Mes programmes</ThemedText>
+            {otherTemplates.map((template) => (
+              <ProgramRow key={template.id} template={template} />
+            ))}
+          </View>
+        )}
+  
+        <View style={styles.teaser}>
+          <View style={styles.teaserIcon}>
+            <Activity size={22} color={palette.run} strokeWidth={2} />
+          </View>
+          <View style={styles.teaserText}>
+            <ThemedText type="defaultSemiBold">Bientôt : la course</ThemedText>
+            <ThemedText type="caption">Suivez vos sorties, allures et records</ThemedText>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  template: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    padding: 12,
+  screen: {
+    flex: 1,
+    backgroundColor: palette.background,
+  },
+  content: {
+    gap: spacing.xxl,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
   header: {
-    display: 'flex',
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
   },
-  button: {
-    textAlign: 'center',
-    height: 60,
-    backgroundColor: '#FF5724',
-    borderRadius: 12,
-    color: '#fff',
-    display: 'flex',
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    boxShadow: '0px 10px 15px -3px rgba(255,87,36, 0.2)',
+  headerText: {
+    flex: 1,
+    gap: 4,
   },
-})
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.accent,
+  },
+  avatarText: {
+    fontFamily: fontFamily.bold,
+    fontSize: 16,
+  },
+  hero: {
+    gap: spacing.lg,
+    padding: spacing.xl,
+    borderRadius: radius.xl + 2,
+    overflow: 'hidden',
+  },
+  heroGlow: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: palette.accentSoft,
+  },
+  heroTitle: {
+    gap: 6,
+  },
+  stats: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  section: {
+    gap: spacing.md,
+  },
+  teaser: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: spacing.lg,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: palette.border,
+  },
+  teaserIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.runSoft,
+  },
+  teaserText: {
+    flex: 1,
+    gap: 2,
+  },
+});
