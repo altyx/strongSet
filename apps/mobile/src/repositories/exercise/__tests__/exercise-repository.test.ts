@@ -13,19 +13,36 @@ afterEach(() => {
 });
 
 it('count compte les exercices de la bibliothèque', () => {
-  expect(ExerciseRepository.count()).toBe(5);
+  expect(ExerciseRepository.count()).toBe(25);
 });
 
 it('getMusclesByExercise regroupe les muscles par exercice (données par défaut)', () => {
-  // 1 Bench Press : Chest, Triceps · 2 Squat : Quadriceps
+  // 1 Développé couché : Chest, Triceps · 2 Squat : Quadriceps
   expect(ExerciseRepository.getMusclesByExercise([1, 2])).toEqual({ 1: ['Chest', 'Triceps'], 2: ['Quadriceps'] });
   expect(ExerciseRepository.getMusclesByExercise([])).toEqual({});
 });
 
-it('getAll liste la bibliothèque par ordre alphabétique avec les muscles', () => {
-  const exercises = ExerciseRepository.getAll();
-  expect(exercises.map((exercise) => exercise.name)).toEqual(['Bench Press', 'Deadlift', 'Pull-ups', 'Shoulder Press', 'Squat']);
-  expect(exercises[0]).toEqual({ id: 1, name: 'Bench Press', equipment: null, muscles: ['Chest', 'Triceps'] });
+it('getAll trie la bibliothèque en français (accents compris) avec matériel et muscles', () => {
+  const names = ExerciseRepository.getAll().map((exercise) => exercise.name);
+  expect(names.slice(0, 4)).toEqual(['Deadlift', 'Développé couché', 'Développé couché haltères', 'Développé couché machine guidée']);
+  // « Écarté » se range avec les E, avant « Pec deck » et « Squat »
+  expect(names.indexOf('Écarté couché haltères')).toBeLessThan(names.indexOf('Pec deck (butterfly)'));
+  expect(names[names.length - 1]).toBe('Squat');
+  expect(ExerciseRepository.getAll().find((exercise) => exercise.id === 1)).toEqual({
+    id: 1,
+    name: 'Développé couché',
+    equipment: 'Barre',
+    muscles: ['Chest', 'Triceps'],
+  });
+});
+
+it('les exercices pectoraux par défaut travaillent tous les pectoraux', () => {
+  const chest = ExerciseRepository.getAll().filter((exercise) => exercise.id === 1 || (exercise.id >= 6 && exercise.id <= 25));
+  expect(chest).toHaveLength(21);
+  chest.forEach((exercise) => {
+    expect(exercise.muscles).toContain('Chest');
+    expect(exercise.equipment).not.toBeNull();
+  });
 });
 
 it('getMuscles liste les muscles par défaut', () => {
@@ -44,12 +61,13 @@ it('create ajoute un exercice avec son matériel et ses muscles', () => {
     equipment: 'Barre',
     muscles: ['Glutes', 'Hamstrings'],
   });
-  expect(ExerciseRepository.count()).toBe(6);
+  expect(ExerciseRepository.count()).toBe(26);
   jest.restoreAllMocks();
 });
 
 it('existsByName ignore la casse et les espaces', () => {
-  expect(ExerciseRepository.existsByName(' bench press ')).toBe(true);
+  expect(ExerciseRepository.existsByName(' développé couché ')).toBe(true);
+  expect(ExerciseRepository.existsByName('DEVELOPPE COUCHE')).toBe(true);
   expect(ExerciseRepository.existsByName('Hip thrust')).toBe(false);
 });
 

@@ -1,4 +1,5 @@
 import {getDatabase} from "@/src/db/database";
+import {normalizeSearch} from "@/src/utils/text";
 
 export interface ExerciseListItem {
   id: number;
@@ -24,9 +25,10 @@ const now = () => Math.floor(Date.now() / 1000);
 export const ExerciseRepository = {
   // Bibliothèque complète, par ordre alphabétique, avec les muscles de chaque exercice
   getAll: (): ExerciseListItem[] => {
-    const exercises = getDatabase().getAllSync<{ id: number; name: string; equipment: string | null }>(
-      'SELECT id, name, equipment FROM exercises ORDER BY name COLLATE NOCASE',
-    );
+    const exercises = getDatabase()
+      .getAllSync<{ id: number; name: string; equipment: string | null }>('SELECT id, name, equipment FROM exercises')
+      // Tri en français : le tri SQLite (NOCASE) ne gère pas les accents et classerait « Écarté » après « Squat »
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
     const muscles = ExerciseRepository.getMusclesByExercise(exercises.map((exercise) => exercise.id));
     return exercises.map((exercise) => ({ ...exercise, muscles: muscles[exercise.id] ?? [] }));
   },
@@ -46,13 +48,12 @@ export const ExerciseRepository = {
     return getDatabase().getAllSync<Muscle>('SELECT id, name FROM muscles ORDER BY id');
   },
 
-  // Nom déjà pris, sans tenir compte de la casse ni des espaces autour
+  // Nom déjà pris, sans tenir compte de la casse, des accents ni des espaces autour (comparé en JS : SQLite ne gère pas les accents)
   existsByName: (name: string): boolean => {
-    return (
-      getDatabase().getFirstSync<{ found: number }>('SELECT 1 AS found FROM exercises WHERE name = ? COLLATE NOCASE', [
-        name.trim(),
-      ]) !== null
-    );
+    const wanted = normalizeSearch(name);
+    return getDatabase()
+      .getAllSync<{ name: string }>('SELECT name FROM exercises')
+      .some((exercise) => normalizeSearch(exercise.name) === wanted);
   },
 
   // @returns l'id de l'exercice créé

@@ -239,7 +239,7 @@ describe('progression', () => {
 
     expect(WorkoutRepository.getTrainedExercises()).toEqual([
       { id: SQUAT.exercise_id, name: 'Squat', last_done: T0 + 2 * DAY, session_count: 2 },
-      { id: BENCH.exercise_id, name: 'Bench Press', last_done: T0 + DAY, session_count: 2 },
+      { id: BENCH.exercise_id, name: 'Développé couché', last_done: T0 + DAY, session_count: 2 },
     ]);
   });
 });
