@@ -97,6 +97,7 @@ export default function RootLayout() {
           <Stack.Screen name="workout-summary/[id]" options={{ headerBackTitle: 'Retour' }} />
           <Stack.Screen name="history" options={{ title: 'Historique', headerBackTitle: 'Accueil' }} />
           <Stack.Screen name="template/[id]" options={{ headerBackTitle: 'Retour' }} />
+          <Stack.Screen name="exercise/[id]" options={{ headerBackTitle: 'Retour' }} />
           <Stack.Screen
             name="create-exercise"
             options={{ presentation: 'modal', title: 'Nouvel exercice' }}

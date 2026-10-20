@@ -215,6 +215,35 @@ describe('récap', () => {
   });
 });
 
+describe('progression', () => {
+  it('getExerciseSessions renvoie les séries validées par séance terminée, la plus récente d’abord', () => {
+    const first = recordWorkout(T0, [{ ...BENCH, sets: [{ weight: 70, reps: 8 }, { weight: 75, reps: 6 }] }]);
+    const second = recordWorkout(T0 + DAY, [
+      { ...SQUAT, sets: [{ weight: 100, reps: 5 }] },
+      { ...BENCH, sets: [{ weight: 80, reps: 5 }] },
+    ]);
+    setNow(T0 + 2 * DAY);
+    WorkoutRepository.startWorkout({ name: 'En cours', exercises: [{ ...BENCH, sets: [{ weight: 90, reps: 1 }] }] });
+
+    expect(WorkoutRepository.getExerciseSessions(BENCH.exercise_id)).toEqual([
+      { workout_id: second, started_at: T0 + DAY, sets: [{ weight: 80, reps: 5 }] },
+      { workout_id: first, started_at: T0, sets: [{ weight: 70, reps: 8 }, { weight: 75, reps: 6 }] },
+    ]);
+    expect(WorkoutRepository.getExerciseSessions(5)).toEqual([]);
+  });
+
+  it('getTrainedExercises liste les exercices faits, du plus récent au plus ancien', () => {
+    recordWorkout(T0, [{ ...BENCH, sets: [{ weight: 70, reps: 8 }] }]);
+    recordWorkout(T0 + DAY, [{ ...SQUAT, sets: [{ weight: 100, reps: 5 }] }, { ...BENCH, sets: [{ weight: 75, reps: 5 }] }]);
+    recordWorkout(T0 + 2 * DAY, [{ ...SQUAT, sets: [{ weight: 105, reps: 5 }] }]);
+
+    expect(WorkoutRepository.getTrainedExercises()).toEqual([
+      { id: SQUAT.exercise_id, name: 'Squat', last_done: T0 + 2 * DAY, session_count: 2 },
+      { id: BENCH.exercise_id, name: 'Bench Press', last_done: T0 + DAY, session_count: 2 },
+    ]);
+  });
+});
+
 it('garde le nom de l’exercice dans l’historique s’il est supprimé de la bibliothèque', () => {
   const id = recordWorkout(T0, [{ ...BENCH, sets: [{ weight: 60, reps: 10 }] }]);
 
