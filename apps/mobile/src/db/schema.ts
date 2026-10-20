@@ -1,6 +1,9 @@
 /**
  * SQL Schema for the database (version 1).
- * Ne pas modifier : toute évolution du schéma passe par une nouvelle migration dans migrations.ts.
+ * Tant qu'aucune version de l'app n'est publiée, on modifie ce schéma directement (puis on réinstalle l'app en dev :
+ * une base déjà en version 1 ne rejoue pas ce script). Dès la première release, il est figé et toute évolution
+ * passe par une nouvelle migration dans migrations.ts.
+ * Les dates sont des timestamps Unix en secondes.
  */
 export const DATABASE_SCHEMA = `
 CREATE TABLE IF NOT EXISTS templates (
@@ -15,11 +18,17 @@ CREATE TABLE IF NOT EXISTS templates (
 
 CREATE TABLE IF NOT EXISTS workouts (
     id          INTEGER PRIMARY KEY,
+    template_id INTEGER,
     name        TEXT,
     note        TEXT,
+    started_at  INTEGER NOT NULL,
+    -- NULL tant que la séance est en cours
+    finished_at INTEGER,
     created_at  INTEGER NOT NULL,
+    updated_at  INTEGER,
     sync_status TEXT DEFAULT 'local',
-    version     INTEGER DEFAULT 1
+    version     INTEGER DEFAULT 1,
+    FOREIGN KEY (template_id) REFERENCES templates (id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS exercises (
@@ -59,7 +68,9 @@ CREATE TABLE IF NOT EXISTS workout_exercises (
     id          INTEGER PRIMARY KEY,
     workout_id  INTEGER NOT NULL,
     exercise_id INTEGER,
+    -- Copie du nom : la séance reste lisible si l'exercice est supprimé
     exercise_name TEXT,
+    position    INTEGER NOT NULL DEFAULT 0,
     note        TEXT,
     created_at  INTEGER NOT NULL,
     updated_at  INTEGER,
@@ -67,6 +78,22 @@ CREATE TABLE IF NOT EXISTS workout_exercises (
     version     INTEGER DEFAULT 1,
     FOREIGN KEY (workout_id) REFERENCES workouts (id) ON DELETE CASCADE,
     FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE SET NULL 
+);
+
+CREATE TABLE IF NOT EXISTS sets (
+    id                  INTEGER PRIMARY KEY,
+    workout_exercise_id INTEGER NOT NULL,
+    position            INTEGER NOT NULL,
+    -- Charge en kg, NULL tant qu'elle n'est pas saisie (0 pour le poids du corps)
+    weight              REAL,
+    reps                INTEGER,
+    -- NULL tant que la série n'est pas validée
+    completed_at        INTEGER,
+    created_at          INTEGER NOT NULL,
+    updated_at          INTEGER,
+    sync_status         TEXT DEFAULT 'local',
+    version             INTEGER DEFAULT 1,
+    FOREIGN KEY (workout_exercise_id) REFERENCES workout_exercises (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS exercise_muscles (
@@ -93,4 +120,12 @@ CREATE INDEX IF NOT EXISTS idx_workout_exercises_exercise_id
 
 CREATE INDEX IF NOT EXISTS idx_exercise_muscles_muscle_id
     ON exercise_muscles (muscle_id);
+
+-- Séries d'un exercice de séance + CASCADE DELETE
+CREATE INDEX IF NOT EXISTS idx_sets_workout_exercise_id
+    ON sets (workout_exercise_id);
+
+-- Séances de la semaine et historique (tri par date)
+CREATE INDEX IF NOT EXISTS idx_workouts_started_at
+    ON workouts (started_at);
 `;
