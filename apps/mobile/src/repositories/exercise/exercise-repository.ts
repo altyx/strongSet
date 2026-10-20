@@ -1,6 +1,21 @@
 import {getDatabase} from "@/src/db/database";
 
+export interface ExerciseListItem {
+  id: number;
+  name: string;
+  muscles: string[];
+}
+
 export const ExerciseRepository = {
+  // Bibliothèque complète, par ordre alphabétique, avec les muscles de chaque exercice
+  getAll: (): ExerciseListItem[] => {
+    const exercises = getDatabase().getAllSync<{ id: number; name: string }>(
+      'SELECT id, name FROM exercises ORDER BY name COLLATE NOCASE',
+    );
+    const muscles = ExerciseRepository.getMusclesByExercise(exercises.map((exercise) => exercise.id));
+    return exercises.map((exercise) => ({ ...exercise, muscles: muscles[exercise.id] ?? [] }));
+  },
+
   count: (): number => {
     const row = getDatabase().getFirstSync<{ count: number }>('SELECT COUNT(*) AS count FROM exercises');
     return row?.count ?? 0;

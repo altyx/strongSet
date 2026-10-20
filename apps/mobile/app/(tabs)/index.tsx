@@ -1,7 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
-import { Activity, Play } from 'lucide-react-native/icons';
+import { Activity, Play, Plus } from 'lucide-react-native/icons';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WorkoutHistoryRow } from '@/src/components/history/workout-history-row';
@@ -76,10 +76,17 @@ export default function HomeScreen() {
   const name = preferences?.name?.trim();
   // En attendant l'historique des séances, on propose le premier programme qui contient des exercices
   const nextTemplate = data.templates.find((template) => template.exercises.length > 0) ?? data.templates[0];
-  const otherTemplates = data.templates.filter((template) => template !== nextTemplate);
   const activeSets = data.activeWorkout?.exercises.flatMap((exercise) => exercise.sets) ?? [];
 
   const startWorkout = (template: Template) => {
+    // Une seule séance à la fois : on propose de reprendre celle en cours
+    if (data.activeWorkout) {
+      Alert.alert('Une séance est déjà en cours', `Terminez ou abandonnez « ${data.activeWorkout.name ?? 'Séance'} » avant d'en démarrer une autre.`, [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Reprendre', onPress: () => router.push('/workout') },
+      ]);
+      return;
+    }
     WorkoutRepository.startWorkout({
       template_id: template.id,
       name: template.name,
@@ -151,6 +158,7 @@ export default function HomeScreen() {
           <Card variant="outlined" style={styles.hero}>
             <ThemedText type="heading">Aucun programme</ThemedText>
             <ThemedText type="caption">Créez un programme pour démarrer votre première séance.</ThemedText>
+            <Button title="Créer un programme" icon={Plus} onPress={() => router.push('/template/new')} />
           </Card>
         )}
 
@@ -174,11 +182,21 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {otherTemplates.length > 0 && (
+        {data.templates.length > 0 && (
           <View style={styles.section}>
-            <ThemedText type="heading">Mes programmes</ThemedText>
-            {otherTemplates.map((template) => (
-              <ProgramRow key={template.id} template={template} />
+            <View style={styles.sectionHeader}>
+              <ThemedText type="heading">Mes programmes</ThemedText>
+              <Pressable onPress={() => router.push('/template/new')} accessibilityRole="button" hitSlop={8}>
+                <ThemedText type="link">+ Nouveau</ThemedText>
+              </Pressable>
+            </View>
+            {data.templates.map((template) => (
+              <ProgramRow
+                key={template.id}
+                template={template}
+                onPress={() => router.push({ pathname: '/template/[id]', params: { id: template.id } })}
+                onStart={() => startWorkout(template)}
+              />
             ))}
           </View>
         )}

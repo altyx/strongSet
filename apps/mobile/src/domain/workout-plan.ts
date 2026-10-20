@@ -2,9 +2,11 @@ import { Template } from '@/src/repositories/template/template-type';
 import { NewWorkoutExercise, SetValues } from '@/src/repositories/workout/workout-type';
 
 /**
- * Exercices d'une séance démarrée depuis un programme. Chaque exercice reçoit autant de séries vides que lors de
- * la dernière séance (sinon le nombre de séries par défaut) : les valeurs précédentes s'affichent en indication et
- * servent de valeur quand on valide une série laissée vide.
+ * Exercices d'une séance démarrée depuis un programme.
+ * - Nombre de séries : l'objectif du programme, sinon autant que lors de la dernière séance, sinon la valeur par défaut.
+ * - Les séries sont vides : les valeurs de la dernière séance s'affichent en indication et servent de valeur quand
+ *   on valide une série laissée vide. Sans historique pour une série, on pré-remplit les répétitions visées.
+ * - Le repos visé par le programme est copié sur l'exercice de séance.
  */
 export function buildWorkoutExercises(
   template: Template,
@@ -12,11 +14,16 @@ export function buildWorkoutExercises(
   defaultSetCount: number,
 ): NewWorkoutExercise[] {
   return template.exercises.map((exercise) => {
-    const setCount = getLastPerformance(exercise.id).length || defaultSetCount;
+    const lastPerformance = getLastPerformance(exercise.id);
+    const setCount = exercise.target_sets ?? (lastPerformance.length || defaultSetCount);
     return {
       exercise_id: exercise.id,
       name: exercise.name,
-      sets: Array.from({ length: Math.max(1, setCount) }, () => ({ weight: null, reps: null })),
+      rest_seconds: exercise.rest_seconds ?? null,
+      sets: Array.from({ length: Math.max(1, setCount) }, (_, index) => ({
+        weight: null,
+        reps: lastPerformance[index] ? null : (exercise.target_reps ?? null),
+      })),
     };
   });
 }

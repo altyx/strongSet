@@ -62,7 +62,7 @@ export default function WorkoutScreen() {
     reload();
   };
 
-  const toggleSet = (set: WorkoutSet, entered: SetValues, previous: SetValues | undefined) => {
+  const toggleSet = (set: WorkoutSet, entered: SetValues, previous: SetValues | undefined, restDuration: number) => {
     if (set.completed_at !== null) {
       WorkoutRepository.setCompleted(set.id, false);
       reload();
@@ -76,7 +76,7 @@ export default function WorkoutScreen() {
     WorkoutRepository.updateSet(set.id, values);
     WorkoutRepository.setCompleted(set.id, true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setRest({ endsAt: Date.now() + restSeconds * 1000, duration: restSeconds });
+    setRest({ endsAt: Date.now() + restDuration * 1000, duration: restDuration });
     reload();
   };
 
@@ -194,7 +194,10 @@ export default function WorkoutScreen() {
               defaultReps={defaultReps}
               currentSetId={currentSetId}
               onChangeSet={changeSet}
-              onToggleSet={(set, index, entered) => toggleSet(set, entered, previous[index])}
+              onToggleSet={(set, index, entered) =>
+                // Repos prévu par le programme pour cet exercice, sinon celui des réglages
+                toggleSet(set, entered, previous[index], exercise.rest_seconds ?? restSeconds)
+              }
               onDeleteSet={deleteSet}
               onAddSet={() => addSet(exercise.id)}
             />

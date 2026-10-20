@@ -55,6 +55,11 @@ CREATE TABLE IF NOT EXISTS template_exercises (
     id INTEGER PRIMARY KEY,
     template_id INTEGER NOT NULL,
     exercise_id INTEGER NOT NULL,
+    position INTEGER NOT NULL DEFAULT 0,
+    -- Objectifs de l'exercice dans le programme ; NULL = valeurs par défaut des réglages
+    target_sets INTEGER,
+    target_reps INTEGER,
+    rest_seconds INTEGER,
     note TEXT,
     created_at INTEGER NOT NULL,
     updated_at INTEGER,
@@ -71,6 +76,8 @@ CREATE TABLE IF NOT EXISTS workout_exercises (
     -- Copie du nom : la séance reste lisible si l'exercice est supprimé
     exercise_name TEXT,
     position    INTEGER NOT NULL DEFAULT 0,
+    -- Repos entre les séries, copié du programme au démarrage ; NULL = valeur par défaut des réglages
+    rest_seconds INTEGER,
     note        TEXT,
     created_at  INTEGER NOT NULL,
     updated_at  INTEGER,
