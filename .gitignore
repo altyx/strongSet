@@ -1,36 +1,15 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# Règles communes au monorepo. Chaque app garde son propre .gitignore pour ses spécificités
+# (ex. apps/mobile/.gitignore pour Expo et les dossiers natifs générés).
 
 # dependencies
 node_modules/
 
-# Expo
-.expo/
-dist/
-web-build/
-expo-env.d.ts
-
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
+# IDE
 .idea
 .vscode
 
-# Metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
 # macOS
 .DS_Store
-*.pem
 
 # local env files
 .env*.local
@@ -38,8 +17,5 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-app-example
-
-# generated native folders
-/ios
-/android
+# debug
+npm-debug.*

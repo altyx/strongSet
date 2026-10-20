@@ -1,50 +1,33 @@
-# Welcome to your Expo app
+# my-fitness
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Monorepo de l'application my-fitness, géré avec les [workspaces npm](https://docs.npmjs.com/cli/using-npm/workspaces).
 
-## Get started
+## Structure
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+apps/
+  mobile/     Application mobile Expo (iOS / Android)
+packages/     Code partagé entre les apps (à venir)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Démarrer
 
-## Learn more
+Toutes les commandes se lancent depuis la racine du repo.
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npm install          # installe les dépendances de tous les workspaces
+npm start            # démarre Metro pour l'app mobile (alias de npm run mobile)
+npm run ios          # compile et lance l'app sur le simulateur iOS (alias de npm run mobile:ios)
+npm run android      # idem sur l'émulateur Android (alias de npm run mobile:android)
+npm run lint         # lint de tous les workspaces
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Pour passer des options à Expo : `npm run ios -- --device "<nom ou UDID>" --port 8082`.
+Pour lancer une commande dans un workspace précis : `npm run <script> -w @my-fitness/mobile`.
+Pour ajouter une dépendance à l'app mobile : `npx expo install <paquet>` depuis `apps/mobile`.
 
-## Join the community
+## Pièges connus
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- **Ne pas lancer `npx expo …` à la racine** : Expo y prendrait la racine du repo pour le projet. Passer par les scripts npm ci-dessus, ou lancer `npx expo …` depuis `apps/mobile`.
+- **Après un `git pull` qui touche aux dépendances ou au passage en monorepo**, régénérer le natif : `npx expo prebuild --clean` dans `apps/mobile` (ou au minimum `pod install` dans `apps/mobile/ios`, avec `LANG=en_US.UTF-8`).
+- **Plusieurs simulateurs démarrés avec le même nom** (ex. deux « iPhone 17 Pro ») : préciser l'UDID avec `--device`, ou n'en garder qu'un seul démarré.
