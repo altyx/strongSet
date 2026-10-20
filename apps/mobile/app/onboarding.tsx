@@ -1,4 +1,3 @@
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Modal, View, Pressable, Keyboard,
 } from "react-native";
