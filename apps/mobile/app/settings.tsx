@@ -1,4 +1,5 @@
-import { Database, FileSpreadsheet } from 'lucide-react-native/icons';
+import { router } from 'expo-router';
+import { ArchiveRestore, Database, FileSpreadsheet } from 'lucide-react-native/icons';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +12,11 @@ import { Stepper } from '@/src/components/ui/stepper';
 import { palette, radius, spacing, typography } from '@/src/constants/theme';
 import { useUserSettings } from '@/src/hooks/user/use-user-settings';
 import { UserSettings } from '@/src/hooks/user/user-settings.type';
+import { BackupRepository } from '@/src/repositories/backup/backup-repository';
+import { Backup } from '@/src/repositories/export/export-repository';
+import { pickBackup } from '@/src/services/backup';
 import { shareBackupJson, shareSetsCsv } from '@/src/services/export';
+import { cancelRestEnd } from '@/src/services/rest-notification';
 import { WeightUnit } from '@/src/utils/weight';
 
 // Valeurs de l'onboarding, si les préférences n'ont jamais été enregistrées
@@ -52,6 +57,46 @@ export default function SettingsScreen() {
     } finally {
       setExporting(false);
     }
+  };
+
+  const restore = (backup: Backup) => {
+    try {
+      BackupRepository.restore(backup);
+    } catch (error) {
+      Alert.alert('La restauration a échoué', error instanceof Error ? error.message : String(error));
+      return;
+    }
+    // Le minuteur de repos éventuel concernait la séance remplacée
+    cancelRestEnd();
+    // Les écrans rechargent leurs données au retour sur l'accueil
+    router.dismissTo('/');
+  };
+
+  const confirmRestore = async () => {
+    setExporting(true);
+    let backup: Backup | null;
+    try {
+      backup = await pickBackup();
+    } catch (error) {
+      Alert.alert('Sauvegarde refusée', error instanceof Error ? error.message : String(error));
+      return;
+    } finally {
+      setExporting(false);
+    }
+    if (!backup) return;
+
+    const date = new Date(backup.exported_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const workouts = backup.tables.workouts.length;
+    const templates = backup.tables.templates.length;
+    Alert.alert(
+      'Restaurer cette sauvegarde ?',
+      `Sauvegarde du ${date} : ${workouts} séance${workouts > 1 ? 's' : ''}, ${templates} programme${templates > 1 ? 's' : ''}.\n\n` +
+        'Vos données actuelles seront remplacées, séance en cours comprise. Cette action est irréversible.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Remplacer mes données', style: 'destructive', onPress: () => restore(backup) },
+      ],
+    );
   };
 
   const unit = settings.weightUnit ?? 'kg';
@@ -148,9 +193,17 @@ export default function SettingsScreen() {
             disabled={exporting}
             onPress={() => share(shareBackupJson)}
           />
+          <Button
+            title="Restaurer une sauvegarde"
+            variant="ghost"
+            icon={ArchiveRestore}
+            disabled={exporting}
+            onPress={confirmRestore}
+          />
           <ThemedText type="caption" tone="tertiary">
             Le CSV s&apos;ouvre dans un tableur (une ligne par série). La sauvegarde JSON contient aussi les programmes et
-            les exercices créés.
+            les exercices créés,
+            et peut être restaurée ici sur un nouveau téléphone.
           </ThemedText>
         </Card>
       </View>
