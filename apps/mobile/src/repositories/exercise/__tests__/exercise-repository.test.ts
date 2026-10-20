@@ -12,36 +12,62 @@ afterEach(() => {
   mockDb.close();
 });
 
+// Bibliothèque par défaut : ids 1 à 87
+const DEFAULT_EXERCISE_COUNT = 87;
+
 it('count compte les exercices de la bibliothèque', () => {
-  expect(ExerciseRepository.count()).toBe(25);
+  expect(ExerciseRepository.count()).toBe(DEFAULT_EXERCISE_COUNT);
 });
 
 it('getMusclesByExercise regroupe les muscles par exercice (données par défaut)', () => {
-  // 1 Développé couché : Chest, Triceps · 2 Squat : Quadriceps
-  expect(ExerciseRepository.getMusclesByExercise([1, 2])).toEqual({ 1: ['Chest', 'Triceps'], 2: ['Quadriceps'] });
+  // 1 Développé couché : Chest, Triceps · 2 Squat : Quadriceps, Glutes
+  expect(ExerciseRepository.getMusclesByExercise([1, 2])).toEqual({
+    1: ['Chest', 'Triceps'],
+    2: ['Quadriceps', 'Glutes'],
+  });
   expect(ExerciseRepository.getMusclesByExercise([])).toEqual({});
 });
 
-it('getAll trie la bibliothèque en français (accents compris) avec matériel et muscles', () => {
-  const names = ExerciseRepository.getAll().map((exercise) => exercise.name);
-  expect(names.slice(0, 4)).toEqual(['Deadlift', 'Développé couché', 'Développé couché haltères', 'Développé couché machine guidée']);
-  // « Écarté » se range avec les E, avant « Pec deck » et « Squat »
-  expect(names.indexOf('Écarté couché haltères')).toBeLessThan(names.indexOf('Pec deck (butterfly)'));
-  expect(names[names.length - 1]).toBe('Squat');
-  expect(ExerciseRepository.getAll().find((exercise) => exercise.id === 1)).toEqual({
-    id: 1,
-    name: 'Développé couché',
-    equipment: 'Barre',
-    muscles: ['Chest', 'Triceps'],
+describe('bibliothèque par défaut', () => {
+  it('est triée en français, accents compris', () => {
+    const names = ExerciseRepository.getAll().map((exercise) => exercise.name);
+    expect(names[0]).toBe('Abducteurs à la machine');
+    // « Écarté » et « Élévations » se rangent avec les E, avant « Extension » et « Face pull »
+    expect(names.indexOf('Écarté couché haltères')).toBeLessThan(names.indexOf('Extension nuque haltère'));
+    expect(names.indexOf('Élévations latérales haltères')).toBeLessThan(names.indexOf('Face pull'));
+    expect([...names].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))).toEqual(names);
   });
-});
 
-it('les exercices pectoraux par défaut travaillent tous les pectoraux', () => {
-  const chest = ExerciseRepository.getAll().filter((exercise) => exercise.id === 1 || (exercise.id >= 6 && exercise.id <= 25));
-  expect(chest).toHaveLength(21);
-  chest.forEach((exercise) => {
-    expect(exercise.muscles).toContain('Chest');
-    expect(exercise.equipment).not.toBeNull();
+  it('a des noms uniques, sans accent ni casse près', () => {
+    const names = ExerciseRepository.getAll().map((exercise) =>
+      exercise.name.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase(),
+    );
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('donne à chaque exercice un matériel et au moins un muscle', () => {
+    ExerciseRepository.getAll().forEach((exercise) => {
+      expect({ name: exercise.name, equipment: exercise.equipment }).toEqual({ name: exercise.name, equipment: expect.any(String) });
+      expect({ name: exercise.name, muscles: exercise.muscles.length > 0 }).toEqual({ name: exercise.name, muscles: true });
+    });
+  });
+
+  it('couvre chaque muscle avec plusieurs exercices', () => {
+    const exercises = ExerciseRepository.getAll();
+    ExerciseRepository.getMuscles().forEach((muscle) => {
+      const count = exercises.filter((exercise) => exercise.muscles.includes(muscle.name)).length;
+      expect({ muscle: muscle.name, enough: count >= 2 }).toEqual({ muscle: muscle.name, enough: true });
+    });
+  });
+
+  it('est en français pour les exercices de base', () => {
+    expect([1, 2, 3, 4, 5].map((id) => ExerciseRepository.getById(id)?.name)).toEqual([
+      'Développé couché',
+      'Squat',
+      'Soulevé de terre',
+      'Tractions',
+      'Développé militaire',
+    ]);
   });
 });
 
@@ -53,25 +79,25 @@ it('getMuscles liste les muscles par défaut', () => {
 
 it('create ajoute un exercice avec son matériel et ses muscles', () => {
   jest.spyOn(Date, 'now').mockReturnValue(1_760_000_000_000);
-  const id = ExerciseRepository.create({ name: '  Hip thrust ', equipment: 'Barre', muscleIds: [8, 9] });
+  const id = ExerciseRepository.create({ name: '  Tirage maison ', equipment: 'Autre', muscleIds: [4, 3] });
 
-  expect(ExerciseRepository.getAll().find((exercise) => exercise.id === id)).toEqual({
+  expect(ExerciseRepository.getById(id)).toEqual({
     id,
-    name: 'Hip thrust',
-    equipment: 'Barre',
-    muscles: ['Glutes', 'Hamstrings'],
+    name: 'Tirage maison',
+    equipment: 'Autre',
+    muscles: ['Biceps', 'Back'],
   });
-  expect(ExerciseRepository.count()).toBe(26);
+  expect(ExerciseRepository.count()).toBe(DEFAULT_EXERCISE_COUNT + 1);
   jest.restoreAllMocks();
 });
 
-it('existsByName ignore la casse et les espaces', () => {
+it('existsByName ignore la casse, les accents et les espaces', () => {
   expect(ExerciseRepository.existsByName(' développé couché ')).toBe(true);
   expect(ExerciseRepository.existsByName('DEVELOPPE COUCHE')).toBe(true);
-  expect(ExerciseRepository.existsByName('Hip thrust')).toBe(false);
+  expect(ExerciseRepository.existsByName('Tirage maison')).toBe(false);
 });
 
 it('getById renvoie un exercice avec ses muscles, ou null', () => {
-  expect(ExerciseRepository.getById(2)).toEqual({ id: 2, name: 'Squat', equipment: null, muscles: ['Quadriceps'] });
+  expect(ExerciseRepository.getById(2)).toEqual({ id: 2, name: 'Squat', equipment: 'Barre', muscles: ['Quadriceps', 'Glutes'] });
   expect(ExerciseRepository.getById(999)).toBeNull();
 });
