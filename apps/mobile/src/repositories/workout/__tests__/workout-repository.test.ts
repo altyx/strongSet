@@ -101,6 +101,70 @@ describe('séries', () => {
     ]);
     expect(exercises[1].sets).toHaveLength(1);
   });
+
+  it('démarre une séance libre sans exercice', () => {
+    const id = WorkoutRepository.startWorkout({ name: 'Séance libre', exercises: [] });
+
+    expect(WorkoutRepository.getActiveWorkout()).toMatchObject({ id, template_id: null, exercises: [] });
+  });
+});
+
+describe('modifier les exercices en séance', () => {
+  it('remplace sur place un exercice sans série validée', () => {
+    const id = WorkoutRepository.startWorkout({
+      name: 'Push',
+      exercises: [{ ...BENCH, rest_seconds: 120, sets: [{ weight: null, reps: 8 }] }, SQUAT],
+    });
+    const bench = WorkoutRepository.getWorkout(id)!.exercises[0];
+
+    const replacementId = WorkoutRepository.replaceExercise(bench.id, {
+      ...SQUAT,
+      rest_seconds: 120,
+      sets: [{ weight: null, reps: null }, { weight: null, reps: null }],
+    });
+
+    const exercises = WorkoutRepository.getWorkout(id)!.exercises;
+    expect(replacementId).toBe(bench.id);
+    expect(exercises[0]).toMatchObject({ id: bench.id, exercise_id: SQUAT.exercise_id, name: 'Squat', position: 0, rest_seconds: 120 });
+    expect(exercises[0].sets).toHaveLength(2);
+    expect(exercises).toHaveLength(2);
+  });
+
+  it('garde les séries validées et insère le remplaçant juste après', () => {
+    const id = WorkoutRepository.startWorkout({
+      name: 'Push',
+      exercises: [{ ...BENCH, sets: [{ weight: 60, reps: 8 }, { weight: 60, reps: 8 }, { weight: 60, reps: 8 }] }, SQUAT],
+    });
+    const bench = WorkoutRepository.getWorkout(id)!.exercises[0];
+    WorkoutRepository.setCompleted(bench.sets[0].id, true);
+
+    const replacementId = WorkoutRepository.replaceExercise(bench.id, {
+      ...SQUAT,
+      sets: [{ weight: null, reps: null }, { weight: null, reps: null }],
+    });
+
+    const exercises = WorkoutRepository.getWorkout(id)!.exercises;
+    expect(exercises.map((exercise) => [exercise.name, exercise.position, exercise.sets.length])).toEqual([
+      ['Bench Press', 0, 1],
+      ['Squat', 1, 2],
+      ['Squat', 2, 0],
+    ]);
+    expect(exercises[1].id).toBe(replacementId);
+    expect(exercises[0].sets[0].completed_at).not.toBeNull();
+  });
+
+  it('retire un exercice et ses séries', () => {
+    const id = WorkoutRepository.startWorkout({
+      name: 'Push',
+      exercises: [{ ...BENCH, sets: [{ weight: 60, reps: 8 }] }, SQUAT],
+    });
+    const bench = WorkoutRepository.getWorkout(id)!.exercises[0];
+
+    WorkoutRepository.removeExercise(bench.id);
+
+    expect(WorkoutRepository.getWorkout(id)!.exercises.map((exercise) => exercise.name)).toEqual(['Squat']);
+    expect(countRows('sets')).toBe(0);
+  });
 });
 
 describe('finishWorkout', () => {

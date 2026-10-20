@@ -1,10 +1,11 @@
-import { Plus } from 'lucide-react-native/icons';
-import { StyleSheet, View } from 'react-native';
+import { Ellipsis, Plus } from 'lucide-react-native/icons';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
 import { Button } from '@/src/components/ui/button';
 import { Card } from '@/src/components/ui/card';
 import { SET_COLUMNS, SetRow } from '@/src/components/workout/set-row';
+import { palette } from '@/src/constants/theme';
 import { SetValues, WorkoutExercise, WorkoutSet } from '@/src/repositories/workout/workout-type';
 
 type ExerciseCardProps = {
@@ -17,6 +18,8 @@ type ExerciseCardProps = {
   onToggleSet: (set: WorkoutSet, index: number, entered: SetValues) => void;
   onDeleteSet: (set: WorkoutSet) => void;
   onAddSet: () => void;
+  // Remplacer ou retirer l'exercice
+  onOptions: () => void;
 };
 
 export function ExerciseCard({
@@ -28,6 +31,7 @@ export function ExerciseCard({
   onToggleSet,
   onDeleteSet,
   onAddSet,
+  onOptions,
 }: ExerciseCardProps) {
   const doneCount = exercise.sets.filter((set) => set.completed_at !== null).length;
   const allDone = exercise.sets.length > 0 && doneCount === exercise.sets.length;
@@ -35,12 +39,23 @@ export function ExerciseCard({
   return (
     <Card variant={allDone ? 'default' : 'outlined'} style={styles.card}>
       <View style={styles.header}>
-        <ThemedText type="heading" style={styles.title}>
-          {exercise.name}
-        </ThemedText>
-        <ThemedText type="caption" tone={allDone ? 'accent' : 'secondary'}>
-          {doneCount}/{exercise.sets.length} séries
-        </ThemedText>
+        <View style={styles.headerText}>
+          <ThemedText type="heading" style={styles.title}>
+            {exercise.name}
+          </ThemedText>
+          <ThemedText type="caption" tone={allDone ? 'accent' : 'secondary'}>
+            {doneCount}/{exercise.sets.length} séries
+          </ThemedText>
+        </View>
+        <Pressable
+          onPress={onOptions}
+          accessibilityRole="button"
+          accessibilityLabel={`Options de ${exercise.name}`}
+          accessibilityHint="Remplacer ou retirer l'exercice"
+          hitSlop={8}
+          style={({ pressed }) => [styles.options, pressed && styles.pressed]}>
+          <Ellipsis size={20} color={palette.textSecondary} strokeWidth={2} pointerEvents="none" />
+        </Pressable>
       </View>
 
       <View style={styles.columns} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -88,13 +103,30 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: 12,
+    alignItems: 'center',
+    gap: 8,
     paddingHorizontal: 6,
+  },
+  headerText: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 12,
   },
   title: {
     flex: 1,
+  },
+  options: {
+    width: 32,
+    height: 32,
+    marginVertical: -6,
+    marginRight: -4,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pressed: {
+    opacity: 0.6,
   },
   columns: {
     flexDirection: 'row',

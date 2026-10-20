@@ -13,16 +13,6 @@ import * as Notifications from 'expo-notifications';
 import {ThemedText} from "@/src/components/themed-text";
 import {ThemedView} from "@/src/components/themed-view";
 import { ArrowRight } from "lucide-react-native";
-// Handler au niveau module (pas dans une fonction)
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
-
 export default function Onboarding() {
   const { savePreferences } = useUserSettings();
   const [isLoading, setIsLoading] = useState(false);
@@ -48,24 +38,6 @@ export default function Onboarding() {
     setUserPref((prev) => ({...prev, [key]: value}))
   }
 
-  async function notif() {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== 'granted') {
-      console.warn('Permission notifications refusée');
-      return;
-    }
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Time's up!",
-        body: 'Change sides!',
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: 10,
-      },
-    });
-  }
   if (isLoading) {
     return <Text>Loading...</Text>;
   }

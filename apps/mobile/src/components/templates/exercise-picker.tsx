@@ -11,12 +11,13 @@ import { ExerciseListItem, ExerciseRepository } from '@/src/repositories/exercis
 
 type ExercisePickerProps = {
   visible: boolean;
+  title?: string;
   onSelect: (exercise: ExerciseListItem) => void;
   onClose: () => void;
 };
 
 // Feuille modale pour choisir un exercice de la bibliothèque
-export function ExercisePicker({ visible, onSelect, onClose }: ExercisePickerProps) {
+export function ExercisePicker({ visible, title = 'Ajouter un exercice', onSelect, onClose }: ExercisePickerProps) {
   const [query, setQuery] = useState('');
   const [exercises, setExercises] = useState<ExerciseListItem[]>([]);
 
@@ -34,7 +35,7 @@ export function ExercisePicker({ visible, onSelect, onClose }: ExercisePickerPro
       onRequestClose={onClose}>
       <View style={styles.sheet}>
         <View style={styles.header}>
-          <ThemedText type="heading">Ajouter un exercice</ThemedText>
+          <ThemedText type="heading">{title}</ThemedText>
           <IconButton icon={X} accessibilityLabel="Fermer" onPress={onClose} />
         </View>
 

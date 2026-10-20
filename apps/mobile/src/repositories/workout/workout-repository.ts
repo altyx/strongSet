@@ -131,6 +131,71 @@ export const WorkoutRepository = {
     return workoutExerciseId;
   },
 
+  /**
+   * Remplace un exercice de séance (ex. machine occupée).
+   * Sans série validée, l'exercice est remplacé sur place. Sinon les séries validées restent sur l'ancien exercice,
+   * ses séries non validées sont supprimées et le remplaçant est inséré juste après lui.
+   * @returns l'id de l'exercice de séance remplaçant
+   */
+  replaceExercise: (workoutExerciseId: number, replacement: NewWorkoutExercise): number => {
+    const db = getDatabase();
+    const timestamp = now();
+    let replacementId = workoutExerciseId;
+
+    db.withTransactionSync(() => {
+      const current = db.getFirstSync<{ workout_id: number; position: number; completed_count: number }>(
+        `SELECT we.workout_id, we.position,
+                (SELECT COUNT(*) FROM sets s WHERE s.workout_exercise_id = we.id AND s.completed_at IS NOT NULL) AS completed_count
+         FROM workout_exercises we
+         WHERE we.id = ?`,
+        [workoutExerciseId],
+      );
+      if (!current) {
+        return;
+      }
+
+      if (current.completed_count === 0) {
+        db.runSync('DELETE FROM sets WHERE workout_exercise_id = ?', [workoutExerciseId]);
+        db.runSync(
+          `UPDATE workout_exercises SET exercise_id = ?, exercise_name = ?, rest_seconds = ?, updated_at = ? WHERE id = ?`,
+          [replacement.exercise_id, replacement.name, replacement.rest_seconds ?? null, timestamp, workoutExerciseId],
+        );
+      } else {
+        db.runSync('DELETE FROM sets WHERE workout_exercise_id = ? AND completed_at IS NULL', [workoutExerciseId]);
+        db.runSync('UPDATE workout_exercises SET position = position + 1 WHERE workout_id = ? AND position > ?', [
+          current.workout_id,
+          current.position,
+        ]);
+        replacementId = db.runSync(
+          `INSERT INTO workout_exercises (workout_id, exercise_id, exercise_name, position, rest_seconds, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            current.workout_id,
+            replacement.exercise_id,
+            replacement.name,
+            current.position + 1,
+            replacement.rest_seconds ?? null,
+            timestamp,
+          ],
+        ).lastInsertRowId;
+      }
+
+      (replacement.sets ?? []).forEach((set, position) => {
+        db.runSync(
+          'INSERT INTO sets (workout_exercise_id, position, weight, reps, created_at) VALUES (?, ?, ?, ?, ?)',
+          [replacementId, position, set.weight, set.reps, timestamp],
+        );
+      });
+    });
+
+    return replacementId;
+  },
+
+  // Retire un exercice de la séance, avec toutes ses séries
+  removeExercise: (workoutExerciseId: number): void => {
+    getDatabase().runSync('DELETE FROM workout_exercises WHERE id = ?', [workoutExerciseId]);
+  },
+
   // Ajoute une série en fin d'exercice. @returns l'id de la série
   addSet: (workoutExerciseId: number, values: SetValues): number => {
     const db = getDatabase();
