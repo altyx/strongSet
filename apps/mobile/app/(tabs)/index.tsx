@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { Activity, Play, Plus } from 'lucide-react-native/icons';
+import { Activity, Dumbbell, Play, Plus } from 'lucide-react-native/icons';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -78,13 +78,29 @@ export default function HomeScreen() {
   const nextTemplate = data.templates.find((template) => template.exercises.length > 0) ?? data.templates[0];
   const activeSets = data.activeWorkout?.exercises.flatMap((exercise) => exercise.sets) ?? [];
 
+  // Une seule séance à la fois : on propose de reprendre celle en cours
+  const canStartWorkout = () => {
+    if (!data.activeWorkout) {
+      return true;
+    }
+    Alert.alert('Une séance est déjà en cours', `Terminez ou abandonnez « ${data.activeWorkout.name ?? 'Séance'} » avant d'en démarrer une autre.`, [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Reprendre', onPress: () => router.push('/workout') },
+    ]);
+    return false;
+  };
+
+  // Séance sans programme : les exercices s'ajoutent pendant la séance
+  const startFreeWorkout = () => {
+    if (!canStartWorkout()) {
+      return;
+    }
+    WorkoutRepository.startWorkout({ name: 'Séance libre', exercises: [] });
+    router.push('/workout');
+  };
+
   const startWorkout = (template: Template) => {
-    // Une seule séance à la fois : on propose de reprendre celle en cours
-    if (data.activeWorkout) {
-      Alert.alert('Une séance est déjà en cours', `Terminez ou abandonnez « ${data.activeWorkout.name ?? 'Séance'} » avant d'en démarrer une autre.`, [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Reprendre', onPress: () => router.push('/workout') },
-      ]);
+    if (!canStartWorkout()) {
       return;
     }
     WorkoutRepository.startWorkout({
@@ -153,12 +169,16 @@ export default function HomeScreen() {
               disabled={nextTemplate.exercises.length === 0}
               onPress={() => startWorkout(nextTemplate)}
             />
+            <Button title="Séance libre" variant="ghost" icon={Dumbbell} onPress={startFreeWorkout} />
           </Card>
         ) : (
           <Card variant="outlined" style={styles.hero}>
             <ThemedText type="heading">Aucun programme</ThemedText>
-            <ThemedText type="caption">Créez un programme pour démarrer votre première séance.</ThemedText>
+            <ThemedText type="caption">
+              Créez un programme, ou lancez une séance libre et ajoutez les exercices au fil de l&apos;eau.
+            </ThemedText>
             <Button title="Créer un programme" icon={Plus} onPress={() => router.push('/template/new')} />
+            <Button title="Séance libre" variant="ghost" icon={Dumbbell} onPress={startFreeWorkout} />
           </Card>
         )}
 

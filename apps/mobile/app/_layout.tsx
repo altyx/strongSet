@@ -10,6 +10,7 @@ import { fontFamily, palette } from '@/src/constants/theme';
 import { initializeDatabase } from '@/src/db/database';
 import {initializeMMKVStorage, STORAGE_KEYS, useMMKVStorage} from '@/src/hooks/use-mmkv-storage';
 import {UserSettings} from "@/src/hooks/user/user-settings.type";
+import { configureNotifications } from '@/src/services/rest-notification';
 
 SplashScreen.setOptions({
   duration: 1000,
@@ -17,6 +18,7 @@ SplashScreen.setOptions({
 })
 // Empêche le splash screen de se cacher automatiquement
 SplashScreen.preventAutoHideAsync();
+configureNotifications();
 
 export const unstable_settings = {
   anchor: '(tabs)',

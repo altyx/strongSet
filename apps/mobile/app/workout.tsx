@@ -1,22 +1,29 @@
 import * as Haptics from 'expo-haptics';
+import { useKeepAwake } from 'expo-keep-awake';
 import { router } from 'expo-router';
-import { ChevronDown } from 'lucide-react-native/icons';
+import { ChevronDown, Plus } from 'lucide-react-native/icons';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ExercisePicker } from '@/src/components/templates/exercise-picker';
 import { ThemedText } from '@/src/components/themed-text';
+import { Button } from '@/src/components/ui/button';
+import { Card } from '@/src/components/ui/card';
 import { ElapsedTime } from '@/src/components/workout/elapsed-time';
 import { ExerciseCard } from '@/src/components/workout/exercise-card';
 import { RestTimer } from '@/src/components/workout/rest-timer';
 import { palette, radius, spacing } from '@/src/constants/theme';
-import { resolveSetValues } from '@/src/domain/workout-plan';
+import { buildWorkoutExercise, resolveSetValues } from '@/src/domain/workout-plan';
 import { useUserSettings } from '@/src/hooks/user/use-user-settings';
+import { ExerciseListItem } from '@/src/repositories/exercise/exercise-repository';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
-import { SetValues, Workout, WorkoutSet } from '@/src/repositories/workout/workout-type';
+import { SetValues, Workout, WorkoutExercise, WorkoutSet } from '@/src/repositories/workout/workout-type';
+import { cancelRestEnd, scheduleRestEnd } from '@/src/services/rest-notification';
 
 const DEFAULT_REST_SECONDS = 90;
 const DEFAULT_REPS = 10;
+const DEFAULT_SET_COUNT = 3;
 
 // Dernières performances par exercice de séance (id de workout_exercises), lues une fois à l'ouverture
 function loadPreviousSets(workout: Workout | null) {
@@ -28,17 +35,45 @@ function loadPreviousSets(workout: Workout | null) {
 }
 
 export default function WorkoutScreen() {
+  // L'écran reste allumé pendant la séance : pas besoin de déverrouiller entre deux séries
+  useKeepAwake();
   const insets = useSafeAreaInsets();
   const { getPreferences } = useUserSettings();
   const preferences = getPreferences();
   const restSeconds = preferences?.restBetweenSeries ?? DEFAULT_REST_SECONDS;
   const defaultReps = preferences?.repPerSeries ?? DEFAULT_REPS;
+  const defaultSetCount = preferences?.seriesPerExercise ?? DEFAULT_SET_COUNT;
 
   const [workout, setWorkout] = useState(() => WorkoutRepository.getActiveWorkout());
-  const [previousSets] = useState(() => loadPreviousSets(workout));
+  const [previousSets, setPreviousSets] = useState(() => loadPreviousSets(workout));
   const [rest, setRest] = useState<{ endsAt: number; duration: number } | null>(null);
+  // Choix d'un exercice : ajout en fin de séance, ou remplacement de `replacing`
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [replacing, setReplacing] = useState<WorkoutExercise | null>(null);
+  const openPicker = (exercise: WorkoutExercise | null) => {
+    setReplacing(exercise);
+    setPickerVisible(true);
+  };
 
   const reload = () => setWorkout(WorkoutRepository.getActiveWorkout());
+
+  // Après ajout, remplacement ou retrait d'exercice : la colonne « Précédent » suit les nouveaux exercices
+  const reloadExercises = () => {
+    const updated = WorkoutRepository.getActiveWorkout();
+    setWorkout(updated);
+    setPreviousSets(loadPreviousSets(updated));
+  };
+
+  // Notification de fin de repos, pour l'app en arrière-plan ou l'écran verrouillé ; suit les ajustements ±15 s
+  const restEndsAt = rest?.endsAt ?? null;
+  useEffect(() => {
+    if (restEndsAt === null) {
+      cancelRestEnd();
+    } else {
+      scheduleRestEnd(restEndsAt);
+    }
+  }, [restEndsAt]);
+  useEffect(() => cancelRestEnd, []);
 
   // Pas de séance en cours (terminée ailleurs) : retour à l'accueil
   useEffect(() => {
@@ -99,6 +134,61 @@ export default function WorkoutScreen() {
     reload();
   };
 
+  const pickExercise = (exercise: ExerciseListItem) => {
+    setPickerVisible(false);
+    const lastPerformance = WorkoutRepository.getLastPerformance(exercise.id);
+
+    if (!replacing) {
+      WorkoutRepository.addExercise(workout.id, buildWorkoutExercise(exercise, lastPerformance, defaultSetCount));
+    } else {
+      // Le remplaçant reprend les séries restant à faire et le repos prévus pour l'exercice remplacé
+      const pending = replacing.sets.filter((set) => set.completed_at === null).length;
+      WorkoutRepository.replaceExercise(
+        replacing.id,
+        buildWorkoutExercise(
+          { ...exercise, target_sets: pending || null, rest_seconds: replacing.rest_seconds },
+          lastPerformance,
+          defaultSetCount,
+        ),
+      );
+    }
+    reloadExercises();
+  };
+
+  const removeExercise = (exercise: WorkoutExercise) => {
+    const done = exercise.sets.filter((set) => set.completed_at !== null).length;
+    Alert.alert(
+      `Retirer « ${exercise.name} » ?`,
+      done > 0
+        ? `${done > 1 ? `Les ${done} séries validées seront supprimées` : 'La série validée sera supprimée'}.`
+        : undefined,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Retirer',
+          style: 'destructive',
+          onPress: () => {
+            WorkoutRepository.removeExercise(exercise.id);
+            reloadExercises();
+          },
+        },
+      ],
+    );
+  };
+
+  const showExerciseOptions = (exercise: WorkoutExercise) => {
+    const done = exercise.sets.some((set) => set.completed_at !== null);
+    Alert.alert(
+      exercise.name,
+      done ? 'Remplacer : les séries déjà validées restent enregistrées sur cet exercice.' : undefined,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Retirer', style: 'destructive', onPress: () => removeExercise(exercise) },
+        { text: 'Remplacer', onPress: () => openPicker(exercise) },
+      ],
+    );
+  };
+
   const finish = () => {
     const pending = allSets.length - doneCount;
     Alert.alert(
@@ -114,6 +204,7 @@ export default function WorkoutScreen() {
           text: 'Abandonner',
           style: 'destructive',
           onPress: () => {
+            cancelRestEnd();
             WorkoutRepository.discardWorkout(workout.id);
             router.back();
           },
@@ -121,6 +212,7 @@ export default function WorkoutScreen() {
         {
           text: 'Terminer',
           onPress: () => {
+            cancelRestEnd();
             const saved = WorkoutRepository.finishWorkout(workout.id);
             if (!saved) {
               router.back();
@@ -200,10 +292,33 @@ export default function WorkoutScreen() {
               }
               onDeleteSet={deleteSet}
               onAddSet={() => addSet(exercise.id)}
+              onOptions={() => showExerciseOptions(exercise)}
             />
           );
         })}
+
+        {workout.exercises.length === 0 ? (
+          <Card variant="outlined" style={styles.empty}>
+            <ThemedText type="heading">Séance libre</ThemedText>
+            <ThemedText type="caption">Ajoutez les exercices au fur et à mesure de votre séance.</ThemedText>
+            <Button title="Ajouter un exercice" icon={Plus} onPress={() => openPicker(null)} />
+          </Card>
+        ) : (
+          <Button
+            title="Ajouter un exercice"
+            variant="secondary"
+            icon={Plus}
+            onPress={() => openPicker(null)}
+          />
+        )}
       </ScrollView>
+
+      <ExercisePicker
+        visible={pickerVisible}
+        title={replacing ? `Remplacer ${replacing.name}` : 'Ajouter un exercice'}
+        onSelect={pickExercise}
+        onClose={() => setPickerVisible(false)}
+      />
 
       {rest && (
         <View style={[styles.restTimer, { bottom: insets.bottom + spacing.md }]}>
@@ -279,6 +394,10 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
+  },
+  empty: {
+    gap: spacing.md,
+    padding: spacing.xl,
   },
   restTimer: {
     position: 'absolute',

@@ -1,4 +1,4 @@
-import { buildWorkoutExercises, resolveSetValues } from '@/src/domain/workout-plan';
+import { buildWorkoutExercise, buildWorkoutExercises, resolveSetValues } from '@/src/domain/workout-plan';
 import { Template } from '@/src/repositories/template/template-type';
 
 const template: Template = {
@@ -51,6 +51,18 @@ describe('buildWorkoutExercises', () => {
 
   it('crée au moins une série', () => {
     expect(buildWorkoutExercises(template, () => [], 0)[0].sets).toHaveLength(1);
+  });
+});
+
+describe('buildWorkoutExercise', () => {
+  it('prépare un exercice de la bibliothèque ajouté en cours de séance, sans objectifs', () => {
+    expect(buildWorkoutExercise({ id: 2, name: 'Squat' }, [{ weight: 100, reps: 5 }], 4)).toEqual({
+      exercise_id: 2,
+      name: 'Squat',
+      rest_seconds: null,
+      sets: [{ weight: null, reps: null }],
+    });
+    expect(buildWorkoutExercise({ id: 2, name: 'Squat' }, [], 3).sets).toHaveLength(3);
   });
 });
 
