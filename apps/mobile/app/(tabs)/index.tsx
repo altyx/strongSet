@@ -1,7 +1,7 @@
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Activity, Play } from 'lucide-react-native/icons';
 import { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ProgramRow } from '@/src/components/home/program-row';
@@ -11,18 +11,22 @@ import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
 import { Card } from '@/src/components/ui/card';
 import { StatTile } from '@/src/components/ui/stat-tile';
+import { ElapsedTime } from '@/src/components/workout/elapsed-time';
 import { fontFamily, palette, radius, spacing } from '@/src/constants/theme';
+import { buildWorkoutExercises } from '@/src/domain/workout-plan';
 import { useUserSettings } from '@/src/hooks/user/use-user-settings';
 import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 import { TemplateRepository } from '@/src/repositories/template/template-repository';
 import { Template } from '@/src/repositories/template/template-type';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
+import { Workout } from '@/src/repositories/workout/workout-type';
 import { formatLongDate, getWeekDays, isSameDay, startOfWeek, toTimestamp } from '@/src/utils/date';
 
 type HomeData = {
   today: Date;
   weekDays: WeekDay[];
   templates: Template[];
+  activeWorkout: Workout | null;
   workoutCount: number;
   exerciseCount: number;
 };
@@ -43,6 +47,7 @@ function loadHomeData(): HomeData {
       hasWorkout: workoutDates.some((workoutDate) => isSameDay(workoutDate, date)),
     })),
     templates: TemplateRepository.getAllTemplates(),
+    activeWorkout: WorkoutRepository.getActiveWorkout(),
     workoutCount: WorkoutRepository.count(),
     exerciseCount: ExerciseRepository.count(),
   };
@@ -64,14 +69,20 @@ export default function HomeScreen() {
     return null;
   }
 
-  const name = getPreferences()?.name?.trim();
+  const preferences = getPreferences();
+  const name = preferences?.name?.trim();
   // En attendant l'historique des séances, on propose le premier programme qui contient des exercices
   const nextTemplate = data.templates.find((template) => template.exercises.length > 0) ?? data.templates[0];
   const otherTemplates = data.templates.filter((template) => template !== nextTemplate);
+  const activeSets = data.activeWorkout?.exercises.flatMap((exercise) => exercise.sets) ?? [];
 
-  const startWorkout = () => {
-    // TODO: ouvrir l'écran de séance en cours quand il existera
-    Alert.alert('Bientôt disponible', 'Le suivi de séance arrive dans une prochaine version.');
+  const startWorkout = (template: Template) => {
+    WorkoutRepository.startWorkout({
+      template_id: template.id,
+      name: template.name,
+      exercises: buildWorkoutExercises(template, WorkoutRepository.getLastPerformance, preferences?.seriesPerExercise ?? 3),
+    });
+    router.push('/workout');
   };
 
   return (
@@ -91,10 +102,23 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
-  
+
         <WeekStrip days={data.weekDays} />
-  
-        {nextTemplate ? (
+
+        {data.activeWorkout ? (
+          <Card variant="outlined" style={styles.hero}>
+            <View style={styles.heroGlow} pointerEvents="none" />
+            <Badge label="Séance en cours" />
+            <View style={styles.heroTitle}>
+              <ThemedText type="display">{data.activeWorkout.name ?? 'Séance'}</ThemedText>
+              <ThemedText type="caption">
+                {activeSets.filter((set) => set.completed_at !== null).length} / {activeSets.length} séries validées
+              </ThemedText>
+            </View>
+            <ElapsedTime startedAt={data.activeWorkout.started_at} />
+            <Button title="Reprendre la séance" icon={Play} iconFilled onPress={() => router.push('/workout')} />
+          </Card>
+        ) : nextTemplate ? (
           <Card variant="outlined" style={styles.hero}>
             <View style={styles.heroGlow} pointerEvents="none" />
             <Badge label="Prochaine séance" />
@@ -112,7 +136,13 @@ export default function HomeScreen() {
                 <ThemedText type="caption">{nextTemplate.exercises.length > 1 ? 'exercices' : 'exercice'}</ThemedText>
               </View>
             )}
-            <Button title="Démarrer la séance" icon={Play} iconFilled onPress={startWorkout} />
+            <Button
+              title="Démarrer la séance"
+              icon={Play}
+              iconFilled
+              disabled={nextTemplate.exercises.length === 0}
+              onPress={() => startWorkout(nextTemplate)}
+            />
           </Card>
         ) : (
           <Card variant="outlined" style={styles.hero}>
@@ -120,13 +150,13 @@ export default function HomeScreen() {
             <ThemedText type="caption">Créez un programme pour démarrer votre première séance.</ThemedText>
           </Card>
         )}
-  
+
         <View style={styles.stats}>
           <StatTile label="Séances" value={String(data.workoutCount)} />
           <StatTile label="Programmes" value={String(data.templates.length)} />
           <StatTile label="Exercices" value={String(data.exerciseCount)} />
         </View>
-  
+
         {otherTemplates.length > 0 && (
           <View style={styles.section}>
             <ThemedText type="heading">Mes programmes</ThemedText>
@@ -135,7 +165,7 @@ export default function HomeScreen() {
             ))}
           </View>
         )}
-  
+
         <View style={styles.teaser}>
           <View style={styles.teaserIcon}>
             <Activity size={22} color={palette.run} strokeWidth={2} />
