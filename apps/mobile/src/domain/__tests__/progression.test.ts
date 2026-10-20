@@ -6,6 +6,8 @@ import {
   sessionStats,
   weeklyProgress,
   weeklyTotals,
+  weekLabel,
+  weekSpokenLabel,
 } from '@/src/domain/progression';
 import { toTimestamp } from '@/src/utils/date';
 
@@ -128,4 +130,11 @@ it('oneRepMaxChange compare la première et la dernière séance chargée de la 
   // 70×5 → 81,5 ; 80×5 → 93,5
   expect(oneRepMaxChange(sessions, at(9, 1))).toBe(12);
   expect(oneRepMaxChange(sessions, at(9, 15))).toBeNull();
+});
+
+it('weekLabel nomme la semaine en cours et préfixe les autres par « sem. »', () => {
+  expect(weekLabel(toTimestamp(new Date(2026, 9, 19)), NOW)).toBe('Cette\nsem.');
+  expect(weekLabel(toTimestamp(new Date(2026, 9, 12)), NOW)).toBe('sem.\n12/10');
+  expect(weekSpokenLabel(toTimestamp(new Date(2026, 9, 19)), NOW)).toBe('cette semaine');
+  expect(weekSpokenLabel(toTimestamp(new Date(2026, 8, 28)), NOW)).toBe('semaine du 28/9');
 });

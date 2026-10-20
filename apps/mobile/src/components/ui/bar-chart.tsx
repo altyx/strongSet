@@ -6,6 +6,7 @@ import { palette } from '@/src/constants/theme';
 type BarChartProps = {
   // Une valeur par barre ; null = pas de donnée (barre vide)
   values: (number | null)[];
+  // Libellés sous les barres, sur une ou deux lignes (séparées par \n)
   labels: string[];
   // Résumé lu par les lecteurs d'écran à la place des barres
   accessibilityLabel: string;
@@ -41,7 +42,7 @@ export function BarChart({ values, labels, accessibilityLabel, height = 150 }: B
                 />
               )}
             </View>
-            <ThemedText type="caption" tone="tertiary" style={styles.label} numberOfLines={1}>
+            <ThemedText type="caption" tone="tertiary" style={[styles.label, index === lastIndex && styles.labelCurrent]} numberOfLines={2}>
               {labels[index]}
             </ThemedText>
           </View>
@@ -76,5 +77,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
     textAlign: 'center',
+  },
+  labelCurrent: {
+    color: palette.textSecondary,
   },
 });

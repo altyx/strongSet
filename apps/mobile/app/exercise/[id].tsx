@@ -8,7 +8,14 @@ import { BarChart } from '@/src/components/ui/bar-chart';
 import { Card } from '@/src/components/ui/card';
 import { muscleLabel } from '@/src/constants/muscles';
 import { palette, radius, spacing } from '@/src/constants/theme';
-import { exerciseRecords, oneRepMaxChange, sessionStats, weeklyProgress } from '@/src/domain/progression';
+import {
+  exerciseRecords,
+  oneRepMaxChange,
+  sessionStats,
+  weekLabel,
+  weeklyProgress,
+  weekSpokenLabel,
+} from '@/src/domain/progression';
 import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { formatShortDate } from '@/src/utils/date';
@@ -23,6 +30,7 @@ function loadProgress(exerciseId: number) {
   const sessions = WorkoutRepository.getExerciseSessions(exerciseId);
   const weeks = weeklyProgress(sessions, now, WEEKS);
   return {
+    now,
     exercise: ExerciseRepository.getById(exerciseId),
     sessions,
     weeks,
@@ -33,10 +41,6 @@ function loadProgress(exerciseId: number) {
   };
 }
 
-const weekLabel = (weekStart: number) => {
-  const date = new Date(weekStart * 1000);
-  return `${date.getDate()}/${date.getMonth() + 1}`;
-};
 const dateLabel = (timestamp: number) => formatShortDate(new Date(timestamp * 1000));
 const formatSet = (weight: number | null, reps: number | null) =>
   weight === null ? `${reps} reps` : `${formatDecimal(weight)} × ${reps}`;
@@ -48,7 +52,7 @@ export default function ExerciseProgressScreen() {
   const [data] = useState(() => loadProgress(Number(id)));
   const [metric, setMetric] = useState<Metric>('force');
 
-  const { exercise, sessions, weeks, records, bodyweight, change } = data;
+  const { now, exercise, sessions, weeks, records, bodyweight, change } = data;
   const title = exercise?.name ?? 'Exercice';
 
   if (sessions.length === 0) {
@@ -151,10 +155,13 @@ export default function ExerciseProgressScreen() {
           </View>
           <BarChart
             values={chart.values}
-            labels={weeks.map((week) => weekLabel(week.weekStart))}
-            accessibilityLabel={`${chart.label} par semaine sur ${WEEKS} semaines : ${chart.values
-              .map((value) => (value === null ? 'aucune séance' : formatDecimal(value)))
-              .join(', ')}`}
+            labels={weeks.map((week) => weekLabel(week.weekStart, now))}
+            accessibilityLabel={`${chart.label} par semaine : ${chart.values
+              .map(
+                (value, index) =>
+                  `${weekSpokenLabel(weeks[index].weekStart, now)}, ${value === null ? 'aucune séance' : formatDecimal(value)}`,
+              )
+              .join(' ; ')}`}
           />
         </Card>
 

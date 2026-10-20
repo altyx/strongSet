@@ -70,6 +70,27 @@ export function lastWeeks(now: Date, count: number): Date[] {
   );
 }
 
+/**
+ * Libellé court d'une semaine pour un graphique, sur deux lignes : « Cette\nsem. » pour la semaine en cours,
+ * sinon « sem.\n12/10 » (date du lundi), pour qu'on ne le lise pas comme la date d'une séance.
+ */
+export function weekLabel(weekStart: number, now: Date): string {
+  return isCurrentWeek(weekStart, now) ? 'Cette\nsem.' : `sem.\n${mondayDate(weekStart)}`;
+}
+
+// Version lue par les lecteurs d'écran, ex. « semaine du 12/10 » ou « cette semaine »
+export function weekSpokenLabel(weekStart: number, now: Date): string {
+  return isCurrentWeek(weekStart, now) ? 'cette semaine' : `semaine du ${mondayDate(weekStart)}`;
+}
+
+const isCurrentWeek = (weekStart: number, now: Date) => weekStart === toTimestamp(startOfWeek(now));
+
+// « 12/10 »
+const mondayDate = (weekStart: number) => {
+  const monday = new Date(weekStart * 1000);
+  return `${monday.getDate()}/${monday.getMonth() + 1}`;
+};
+
 // Évolution semaine par semaine d'un exercice, sur les `count` dernières semaines
 export function weeklyProgress(sessions: ExerciseSession[], now: Date, count = 8): WeekPoint[] {
   const weeks = lastWeeks(now, count).map(toTimestamp);

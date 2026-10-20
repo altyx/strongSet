@@ -8,7 +8,7 @@ import { ThemedText } from '@/src/components/themed-text';
 import { BarChart } from '@/src/components/ui/bar-chart';
 import { Card } from '@/src/components/ui/card';
 import { palette, radius, spacing } from '@/src/constants/theme';
-import { lastWeeks, oneRepMaxChange, sessionStats, weeklyTotals } from '@/src/domain/progression';
+import { lastWeeks, oneRepMaxChange, sessionStats, weekLabel, weeklyTotals, weekSpokenLabel } from '@/src/domain/progression';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { formatShortDate, toTimestamp } from '@/src/utils/date';
 import { formatDecimal } from '@/src/utils/number';
@@ -47,6 +47,7 @@ function loadProgress() {
     };
   });
   return {
+    now,
     weeks,
     sessionsThisPeriod: history.filter((workout) => workout.started_at >= since).length,
     exercises,
@@ -95,13 +96,10 @@ export default function ProgressScreen() {
               </View>
               <BarChart
                 values={data.weeks.map((week) => week.total)}
-                labels={data.weeks.map((week) => {
-                  const date = new Date(week.weekStart * 1000);
-                  return `${date.getDate()}/${date.getMonth() + 1}`;
-                })}
-                accessibilityLabel={`Volume par semaine sur ${WEEKS} semaines, en kilos : ${data.weeks
-                  .map((week) => formatDecimal(week.total))
-                  .join(', ')}`}
+                labels={data.weeks.map((week) => weekLabel(week.weekStart, data.now))}
+                accessibilityLabel={`Volume par semaine, en kilos : ${data.weeks
+                  .map((week) => `${weekSpokenLabel(week.weekStart, data.now)}, ${formatDecimal(week.total)}`)
+                  .join(' ; ')}`}
               />
             </Card>
 
