@@ -17,7 +17,7 @@ afterEach(() => {
 
 it('lit les programmes par défaut avec leurs exercices dans l’ordre', () => {
   const fullBody = TemplateRepository.getAllTemplates().find((template) => template.name === 'Full Body')!;
-  expect(fullBody.exercises.map((exercise) => exercise.name)).toEqual(['Bench Press', 'Squat', 'Deadlift', 'Shoulder Press']);
+  expect(fullBody.exercises.map((exercise) => exercise.name)).toEqual(['Développé couché', 'Squat', 'Deadlift', 'Shoulder Press']);
   expect(fullBody.exercises[0]).toMatchObject({ target_sets: null, target_reps: null, rest_seconds: null });
 });
 
@@ -53,7 +53,7 @@ it('met à jour le nom, l’ordre et les objectifs', () => {
   expect(template.name).toBe('Full Body A');
   expect(template.exercises.map((exercise) => [exercise.name, exercise.target_reps])).toEqual([
     ['Squat', 6],
-    ['Bench Press', 8],
+    ['Développé couché', 8],
   ]);
 });
 
