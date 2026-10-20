@@ -102,7 +102,15 @@ export default function ExercisesScreen() {
         keyboardDismissMode="on-drag"
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
-        renderItem={({ item }) => <ExerciseRow exercise={item} bestWeight={data.bestWeights[item.id]} />}
+        renderItem={({ item }) => (
+          <Pressable
+            onPress={() => router.push({ pathname: '/exercise/[id]', params: { id: item.id } })}
+            accessibilityRole="button"
+            accessibilityHint="Voir la progression"
+            style={({ pressed }) => pressed && styles.pressed}>
+            <ExerciseRow exercise={item} bestWeight={data.bestWeights[item.id]} />
+          </Pressable>
+        )}
         ListEmptyComponent={
           <ThemedText type="caption" style={styles.empty}>
             Aucun exercice ne correspond.

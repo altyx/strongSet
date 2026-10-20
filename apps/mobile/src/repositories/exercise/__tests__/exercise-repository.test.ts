@@ -52,3 +52,8 @@ it('existsByName ignore la casse et les espaces', () => {
   expect(ExerciseRepository.existsByName(' bench press ')).toBe(true);
   expect(ExerciseRepository.existsByName('Hip thrust')).toBe(false);
 });
+
+it('getById renvoie un exercice avec ses muscles, ou null', () => {
+  expect(ExerciseRepository.getById(2)).toEqual({ id: 2, name: 'Squat', equipment: null, muscles: ['Quadriceps'] });
+  expect(ExerciseRepository.getById(999)).toBeNull();
+});

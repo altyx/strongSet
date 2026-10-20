@@ -1,5 +1,6 @@
 import {getDatabase} from "@/src/db/database";
 import {
+  ExerciseSession,
   NewWorkoutExercise,
   SetValues,
   Workout,
@@ -256,6 +257,46 @@ export const WorkoutRepository = {
       [before, ...exerciseIds],
     );
     return Object.fromEntries(rows.map((row) => [row.exercise_id, row.best]));
+  },
+
+  /**
+   * Séries validées d'un exercice, séance terminée par séance terminée, de la plus récente à la plus ancienne.
+   * Un exercice fait deux fois dans la même séance donne deux entrées.
+   */
+  getExerciseSessions: (exerciseId: number): ExerciseSession[] => {
+    const rows = getDatabase().getAllSync<{ workout_exercise_id: number; workout_id: number; started_at: number; weight: number | null; reps: number | null }>(
+      `SELECT we.id AS workout_exercise_id, w.id AS workout_id, w.started_at, s.weight, s.reps
+       FROM sets s
+       JOIN workout_exercises we ON we.id = s.workout_exercise_id
+       JOIN workouts w ON w.id = we.workout_id
+       WHERE we.exercise_id = ? AND w.finished_at IS NOT NULL AND s.completed_at IS NOT NULL
+       ORDER BY w.started_at DESC, we.id, s.position, s.id`,
+      [exerciseId],
+    );
+    const sessions = new Map<number, ExerciseSession>();
+    rows.forEach((row) => {
+      let session = sessions.get(row.workout_exercise_id);
+      if (!session) {
+        session = { workout_id: row.workout_id, started_at: row.started_at, sets: [] };
+        sessions.set(row.workout_exercise_id, session);
+      }
+      session.sets.push({ weight: row.weight, reps: row.reps });
+    });
+    return Array.from(sessions.values());
+  },
+
+  // Exercices déjà faits en séance terminée, du plus récemment fait au plus ancien
+  getTrainedExercises: (): { id: number; name: string; last_done: number; session_count: number }[] => {
+    return getDatabase().getAllSync(
+      `SELECT e.id, e.name, MAX(w.started_at) AS last_done, COUNT(DISTINCT w.id) AS session_count
+       FROM workout_exercises we
+       JOIN workouts w ON w.id = we.workout_id
+       JOIN exercises e ON e.id = we.exercise_id
+       WHERE w.finished_at IS NOT NULL
+         AND EXISTS (SELECT 1 FROM sets s WHERE s.workout_exercise_id = we.id AND s.completed_at IS NOT NULL)
+       GROUP BY e.id
+       ORDER BY last_done DESC`,
+    );
   },
 
   updateNote: (workoutId: number, note: string | null): void => {

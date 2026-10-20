@@ -42,6 +42,13 @@ export interface WorkoutSummary {
   volume: number;
 }
 
+// Séries validées d'un exercice lors d'une séance terminée (progression)
+export interface ExerciseSession {
+  workout_id: number;
+  started_at: number;
+  sets: SetValues[];
+}
+
 // Valeurs saisies pour une série (création ou mise à jour)
 export interface SetValues {
   weight: number | null;

@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Dumbbell, House } from 'lucide-react-native/icons';
+import { Dumbbell, House, TrendingUp } from 'lucide-react-native/icons';
 import React from 'react';
 
 import { HapticTab } from '@/src/components/haptic-tab';
@@ -35,6 +35,13 @@ export default function TabLayout() {
         options={{
           title: 'Exercices',
           tabBarIcon: ({ color }) => <Dumbbell size={24} color={color} strokeWidth={2} pointerEvents="none" />,
+        }}
+      />
+      <Tabs.Screen
+        name="progress"
+        options={{
+          title: 'Progrès',
+          tabBarIcon: ({ color }) => <TrendingUp size={24} color={color} strokeWidth={2} pointerEvents="none" />,
         }}
       />
     </Tabs>

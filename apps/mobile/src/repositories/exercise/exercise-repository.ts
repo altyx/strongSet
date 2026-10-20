@@ -31,6 +31,17 @@ export const ExerciseRepository = {
     return exercises.map((exercise) => ({ ...exercise, muscles: muscles[exercise.id] ?? [] }));
   },
 
+  getById: (id: number): ExerciseListItem | null => {
+    const exercise = getDatabase().getFirstSync<{ id: number; name: string; equipment: string | null }>(
+      'SELECT id, name, equipment FROM exercises WHERE id = ?',
+      [id],
+    );
+    if (!exercise) {
+      return null;
+    }
+    return { ...exercise, muscles: ExerciseRepository.getMusclesByExercise([id])[id] ?? [] };
+  },
+
   getMuscles: (): Muscle[] => {
     return getDatabase().getAllSync<Muscle>('SELECT id, name FROM muscles ORDER BY id');
   },
