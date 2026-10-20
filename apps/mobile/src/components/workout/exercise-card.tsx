@@ -7,18 +7,20 @@ import { Card } from '@/src/components/ui/card';
 import { SET_COLUMNS, SetRow } from '@/src/components/workout/set-row';
 import { palette } from '@/src/constants/theme';
 import { SetValues, WorkoutExercise, WorkoutSet } from '@/src/repositories/workout/workout-type';
+import { WeightUnit } from '@/src/utils/weight';
 
 type ExerciseCardProps = {
   exercise: WorkoutExercise;
   // Séries validées de la dernière séance avec cet exercice, dans l'ordre
   previous: SetValues[];
   defaultReps: number;
+  unit: WeightUnit;
   currentSetId: number | null;
   onChangeSet: (set: WorkoutSet, values: SetValues) => void;
   onToggleSet: (set: WorkoutSet, index: number, entered: SetValues) => void;
   onDeleteSet: (set: WorkoutSet) => void;
   onAddSet: () => void;
-  // Remplacer ou retirer l'exercice
+  // Note, déplacement, remplacement, retrait
   onOptions: () => void;
 };
 
@@ -26,6 +28,7 @@ export function ExerciseCard({
   exercise,
   previous,
   defaultReps,
+  unit,
   currentSetId,
   onChangeSet,
   onToggleSet,
@@ -51,12 +54,18 @@ export function ExerciseCard({
           onPress={onOptions}
           accessibilityRole="button"
           accessibilityLabel={`Options de ${exercise.name}`}
-          accessibilityHint="Remplacer ou retirer l'exercice"
+          accessibilityHint="Note, déplacer, remplacer ou retirer l'exercice"
           hitSlop={8}
           style={({ pressed }) => [styles.options, pressed && styles.pressed]}>
           <Ellipsis size={20} color={palette.textSecondary} strokeWidth={2} pointerEvents="none" />
         </Pressable>
       </View>
+
+      {exercise.exercise_note && (
+        <ThemedText type="caption" style={styles.note} accessibilityLabel={`Note : ${exercise.exercise_note}`}>
+          {exercise.exercise_note}
+        </ThemedText>
+      )}
 
       <View style={styles.columns} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <ThemedText type="label" tone="tertiary" style={{ width: SET_COLUMNS.number }}>
@@ -66,7 +75,7 @@ export function ExerciseCard({
           Précédent
         </ThemedText>
         <ThemedText type="label" tone="tertiary" style={[styles.center, { width: SET_COLUMNS.weight }]}>
-          kg
+          {unit}
         </ThemedText>
         <ThemedText type="label" tone="tertiary" style={[styles.center, { width: SET_COLUMNS.reps }]}>
           Reps
@@ -83,6 +92,7 @@ export function ExerciseCard({
             set={set}
             previous={previous[index]}
             defaultReps={defaultReps}
+            unit={unit}
             isCurrent={set.id === currentSetId}
             onChange={(values) => onChangeSet(set, values)}
             onToggle={(entered) => onToggleSet(set, index, entered)}
@@ -115,6 +125,11 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
+  },
+  note: {
+    marginTop: -4,
+    paddingHorizontal: 6,
+    fontStyle: 'italic',
   },
   options: {
     width: 32,

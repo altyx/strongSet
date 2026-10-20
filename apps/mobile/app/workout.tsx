@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
-import { useKeepAwake } from 'expo-keep-awake';
-import { router } from 'expo-router';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronDown, Plus } from 'lucide-react-native/icons';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -12,40 +12,60 @@ import { Button } from '@/src/components/ui/button';
 import { Card } from '@/src/components/ui/card';
 import { ElapsedTime } from '@/src/components/workout/elapsed-time';
 import { ExerciseCard } from '@/src/components/workout/exercise-card';
+import { ExerciseOptionsSheet } from '@/src/components/workout/exercise-options-sheet';
 import { RestTimer } from '@/src/components/workout/rest-timer';
 import { palette, radius, spacing } from '@/src/constants/theme';
 import { buildWorkoutExercise, resolveSetValues } from '@/src/domain/workout-plan';
 import { useUserSettings } from '@/src/hooks/user/use-user-settings';
-import { ExerciseListItem } from '@/src/repositories/exercise/exercise-repository';
+import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
+import { ExerciseListItem, ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { SetValues, Workout, WorkoutExercise, WorkoutSet } from '@/src/repositories/workout/workout-type';
 import { cancelRestEnd, scheduleRestEnd } from '@/src/services/rest-notification';
+import { formatLongDate } from '@/src/utils/date';
 
 const DEFAULT_REST_SECONDS = 90;
 const DEFAULT_REPS = 10;
 const DEFAULT_SET_COUNT = 3;
 
-// Dernières performances par exercice de séance (id de workout_exercises), lues une fois à l'ouverture
-function loadPreviousSets(workout: Workout | null) {
+const KEEP_AWAKE_TAG = 'workout';
+
+/**
+ * Dernières performances par exercice de séance (id de workout_exercises), lues à l'ouverture.
+ * En modification, seules les séances antérieures comptent.
+ */
+function loadPreviousSets(workout: Workout | null, editing: boolean) {
   const previous = new Map<number, SetValues[]>();
   workout?.exercises.forEach((exercise) => {
-    previous.set(exercise.id, exercise.exercise_id === null ? [] : WorkoutRepository.getLastPerformance(exercise.exercise_id));
+    previous.set(
+      exercise.id,
+      exercise.exercise_id === null
+        ? []
+        : WorkoutRepository.getLastPerformance(exercise.exercise_id, editing ? workout.started_at : undefined),
+    );
   });
   return previous;
 }
 
+/**
+ * Séance en cours, ou modification d'une séance terminée quand l'écran est ouvert avec `id`.
+ * Les modifications sont enregistrées au fur et à mesure ; « Enregistrer » ne fait que le ménage final.
+ */
 export default function WorkoutScreen() {
-  // L'écran reste allumé pendant la séance : pas besoin de déverrouiller entre deux séries
-  useKeepAwake();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const editing = id !== undefined;
   const insets = useSafeAreaInsets();
+  const unit = useWeightUnit();
   const { getPreferences } = useUserSettings();
   const preferences = getPreferences();
   const restSeconds = preferences?.restBetweenSeries ?? DEFAULT_REST_SECONDS;
   const defaultReps = preferences?.repPerSeries ?? DEFAULT_REPS;
   const defaultSetCount = preferences?.seriesPerExercise ?? DEFAULT_SET_COUNT;
 
-  const [workout, setWorkout] = useState(() => WorkoutRepository.getActiveWorkout());
-  const [previousSets, setPreviousSets] = useState(() => loadPreviousSets(workout));
+  const load = () => (editing ? WorkoutRepository.getWorkout(Number(id)) : WorkoutRepository.getActiveWorkout());
+  const [workout, setWorkout] = useState(load);
+  const [previousSets, setPreviousSets] = useState(() => loadPreviousSets(workout, editing));
+  const [optionsFor, setOptionsFor] = useState<WorkoutExercise | null>(null);
   const [rest, setRest] = useState<{ endsAt: number; duration: number } | null>(null);
   // Choix d'un exercice : ajout en fin de séance, ou remplacement de `replacing`
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -55,14 +75,25 @@ export default function WorkoutScreen() {
     setPickerVisible(true);
   };
 
-  const reload = () => setWorkout(WorkoutRepository.getActiveWorkout());
+  const reload = () => setWorkout(load());
 
   // Après ajout, remplacement ou retrait d'exercice : la colonne « Précédent » suit les nouveaux exercices
   const reloadExercises = () => {
-    const updated = WorkoutRepository.getActiveWorkout();
+    const updated = load();
     setWorkout(updated);
-    setPreviousSets(loadPreviousSets(updated));
+    setPreviousSets(loadPreviousSets(updated, editing));
   };
+
+  // L'écran reste allumé pendant la séance : pas besoin de déverrouiller entre deux séries
+  useEffect(() => {
+    if (editing) {
+      return;
+    }
+    activateKeepAwakeAsync(KEEP_AWAKE_TAG);
+    return () => {
+      deactivateKeepAwake(KEEP_AWAKE_TAG);
+    };
+  }, [editing]);
 
   // Notification de fin de repos, pour l'app en arrière-plan ou l'écran verrouillé ; suit les ajustements ±15 s
   const restEndsAt = rest?.endsAt ?? null;
@@ -75,7 +106,7 @@ export default function WorkoutScreen() {
   }, [restEndsAt]);
   useEffect(() => cancelRestEnd, []);
 
-  // Pas de séance en cours (terminée ailleurs) : retour à l'accueil
+  // Pas de séance en cours (terminée ailleurs) ou séance introuvable : retour à l'écran précédent
   useEffect(() => {
     if (!workout) {
       router.back();
@@ -104,14 +135,18 @@ export default function WorkoutScreen() {
       return;
     }
 
-    const values = resolveSetValues(entered, previous, defaultReps);    if (!values) {
+    const values = resolveSetValues(entered, previous, defaultReps);
+    if (!values) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
     WorkoutRepository.updateSet(set.id, values);
     WorkoutRepository.setCompleted(set.id, true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setRest({ endsAt: Date.now() + restDuration * 1000, duration: restDuration });
+    // Pas de repos quand on corrige une séance passée
+    if (!editing) {
+      setRest({ endsAt: Date.now() + restDuration * 1000, duration: restDuration });
+    }
     reload();
   };
 
@@ -129,14 +164,16 @@ export default function WorkoutScreen() {
     ]);
   };
 
-  const addSet = (workoutExerciseId: number) => {
-    WorkoutRepository.addSet(workoutExerciseId, { weight: null, reps: null });
+  // La nouvelle série reprend les valeurs de la dernière : souvent la même charge pour une série de plus
+  const addSet = (exercise: WorkoutExercise) => {
+    const last = exercise.sets[exercise.sets.length - 1];
+    WorkoutRepository.addSet(exercise.id, { weight: last?.weight ?? null, reps: last?.reps ?? null });
     reload();
   };
 
   const pickExercise = (exercise: ExerciseListItem) => {
     setPickerVisible(false);
-    const lastPerformance = WorkoutRepository.getLastPerformance(exercise.id);
+    const lastPerformance = WorkoutRepository.getLastPerformance(exercise.id, editing ? workout.started_at : undefined);
 
     if (!replacing) {
       WorkoutRepository.addExercise(workout.id, buildWorkoutExercise(exercise, lastPerformance, defaultSetCount));
@@ -176,28 +213,58 @@ export default function WorkoutScreen() {
     );
   };
 
-  const showExerciseOptions = (exercise: WorkoutExercise) => {
-    const done = exercise.sets.some((set) => set.completed_at !== null);
-    Alert.alert(
-      exercise.name,
-      done ? 'Remplacer : les séries déjà validées restent enregistrées sur cet exercice.' : undefined,
-      [
+  const closeOptions = (note?: string) => {
+    if (note !== undefined && optionsFor?.exercise_id != null) {
+      ExerciseRepository.updateNote(optionsFor.exercise_id, note);
+      reload();
+    }
+    setOptionsFor(null);
+  };
+
+  const moveExercise = (exercise: WorkoutExercise, direction: -1 | 1) => {
+    WorkoutRepository.moveExercise(exercise.id, direction);
+    reload();
+  };
+
+  const pendingCount = allSets.length - doneCount;
+  const pendingWarning =
+    pendingCount > 0
+      ? `${pendingCount} ${pendingCount > 1 ? 'séries non validées ne seront pas enregistrées' : 'série non validée ne sera pas enregistrée'}.`
+      : undefined;
+
+  const saveEdit = () => {
+    if (doneCount === 0) {
+      Alert.alert('Supprimer la séance ?', "Plus aucune série n'est validée : la séance sera supprimée de l'historique.", [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Retirer', style: 'destructive', onPress: () => removeExercise(exercise) },
-        { text: 'Remplacer', onPress: () => openPicker(exercise) },
-      ],
-    );
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () => {
+            WorkoutRepository.discardWorkout(workout.id);
+            router.back();
+          },
+        },
+      ]);
+      return;
+    }
+    const save = () => {
+      WorkoutRepository.saveEditedWorkout(workout.id);
+      router.back();
+    };
+    if (pendingWarning) {
+      Alert.alert('Enregistrer les modifications ?', pendingWarning, [
+        { text: 'Continuer', style: 'cancel' },
+        { text: 'Enregistrer', onPress: save },
+      ]);
+      return;
+    }
+    save();
   };
 
   const finish = () => {
-    const pending = allSets.length - doneCount;
     Alert.alert(
       'Terminer la séance ?',
-      doneCount === 0
-        ? "Aucune série n'est validée : la séance ne sera pas enregistrée."
-        : pending > 0
-          ? `${pending} ${pending > 1 ? 'séries non validées ne seront pas enregistrées' : 'série non validée ne sera pas enregistrée'}.`
-          : undefined,
+      doneCount === 0 ? "Aucune série n'est validée : la séance ne sera pas enregistrée." : pendingWarning,
       [
         { text: 'Continuer', style: 'cancel' },
         {
@@ -230,27 +297,38 @@ export default function WorkoutScreen() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Réduire la séance"
-          accessibilityHint="La séance continue, vous pourrez la reprendre depuis l'accueil"
-          hitSlop={4}
-          style={styles.headerButton}>
-          <ChevronDown size={24} color={palette.text} strokeWidth={2} pointerEvents="none" />
-        </Pressable>
+        {editing ? (
+          // Pas de bouton « réduire » en modification ; l'espace garde le titre au même endroit
+          <View style={styles.headerButtonPlaceholder} />
+        ) : (
+          <Pressable
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Réduire la séance"
+            accessibilityHint="La séance continue, vous pourrez la reprendre depuis l'accueil"
+            hitSlop={4}
+            style={styles.headerButton}>
+            <ChevronDown size={24} color={palette.text} strokeWidth={2} pointerEvents="none" />
+          </Pressable>
+        )}
         <View style={styles.headerTitle}>
           <ThemedText type="label" numberOfLines={1}>
-            {workout.name ?? 'Séance'}
+            {editing ? 'Modifier la séance' : (workout.name ?? 'Séance')}
           </ThemedText>
-          <ElapsedTime startedAt={workout.started_at} />
+          {editing ? (
+            <ThemedText type="caption" numberOfLines={1}>
+              {[workout.name, formatLongDate(new Date(workout.started_at * 1000))].filter(Boolean).join(' · ')}
+            </ThemedText>
+          ) : (
+            <ElapsedTime startedAt={workout.started_at} />
+          )}
         </View>
         <Pressable
-          onPress={finish}
+          onPress={editing ? saveEdit : finish}
           accessibilityRole="button"
           style={({ pressed }) => [styles.finishButton, pressed && styles.pressed]}>
           <ThemedText type="defaultSemiBold" tone="onAccent">
-            Terminer
+            {editing ? 'Enregistrer' : 'Terminer'}
           </ThemedText>
         </Pressable>
       </View>
@@ -284,6 +362,7 @@ export default function WorkoutScreen() {
               exercise={exercise}
               previous={previous}
               defaultReps={defaultReps}
+              unit={unit}
               currentSetId={currentSetId}
               onChangeSet={changeSet}
               onToggleSet={(set, index, entered) =>
@@ -291,16 +370,18 @@ export default function WorkoutScreen() {
                 toggleSet(set, entered, previous[index], exercise.rest_seconds ?? restSeconds)
               }
               onDeleteSet={deleteSet}
-              onAddSet={() => addSet(exercise.id)}
-              onOptions={() => showExerciseOptions(exercise)}
+              onAddSet={() => addSet(exercise)}
+              onOptions={() => setOptionsFor(exercise)}
             />
           );
         })}
 
         {workout.exercises.length === 0 ? (
           <Card variant="outlined" style={styles.empty}>
-            <ThemedText type="heading">Séance libre</ThemedText>
-            <ThemedText type="caption">Ajoutez les exercices au fur et à mesure de votre séance.</ThemedText>
+            <ThemedText type="heading">{editing ? 'Aucun exercice' : 'Séance libre'}</ThemedText>
+            <ThemedText type="caption">
+              {editing ? 'Ajoutez un exercice pour garder cette séance.' : 'Ajoutez les exercices au fur et à mesure de votre séance.'}
+            </ThemedText>
             <Button title="Ajouter un exercice" icon={Plus} onPress={() => openPicker(null)} />
           </Card>
         ) : (
@@ -312,6 +393,16 @@ export default function WorkoutScreen() {
           />
         )}
       </ScrollView>
+
+      <ExerciseOptionsSheet
+        exercise={optionsFor}
+        canMoveUp={optionsFor !== null && workout.exercises[0]?.id !== optionsFor.id}
+        canMoveDown={optionsFor !== null && workout.exercises[workout.exercises.length - 1]?.id !== optionsFor.id}
+        onClose={closeOptions}
+        onMove={(direction) => optionsFor && moveExercise(optionsFor, direction)}
+        onReplace={() => optionsFor && openPicker(optionsFor)}
+        onRemove={() => optionsFor && removeExercise(optionsFor)}
+      />
 
       <ExercisePicker
         visible={pickerVisible}
@@ -356,6 +447,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: palette.surface,
+  },
+  headerButtonPlaceholder: {
+    width: 44,
   },
   headerTitle: {
     flex: 1,

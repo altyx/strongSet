@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { Activity, Dumbbell, Play, Plus } from 'lucide-react-native/icons';
+import { Activity, Dumbbell, Play, Plus, Settings } from 'lucide-react-native/icons';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { ThemedText } from '@/src/components/themed-text';
 import { Badge } from '@/src/components/ui/badge';
 import { Button } from '@/src/components/ui/button';
 import { Card } from '@/src/components/ui/card';
+import { IconButton } from '@/src/components/ui/icon-button';
 import { StatTile } from '@/src/components/ui/stat-tile';
 import { ElapsedTime } from '@/src/components/workout/elapsed-time';
 import { fontFamily, palette, radius, spacing } from '@/src/constants/theme';
@@ -120,12 +121,19 @@ export default function HomeScreen() {
             <ThemedText type="label">{formatLongDate(data.today)}</ThemedText>
             <ThemedText type="title">{name ? `Bonjour ${name}` : 'Bonjour'}</ThemedText>
           </View>
-          {name && (
-            <View style={styles.avatar} accessible accessibilityLabel={`Profil de ${name}`}>
+          {name ? (
+            <Pressable
+              onPress={() => router.push('/settings')}
+              accessibilityRole="button"
+              accessibilityLabel="Réglages"
+              accessibilityHint={`Profil de ${name}`}
+              style={({ pressed }) => [styles.avatar, pressed && styles.pressed]}>
               <ThemedText style={styles.avatarText} tone="onAccent">
                 {name.charAt(0).toUpperCase()}
               </ThemedText>
-            </View>
+            </Pressable>
+          ) : (
+            <IconButton icon={Settings} accessibilityLabel="Réglages" onPress={() => router.push('/settings')} />
           )}
         </View>
 
@@ -262,6 +270,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: palette.accent,
+  },
+  pressed: {
+    opacity: 0.8,
   },
   avatarText: {
     fontFamily: fontFamily.bold,

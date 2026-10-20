@@ -16,6 +16,8 @@ export interface WorkoutExercise {
   position: number;
   // Repos entre les séries en secondes ; null = valeur par défaut des réglages
   rest_seconds: number | null;
+  // Note personnelle de l'exercice dans la bibliothèque (réglage machine, prise…) ; null si aucune
+  exercise_note: string | null;
   sets: WorkoutSet[];
 }
 

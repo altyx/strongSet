@@ -82,6 +82,16 @@ export const ExerciseRepository = {
     return exerciseId;
   },
 
+  // Note personnelle (réglage machine, prise…), affichée à chaque séance ; une note vide est effacée
+  updateNote: (exerciseId: number, note: string): void => {
+    const trimmed = note.trim();
+    getDatabase().runSync('UPDATE exercises SET note = ?, updated_at = ? WHERE id = ?', [
+      trimmed === '' ? null : trimmed,
+      now(),
+      exerciseId,
+    ]);
+  },
+
   count: (): number => {
     const row = getDatabase().getFirstSync<{ count: number }>('SELECT COUNT(*) AS count FROM exercises');
     return row?.count ?? 0;

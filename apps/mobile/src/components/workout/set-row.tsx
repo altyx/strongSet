@@ -5,7 +5,8 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { ThemedText } from '@/src/components/themed-text';
 import { fontFamily, palette, radius } from '@/src/constants/theme';
 import { SetValues, WorkoutSet } from '@/src/repositories/workout/workout-type';
-import { formatDecimal, parseDecimal, parseInteger } from '@/src/utils/number';
+import { parseDecimal, parseInteger } from '@/src/utils/number';
+import { formatWeightValue, fromUnit, WeightUnit } from '@/src/utils/weight';
 
 // Colonnes partagées avec l'en-tête du tableau (ExerciseCard)
 export const SET_COLUMNS = { number: 28, weight: 68, reps: 56, check: 44 } as const;
@@ -16,6 +17,8 @@ type SetRowProps = {
   // Série correspondante de la dernière séance : affichée en indication et en placeholder
   previous?: SetValues;
   defaultReps: number;
+  // Unité de saisie et d'affichage ; les valeurs reçues et renvoyées restent en kg
+  unit: WeightUnit;
   // Première série non validée de la séance : mise en avant
   isCurrent: boolean;
   onChange: (values: SetValues) => void;
@@ -24,24 +27,33 @@ type SetRowProps = {
   onDelete: () => void;
 };
 
-function formatPrevious(previous?: SetValues) {
+function formatPrevious(unit: WeightUnit, previous?: SetValues) {
   if (!previous?.reps) {
     return '—';
   }
-  return previous.weight === null ? `${previous.reps} reps` : `${formatDecimal(previous.weight)} × ${previous.reps}`;
+  return previous.weight === null ? `${previous.reps} reps` : `${formatWeightValue(previous.weight, unit)} × ${previous.reps}`;
 }
 
 /**
  * Les champs gardent leur texte en local pendant la saisie et ne l'enregistrent qu'à la perte du focus.
  * Le parent remonte la ligne (via sa `key`) quand les valeurs enregistrées changent.
  */
-export function SetRow({ index, set, previous, defaultReps, isCurrent, onChange, onToggle, onDelete }: SetRowProps) {
-  const [weightText, setWeightText] = useState(set.weight === null ? '' : formatDecimal(set.weight));
+export function SetRow({ index, set, previous, defaultReps, unit, isCurrent, onChange, onToggle, onDelete }: SetRowProps) {
+  const savedWeightText = set.weight === null ? '' : formatWeightValue(set.weight, unit);
+  const [weightText, setWeightText] = useState(savedWeightText);
   const [repsText, setRepsText] = useState(set.reps === null ? '' : String(set.reps));
   const done = set.completed_at !== null;
   const number = index + 1;
 
-  const entered = (): SetValues => ({ weight: parseDecimal(weightText), reps: parseInteger(repsText) });
+  // Charge non retouchée : on garde la valeur enregistrée, que l'arrondi d'affichage en livres ne doit pas modifier
+  const enteredWeight = () => {
+    if (weightText === savedWeightText) {
+      return set.weight;
+    }
+    const value = parseDecimal(weightText);
+    return value === null ? null : fromUnit(value, unit);
+  };
+  const entered = (): SetValues => ({ weight: enteredWeight(), reps: parseInteger(repsText) });
 
   const save = () => {
     const values = entered();
@@ -63,17 +75,17 @@ export function SetRow({ index, set, previous, defaultReps, isCurrent, onChange,
         <ThemedText style={styles.numberText}>{number}</ThemedText>
       </Pressable>
       <ThemedText type="caption" style={styles.previous} numberOfLines={1}>
-        {formatPrevious(previous)}
+        {formatPrevious(unit, previous)}
       </ThemedText>
       <TextInput
         value={weightText}
         onChangeText={setWeightText}
         onEndEditing={save}
-        placeholder={previous?.weight != null ? formatDecimal(previous.weight) : 'kg'}
+        placeholder={previous?.weight != null ? formatWeightValue(previous.weight, unit) : unit}
         placeholderTextColor={palette.textTertiary}
         keyboardType="decimal-pad"
         selectTextOnFocus
-        accessibilityLabel={`Charge de la série ${number}, en kilos`}
+        accessibilityLabel={`Charge de la série ${number}, en ${unit === 'lb' ? 'livres' : 'kilos'}`}
         style={[inputStyle, { width: SET_COLUMNS.weight }]}
       />
       <TextInput

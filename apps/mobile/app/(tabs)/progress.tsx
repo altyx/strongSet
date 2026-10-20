@@ -11,7 +11,8 @@ import { palette, radius, spacing } from '@/src/constants/theme';
 import { lastWeeks, oneRepMaxChange, sessionStats, weekLabel, weeklyTotals, weekSpokenLabel } from '@/src/domain/progression';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { formatShortDate, toTimestamp } from '@/src/utils/date';
-import { formatDecimal } from '@/src/utils/number';
+import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
+import { formatWeight, formatWeightValue, spokenWeight, WeightUnit } from '@/src/utils/weight';
 
 const WEEKS = 8;
 const HISTORY_LIMIT = 500;
@@ -26,7 +27,7 @@ type TrainedExercise = {
   change: number | null;
 };
 
-function loadProgress() {
+function loadProgress(unit: WeightUnit) {
   const now = new Date();
   const since = toTimestamp(lastWeeks(now, WEEKS)[0]);
   const history = WorkoutRepository.getHistory(HISTORY_LIMIT);
@@ -42,7 +43,7 @@ function loadProgress() {
       id: exercise.id,
       name: exercise.name,
       lastDone: exercise.last_done,
-      lastBest: last.topSet ? `${formatDecimal(last.topSet.weight)} × ${last.topSet.reps}` : `${last.maxReps} reps`,
+      lastBest: last.topSet ? `${formatWeightValue(last.topSet.weight, unit)} × ${last.topSet.reps}` : `${last.maxReps} reps`,
       change: oneRepMaxChange(sessions, since),
     };
   });
@@ -56,13 +57,14 @@ function loadProgress() {
 
 export default function ProgressScreen() {
   const insets = useSafeAreaInsets();
+  const unit = useWeightUnit();
   const [data, setData] = useState<ReturnType<typeof loadProgress> | null>(null);
 
-  // Recharge au retour sur l'onglet : une séance a pu être terminée entre-temps
+  // Recharge au retour sur l'onglet : une séance a pu être terminée, ou l'unité changée, entre-temps
   useFocusEffect(
     useCallback(() => {
-      setData(loadProgress());
-    }, []),
+      setData(loadProgress(unit));
+    }, [unit]),
   );
 
   if (!data) {
@@ -89,7 +91,7 @@ export default function ProgressScreen() {
               <View style={styles.metric}>
                 <ThemedText type="caption">Volume cette semaine</ThemedText>
                 {/* Valeur avec unité : pas de capitales */}
-                <ThemedText type="display" style={styles.noUppercase}>{formatDecimal(current)} kg</ThemedText>
+                <ThemedText type="display" style={styles.noUppercase}>{formatWeight(current, unit)}</ThemedText>
                 <ThemedText type="caption">
                   {data.sessionsThisPeriod} {data.sessionsThisPeriod > 1 ? 'séances' : 'séance'} en {WEEKS} semaines
                 </ThemedText>
@@ -97,8 +99,8 @@ export default function ProgressScreen() {
               <BarChart
                 values={data.weeks.map((week) => week.total)}
                 labels={data.weeks.map((week) => weekLabel(week.weekStart, data.now))}
-                accessibilityLabel={`Volume par semaine, en kilos : ${data.weeks
-                  .map((week) => `${weekSpokenLabel(week.weekStart, data.now)}, ${formatDecimal(week.total)}`)
+                accessibilityLabel={`Volume par semaine : ${data.weeks
+                  .map((week) => `${weekSpokenLabel(week.weekStart, data.now)}, ${spokenWeight(week.total, unit)}`)
                   .join(' ; ')}`}
               />
             </Card>
@@ -123,9 +125,9 @@ export default function ProgressScreen() {
                     <ThemedText
                       type="defaultSemiBold"
                       tone={exercise.change > 0 ? 'accent' : 'secondary'}
-                      accessibilityLabel={`1RM estimé ${exercise.change > 0 ? 'en hausse' : 'en baisse'} de ${formatDecimal(Math.abs(exercise.change))} kilos`}>
+                      accessibilityLabel={`1RM estimé ${exercise.change > 0 ? 'en hausse' : 'en baisse'} de ${spokenWeight(Math.abs(exercise.change), unit)}`}>
                       {exercise.change > 0 ? '+' : ''}
-                      {formatDecimal(exercise.change)} kg
+                      {formatWeight(exercise.change, unit)}
                     </ThemedText>
                   )}
                   <ChevronRight size={20} color={palette.textTertiary} strokeWidth={2} pointerEvents="none" />

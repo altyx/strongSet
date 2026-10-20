@@ -1,7 +1,7 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { Trophy } from 'lucide-react-native/icons';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Pencil, Trash2, Trophy } from 'lucide-react-native/icons';
+import { useCallback, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/src/components/themed-text';
@@ -16,7 +16,8 @@ import { WorkoutRepository } from '@/src/repositories/workout/workout-repository
 import { Workout } from '@/src/repositories/workout/workout-type';
 import { formatLongDate } from '@/src/utils/date';
 import { formatDuration } from '@/src/utils/duration';
-import { formatDecimal } from '@/src/utils/number';
+import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
+import { formatWeight, formatWeightValue } from '@/src/utils/weight';
 
 function loadSummary(workout: Workout) {
   const exerciseIds = workout.exercises.flatMap((exercise) => (exercise.exercise_id === null ? [] : [exercise.exercise_id]));
@@ -39,9 +40,23 @@ export default function WorkoutSummaryScreen() {
   const { id, finished } = useLocalSearchParams<{ id: string; finished?: string }>();
   const justFinished = finished === '1';
   const insets = useSafeAreaInsets();
-  const [workout] = useState(() => WorkoutRepository.getWorkout(Number(id)));
-  const [summary] = useState(() => (workout ? loadSummary(workout) : null));
+  const unit = useWeightUnit();
+  const [workout, setWorkout] = useState(() => WorkoutRepository.getWorkout(Number(id)));
+  const [summary, setSummary] = useState(() => (workout ? loadSummary(workout) : null));
   const [note, setNote] = useState(workout?.note ?? '');
+
+  // Recharge au retour de la modification de la séance ; si elle a été supprimée entre-temps, on quitte l'écran
+  useFocusEffect(
+    useCallback(() => {
+      const updated = WorkoutRepository.getWorkout(Number(id));
+      if (!updated) {
+        router.back();
+        return;
+      }
+      setWorkout(updated);
+      setSummary(loadSummary(updated));
+    }, [id]),
+  );
 
   if (!workout || !summary) {
     return (
@@ -58,6 +73,25 @@ export default function WorkoutSummaryScreen() {
   const saveNote = () => {
     const trimmed = note.trim();
     WorkoutRepository.updateNote(workout.id, trimmed === '' ? null : trimmed);
+  };
+
+  const editWorkout = () => {
+    saveNote();
+    router.push({ pathname: '/workout', params: { id: workout.id } });
+  };
+
+  const deleteWorkout = () => {
+    Alert.alert('Supprimer la séance ?', 'Ses séries seront retirées de l’historique, des records et de la progression.', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+        onPress: () => {
+          WorkoutRepository.discardWorkout(workout.id);
+          router.back();
+        },
+      },
+    ]);
   };
 
   return (
@@ -94,7 +128,7 @@ export default function WorkoutSummaryScreen() {
         <View style={styles.grid}>
           <View style={styles.row}>
             <StatTile label="Durée" value={formatDuration(stats.durationSeconds)} />
-            <StatTile label="Volume" value={formatDecimal(stats.volume)} suffix="kg" />
+            <StatTile label="Volume" value={formatWeightValue(stats.volume, unit)} suffix={unit} />
           </View>
           <View style={styles.row}>
             <StatTile label="Séries" value={String(stats.completedSetCount)} />
@@ -119,11 +153,11 @@ export default function WorkoutSummaryScreen() {
                 <View style={styles.flex}>
                   <ThemedText type="defaultSemiBold">{record.exerciseName}</ThemedText>
                   <ThemedText type="caption">
-                    Charge max · {formatDecimal(record.weight)} kg × {record.reps}
+                    Charge max · {formatWeight(record.weight, unit)} × {record.reps}
                   </ThemedText>
                 </View>
                 <ThemedText type="metric" tone="accent" style={styles.recordDelta}>
-                  +{formatDecimal(record.weight - record.previousBest)} kg
+                  +{formatWeight(record.weight - record.previousBest, unit)}
                 </ThemedText>
               </View>
             ))}
@@ -160,7 +194,7 @@ export default function WorkoutSummaryScreen() {
                     {index + 1}
                   </ThemedText>
                   <ThemedText style={styles.setValue}>
-                    {set.weight === null ? `${set.reps} reps` : `${formatDecimal(set.weight)} kg × ${set.reps}`}
+                    {set.weight === null ? `${set.reps} reps` : `${formatWeight(set.weight, unit)} × ${set.reps}`}
                   </ThemedText>
                 </View>
               ))}
@@ -180,6 +214,11 @@ export default function WorkoutSummaryScreen() {
             accessibilityLabel="Note sur la séance"
             style={styles.note}
           />
+        </View>
+
+        <View style={styles.actions}>
+          <Button title="Modifier la séance" variant="secondary" icon={Pencil} onPress={editWorkout} />
+          <Button title="Supprimer la séance" variant="ghost" icon={Trash2} onPress={deleteWorkout} />
         </View>
       </ScrollView>
 
@@ -202,6 +241,9 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: palette.background,
+  },
+  actions: {
+    gap: spacing.sm,
   },
   empty: {
     alignItems: 'center',
