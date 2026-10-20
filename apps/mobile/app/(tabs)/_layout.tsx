@@ -1,33 +1,39 @@
 import { Tabs } from 'expo-router';
+import { Dumbbell, House } from 'lucide-react-native/icons';
 import React from 'react';
 
 import { HapticTab } from '@/src/components/haptic-tab';
-import { IconSymbol } from '@/src/components/ui/icon-symbol';
-import { Colors } from '@/src/constants/theme';
-import { useColorScheme } from '@/src/hooks/use-color-scheme';
+import { fontFamily, palette } from '@/src/constants/theme';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarActiveTintColor: palette.accent,
+        tabBarInactiveTintColor: palette.textSecondary,
+        tabBarStyle: {
+          backgroundColor: palette.background,
+          borderTopColor: palette.surfaceRaised,
+        },
+        tabBarLabelStyle: {
+          fontFamily: fontFamily.semibold,
+          fontSize: 11,
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Accueil',
+          tabBarIcon: ({ color }) => <House size={24} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="exercises"
         options={{
           title: 'Exercices',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="dumbbell.fill" color={color} />,
+          tabBarIcon: ({ color }) => <Dumbbell size={24} color={color} strokeWidth={2} />,
         }}
       />
     </Tabs>

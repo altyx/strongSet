@@ -1,13 +1,14 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, ThemeProvider, type Theme } from '@react-navigation/native';
 import {Stack, useRouter} from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
+import { loadAppFonts } from '@/src/constants/fonts';
+import { fontFamily, palette } from '@/src/constants/theme';
 import { initializeDatabase } from '@/src/db/database';
 import {initializeMMKVStorage, STORAGE_KEYS, useMMKVStorage} from '@/src/hooks/use-mmkv-storage';
-import { useColorScheme } from '@/src/hooks/use-color-scheme';
 import {UserSettings} from "@/src/hooks/user/user-settings.type";
 
 SplashScreen.setOptions({
@@ -21,8 +22,27 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
+// Thème sombre de navigation (en-têtes, fonds des écrans) aligné sur la palette
+const navigationTheme: Theme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    primary: palette.accent,
+    background: palette.background,
+    card: palette.background,
+    text: palette.text,
+    border: palette.surfaceRaised,
+  },
+  fonts: {
+    ...DarkTheme.fonts,
+    regular: { fontFamily: fontFamily.regular, fontWeight: '400' },
+    medium: { fontFamily: fontFamily.medium, fontWeight: '500' },
+    bold: { fontFamily: fontFamily.semibold, fontWeight: '600' },
+    heavy: { fontFamily: fontFamily.bold, fontWeight: '700' },
+  },
+};
+
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const router = useRouter();
   const [isReady, setIsReady] = useState(false);
   const { read } = useMMKVStorage();
@@ -34,6 +54,7 @@ export default function RootLayout() {
         await initializeMMKVStorage();
         // Crée la base locale et applique les migrations avant d'afficher le moindre écran
         await initializeDatabase();
+        await loadAppFonts();
 
         const user = read<UserSettings>(STORAGE_KEYS.USER_PREFERENCES);
         console.log(user);
@@ -62,7 +83,7 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={navigationTheme}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
@@ -73,7 +94,7 @@ export default function RootLayout() {
             options={{ presentation: 'modal', title: 'Nouvel exercice' }}
           />
         </Stack>
-        <StatusBar style="auto" />
+        <StatusBar style="light" />
     </ThemeProvider>
   );
 }

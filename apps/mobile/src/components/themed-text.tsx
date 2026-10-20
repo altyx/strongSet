@@ -1,11 +1,32 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
+import { palette, typography } from '@/src/constants/theme';
 import { useThemeColor } from '@/src/hooks/use-theme-color';
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link' | 'label';
+  type?:
+    | 'default'
+    | 'defaultSemiBold'
+    | 'title'
+    | 'subtitle'
+    | 'heading'
+    | 'caption'
+    | 'label'
+    | 'link'
+    | 'display'
+    | 'metric';
+  // Couleur du texte dans la palette ; prime sur la couleur par défaut de la variante
+  tone?: keyof typeof tones;
+};
+
+const tones = {
+  primary: palette.text,
+  secondary: palette.textSecondary,
+  tertiary: palette.textTertiary,
+  accent: palette.accent,
+  onAccent: palette.onAccent,
 };
 
 export function ThemedText({
@@ -13,56 +34,25 @@ export function ThemedText({
   lightColor,
   darkColor,
   type = 'default',
+  tone,
   ...rest
 }: ThemedTextProps) {
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const themeColor = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const color = tone ? tones[tone] : themeColor;
 
-  return (
-    <Text
-      style={[
-        { color },
-        type === 'default' ? styles.default : undefined,
-        type === 'title' ? styles.title : undefined,
-        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
-        type === 'link' ? styles.link : undefined,
-        type === 'label' ? styles.label : undefined,
-        style,
-      ]}
-      {...rest}
-    />
-  );
+  return <Text style={[{ color }, styles[type], tone && { color }, style]} {...rest} />;
 }
 
 const styles = StyleSheet.create({
-  default: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#475569',
-  },
-  defaultSemiBold: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    lineHeight: 37.5,
-    color: '#0F172A'
-  },
-  subtitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  link: {
-    lineHeight: 30,
-    fontSize: 16,
-    color: '#FF5724',
-  },
-  label: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#0F172A'
-  }
+  default: typography.body,
+  defaultSemiBold: typography.bodyStrong,
+  title: typography.title,
+  // Ancien nom de heading, gardé pour les écrans pas encore migrés
+  subtitle: typography.heading,
+  heading: typography.heading,
+  caption: { ...typography.caption, color: palette.textSecondary },
+  label: { ...typography.label, color: palette.textSecondary },
+  link: { ...typography.bodyStrong, color: palette.accent },
+  display: typography.display,
+  metric: typography.metric,
 });
