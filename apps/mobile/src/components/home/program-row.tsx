@@ -4,13 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/src/components/themed-text';
 import { fontFamily, palette, radius } from '@/src/constants/theme';
 import { Template } from '@/src/repositories/template/template-type';
-
-// « Full Body » -> « FB », « Chest » -> « CH »
-function initials(name: string) {
-  const words = name.trim().split(/\s+/);
-  const letters = words.length > 1 ? words[0][0] + words[1][0] : name.slice(0, 2);
-  return letters.toUpperCase();
-}
+import { initials } from '@/src/utils/text';
 
 type ProgramRowProps = {
   template: Template;

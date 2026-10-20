@@ -6,6 +6,7 @@ import { ThemedText } from '@/src/components/themed-text';
 import { IconButton } from '@/src/components/ui/icon-button';
 import { muscleLabel } from '@/src/constants/muscles';
 import { palette, radius, spacing, typography } from '@/src/constants/theme';
+import { filterExercises } from '@/src/domain/exercise-library';
 import { ExerciseListItem, ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 
 type ExercisePickerProps = {
@@ -14,15 +15,12 @@ type ExercisePickerProps = {
   onClose: () => void;
 };
 
-// Recherche insensible à la casse et aux accents
-const normalize = (text: string) => text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-
 // Feuille modale pour choisir un exercice de la bibliothèque
 export function ExercisePicker({ visible, onSelect, onClose }: ExercisePickerProps) {
   const [query, setQuery] = useState('');
   const [exercises, setExercises] = useState<ExerciseListItem[]>([]);
 
-  const filtered = exercises.filter((exercise) => normalize(exercise.name).includes(normalize(query.trim())));
+  const filtered = filterExercises(exercises, query, null);
 
   return (
     <Modal

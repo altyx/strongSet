@@ -26,14 +26,15 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Accueil',
-          tabBarIcon: ({ color }) => <House size={24} color={color} strokeWidth={2} />,
+          // pointerEvents none : sinon le SVG capte le toucher et l'onglet ne réagit pas quand on tape sur l'icône
+          tabBarIcon: ({ color }) => <House size={24} color={color} strokeWidth={2} pointerEvents="none" />,
         }}
       />
       <Tabs.Screen
         name="exercises"
         options={{
           title: 'Exercices',
-          tabBarIcon: ({ color }) => <Dumbbell size={24} color={color} strokeWidth={2} />,
+          tabBarIcon: ({ color }) => <Dumbbell size={24} color={color} strokeWidth={2} pointerEvents="none" />,
         }}
       />
     </Tabs>

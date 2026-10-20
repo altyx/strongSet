@@ -1,212 +1,187 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import {
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/src/components/themed-text';
-import { ThemedView } from '@/src/components/themed-view';
-import { useThemeColor } from '@/src/hooks/use-theme-color';
+import { Button } from '@/src/components/ui/button';
+import { EQUIPMENT_OPTIONS } from '@/src/constants/equipment';
+import { muscleLabel } from '@/src/constants/muscles';
+import { palette, radius, spacing, typography } from '@/src/constants/theme';
+import { validateNewExercise } from '@/src/domain/exercise-library';
+import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 
-const MUSCLE_GROUPS = [
-  'Poitrine',
-  'Dos',
-  'Épaules',
-  'Biceps',
-  'Triceps',
-  'Jambes',
-  'Abdominaux',
-  'Fessiers',
-  'Mollets',
-  'Avant-bras',
-  'Cardio',
-];
+type ChipProps = { label: string; selected: boolean; onPress: () => void; role: 'checkbox' | 'radio' };
 
+function Chip({ label, selected, onPress, role }: ChipProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole={role}
+      accessibilityState={{ checked: selected }}
+      style={[styles.chip, selected && styles.chipSelected]}>
+      <ThemedText type="defaultSemiBold" tone={selected ? 'onAccent' : 'secondary'} style={styles.chipText}>
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
+// Création d'un exercice de la bibliothèque (modale)
 export default function CreateExerciseModal() {
+  const insets = useSafeAreaInsets();
+  const [muscles] = useState(() => ExerciseRepository.getMuscles());
   const [name, setName] = useState('');
-  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
+  const [muscleIds, setMuscleIds] = useState<number[]>([]);
+  const [equipment, setEquipment] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const textColor = useThemeColor({}, 'text');
-  const backgroundColor = useThemeColor({}, 'background');
-  const tintColor = useThemeColor({}, 'tint');
+  const toggleMuscle = (id: number) => {
+    setMuscleIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+    setError(null);
+  };
 
-  const handleCreate = () => {
-    if (!name.trim()) {
-      setError('Le nom de l\'exercice est requis');
+  const create = () => {
+    const message = validateNewExercise(name, muscleIds, ExerciseRepository.existsByName(name));
+    if (message) {
+      setError(message);
       return;
     }
-
-    try {
-
-      router.back();
-    } catch (e) {
-      setError('Erreur lors de la création de l\'exercice');
-      console.error(e);
-    }
+    ExerciseRepository.create({ name, equipment, muscleIds });
+    router.back();
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.keyboardView}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ThemedView style={styles.container}>
-          <ThemedText type="title" style={styles.title}>
-            Nouvel exercice
-          </ThemedText>
+    <View style={styles.screen}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 120 }]}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets>
+        <View style={styles.field}>
+          <ThemedText type="label">Nom de l&apos;exercice</ThemedText>
+          <TextInput
+            value={name}
+            onChangeText={(text) => {
+              setName(text);
+              setError(null);
+            }}
+            placeholder="Ex. Développé couché"
+            placeholderTextColor={palette.textTertiary}
+            autoFocus
+            accessibilityLabel="Nom de l'exercice"
+            style={styles.input}
+          />
+        </View>
 
-          {error && (
-            <ThemedView style={styles.errorContainer}>
-              <ThemedText style={styles.errorText}>{error}</ThemedText>
-            </ThemedView>
-          )}
+        <View style={styles.field}>
+          <ThemedText type="label">Muscles travaillés</ThemedText>
+          <View style={styles.chips}>
+            {muscles.map((muscle) => (
+              <Chip
+                key={muscle.id}
+                label={muscleLabel(muscle.name)}
+                selected={muscleIds.includes(muscle.id)}
+                onPress={() => toggleMuscle(muscle.id)}
+                role="checkbox"
+              />
+            ))}
+          </View>
+        </View>
 
-          <ThemedView style={styles.inputContainer}>
-            <ThemedText type="defaultSemiBold">Nom de l&apos;exercice</ThemedText>
-            <TextInput
-              style={[
-                styles.input,
-                { color: textColor, borderColor: textColor, backgroundColor },
-              ]}
-              value={name}
-              onChangeText={setName}
-              placeholder="Ex: Développé couché"
-              placeholderTextColor="#888"
-            />
-          </ThemedView>
-
-          <ThemedView style={styles.inputContainer}>
-            <ThemedText type="defaultSemiBold">Groupe musculaire</ThemedText>
-            <ThemedView style={styles.muscleGroupsContainer}>
-              {MUSCLE_GROUPS.map((group) => (
-                <TouchableOpacity
-                  key={group}
-                  style={[
-                    styles.muscleGroupButton,
-                    {
-                      backgroundColor:
-                        selectedMuscleGroup === group ? tintColor : 'transparent',
-                      borderColor: tintColor,
-                    },
-                  ]}
-                  onPress={() =>
-                    setSelectedMuscleGroup(
-                      selectedMuscleGroup === group ? null : group
-                    )
-                  }
-                >
-                  <ThemedText
-                    style={[
-                      styles.muscleGroupText,
-                      {
-                        color: selectedMuscleGroup === group ? '#fff' : textColor,
-                      },
-                    ]}
-                  >
-                    {group}
-                  </ThemedText>
-                </TouchableOpacity>
-              ))}
-            </ThemedView>
-          </ThemedView>
-
-          <ThemedView style={styles.buttonsContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={() => router.back()}
-            >
-              <ThemedText>Annuler</ThemedText>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, styles.createButton, { backgroundColor: tintColor }]}
-              onPress={handleCreate}
-            >
-              <ThemedText style={styles.createButtonText}>Créer</ThemedText>
-            </TouchableOpacity>
-          </ThemedView>
-        </ThemedView>
+        <View style={styles.field}>
+          <ThemedText type="label">Matériel (facultatif)</ThemedText>
+          <View style={styles.chips} accessibilityRole="radiogroup">
+            {EQUIPMENT_OPTIONS.map((option) => (
+              <Chip
+                key={option}
+                label={option}
+                selected={equipment === option}
+                // Un second appui désélectionne
+                onPress={() => setEquipment((current) => (current === option ? null : option))}
+                role="radio"
+              />
+            ))}
+          </View>
+        </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+
+      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
+        {error && (
+          <ThemedText type="caption" tone="accent" style={styles.error} accessibilityRole="alert">
+            {error}
+          </ThemedText>
+        )}
+        <View style={styles.actions}>
+          <Button title="Annuler" variant="secondary" onPress={() => router.back()} style={styles.action} />
+          <Button title="Créer" onPress={create} style={styles.action} />
+        </View>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardView: {
+  screen: {
     flex: 1,
+    backgroundColor: palette.background,
   },
-  scrollContent: {
-    flexGrow: 1,
+  content: {
+    gap: spacing.xxl,
+    padding: spacing.xl,
   },
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  title: {
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  errorContainer: {
-    backgroundColor: '#ffebee',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: '#c62828',
-  },
-  inputContainer: {
-    marginBottom: 20,
-    gap: 8,
+  field: {
+    gap: spacing.md,
   },
   input: {
+    ...typography.body,
+    height: 52,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
+    borderColor: palette.border,
+    backgroundColor: palette.surface,
+    color: palette.text,
   },
-  muscleGroupsContainer: {
+  chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.sm,
   },
-  muscleGroupButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+  chip: {
+    height: 40,
+    paddingHorizontal: spacing.lg,
     borderRadius: 20,
+    justifyContent: 'center',
     borderWidth: 1,
+    borderColor: palette.border,
   },
-  muscleGroupText: {
+  chipSelected: {
+    borderColor: palette.accent,
+    backgroundColor: palette.accent,
+  },
+  chipText: {
     fontSize: 14,
   },
-  buttonsContainer: {
+  footer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    gap: spacing.sm,
+    paddingTop: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    borderTopWidth: 1,
+    borderTopColor: palette.surfaceRaised,
+    backgroundColor: palette.background,
+  },
+  error: {
+    textAlign: 'center',
+  },
+  actions: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 'auto',
-    paddingTop: 20,
+    gap: spacing.md,
   },
-  button: {
+  action: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#888',
-  },
-  createButton: {},
-  createButtonText: {
-    color: '#fff',
-    fontWeight: '600',
   },
 });
-
