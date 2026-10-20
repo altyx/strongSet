@@ -122,12 +122,13 @@ export default function WorkoutScreen() {
           text: 'Terminer',
           onPress: () => {
             const saved = WorkoutRepository.finishWorkout(workout.id);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            // TODO: ouvrir le récap de séance (étape 3 du plan) au lieu de revenir à l'accueil
-            router.back();
             if (!saved) {
+              router.back();
               Alert.alert('Séance non enregistrée', "Aucune série n'avait été validée.");
+              return;
             }
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            router.replace({ pathname: '/workout-summary/[id]', params: { id: workout.id, finished: '1' } });
           },
         },
       ],

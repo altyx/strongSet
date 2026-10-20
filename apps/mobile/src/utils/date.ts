@@ -13,6 +13,11 @@ export function formatLongDate(date: Date) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
+// Ex. « mar. 20 oct. »
+export function formatShortDate(date: Date) {
+  return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
 // Lundi 00:00 (heure locale) de la semaine contenant `date`
 export function startOfWeek(date: Date) {
   const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());

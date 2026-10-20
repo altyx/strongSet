@@ -1,4 +1,4 @@
-import { formatDuration } from '@/src/utils/duration';
+import { formatDuration, formatMinutes } from '@/src/utils/duration';
 import { formatDecimal, parseDecimal, parseInteger } from '@/src/utils/number';
 
 describe('formatDecimal', () => {
@@ -35,4 +35,10 @@ it('formatDuration affiche minutes:secondes, avec les heures au-delà d’une he
   expect(formatDuration(1934)).toBe('32:14');
   expect(formatDuration(3723)).toBe('1:02:03');
   expect(formatDuration(-3)).toBe('0:00');
+});
+
+it('formatMinutes arrondit à la minute et passe en heures au-delà de 60 min', () => {
+  expect(formatMinutes(29)).toBe('0 min');
+  expect(formatMinutes(54 * 60 + 12)).toBe('54 min');
+  expect(formatMinutes(65 * 60)).toBe('1 h 05');
 });
