@@ -16,7 +16,8 @@ export function IconButton({ icon: Icon, ...rest }: IconButtonProps) {
       hitSlop={4}
       style={({ pressed }) => [styles.base, pressed && styles.pressed]}
       {...rest}>
-      <Icon size={20} color={palette.text} strokeWidth={2} />
+      {/* pointerEvents none : sinon le SVG capte le toucher et le Pressable ne reçoit rien */}
+      <Icon size={20} color={palette.text} strokeWidth={2} pointerEvents="none" />
     </Pressable>
   );
 }

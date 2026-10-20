@@ -89,6 +89,11 @@ export default function RootLayout() {
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           <Stack.Screen name="onboarding" options={{ headerShown: true, title: 'My fitness App' }} />
           <Stack.Screen name="CGU" options={{ presentation: 'modal'  }} />
+          {/* Plein écran sans geste de fermeture : une séance ne doit pas se perdre par un balayage accidentel */}
+          <Stack.Screen
+            name="workout"
+            options={{ presentation: 'fullScreenModal', headerShown: false, gestureEnabled: false }}
+          />
           <Stack.Screen
             name="create-exercise"
             options={{ presentation: 'modal', title: 'Nouvel exercice' }}

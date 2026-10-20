@@ -44,7 +44,10 @@ export function Button({
         style,
       ]}
       {...rest}>
-      {Icon && <Icon size={18} color={color} strokeWidth={2.5} fill={iconFilled ? color : 'none'} />}
+      {/* pointerEvents none : sinon le SVG capte le toucher et le Pressable ne reçoit rien */}
+      {Icon && (
+        <Icon size={18} color={color} strokeWidth={2.5} fill={iconFilled ? color : 'none'} pointerEvents="none" />
+      )}
       <ThemedText style={[styles.label, variant === 'primary' && styles.labelPrimary, { color }]}>{title}</ThemedText>
     </Pressable>
   );
