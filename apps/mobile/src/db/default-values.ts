@@ -51,9 +51,9 @@ export const DEFAULT_VALUES_DATABASE = `
     INSERT OR IGNORE INTO exercise_muscles (exercise_id, muscle_id)
     VALUES (5, 5);
 
-    INSERT OR IGNORE INTO template_exercises (id, template_id, exercise_id, created_at)
-    VALUES (1, 1, 1, 1609459200),
-           (2, 1, 2, 1609459200),
-           (3, 1, 3, 1609459200),
-           (4, 1, 5, 1609459200);
+    INSERT OR IGNORE INTO template_exercises (id, template_id, exercise_id, position, created_at)
+    VALUES (1, 1, 1, 0, 1609459200),
+           (2, 1, 2, 1, 1609459200),
+           (3, 1, 3, 2, 1609459200),
+           (4, 1, 5, 3, 1609459200);
 `;

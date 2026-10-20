@@ -26,6 +26,29 @@ describe('buildWorkoutExercises', () => {
     expect(exercises[0].sets).toEqual([{ weight: null, reps: null }, { weight: null, reps: null }]);
   });
 
+  it('applique les objectifs du programme : séries, répétitions sans historique, repos', () => {
+    const programmed: Template = {
+      ...template,
+      exercises: [
+        { id: 1, name: 'Bench Press', target_sets: 3, target_reps: 8, rest_seconds: 150 },
+        { id: 2, name: 'Squat', target_sets: null, target_reps: null, rest_seconds: null },
+      ],
+    };
+    const lastPerformance = (exerciseId: number) => (exerciseId === 1 ? [{ weight: 70, reps: 8 }] : []);
+
+    const [bench, squat] = buildWorkoutExercises(programmed, lastPerformance, 4);
+
+    expect(bench.rest_seconds).toBe(150);
+    // 3 séries visées ; la 1re a un historique (indication), les suivantes reçoivent les reps visées
+    expect(bench.sets).toEqual([
+      { weight: null, reps: null },
+      { weight: null, reps: 8 },
+      { weight: null, reps: 8 },
+    ]);
+    expect(squat.rest_seconds).toBeNull();
+    expect(squat.sets).toHaveLength(4);
+  });
+
   it('crée au moins une série', () => {
     expect(buildWorkoutExercises(template, () => [], 0)[0].sets).toHaveLength(1);
   });

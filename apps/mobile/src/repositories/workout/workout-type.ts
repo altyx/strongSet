@@ -14,6 +14,8 @@ export interface WorkoutExercise {
   exercise_id: number | null;
   name: string;
   position: number;
+  // Repos entre les séries en secondes ; null = valeur par défaut des réglages
+  rest_seconds: number | null;
   sets: WorkoutSet[];
 }
 
@@ -49,6 +51,8 @@ export interface SetValues {
 export interface NewWorkoutExercise {
   exercise_id: number | null;
   name: string;
+  // Repos entre les séries en secondes, repris du programme ; null ou absent = valeur par défaut des réglages
+  rest_seconds?: number | null;
   // Séries créées d'emblée, ex. pré-remplies avec la dernière performance
   sets?: SetValues[];
 }

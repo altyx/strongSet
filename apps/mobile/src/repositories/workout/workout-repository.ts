@@ -41,8 +41,9 @@ export const WorkoutRepository = {
 
       params.exercises.forEach((exercise, position) => {
         const workoutExerciseId = db.runSync(
-          'INSERT INTO workout_exercises (workout_id, exercise_id, exercise_name, position, created_at) VALUES (?, ?, ?, ?, ?)',
-          [workoutId, exercise.exercise_id, exercise.name, position, timestamp],
+          `INSERT INTO workout_exercises (workout_id, exercise_id, exercise_name, position, rest_seconds, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [workoutId, exercise.exercise_id, exercise.name, position, exercise.rest_seconds ?? null, timestamp],
         ).lastInsertRowId;
 
         (exercise.sets ?? []).forEach((set, setPosition) => {
@@ -76,7 +77,7 @@ export const WorkoutRepository = {
     }
 
     const exercises = db.getAllSync<Omit<WorkoutExercise, 'sets'>>(
-      `SELECT id, exercise_id, exercise_name AS name, position
+      `SELECT id, exercise_id, exercise_name AS name, position, rest_seconds
        FROM workout_exercises
        WHERE workout_id = ?
        ORDER BY position, id`,
@@ -114,8 +115,9 @@ export const WorkoutRepository = {
         [workoutId],
       );
       workoutExerciseId = db.runSync(
-        'INSERT INTO workout_exercises (workout_id, exercise_id, exercise_name, position, created_at) VALUES (?, ?, ?, ?, ?)',
-        [workoutId, exercise.exercise_id, exercise.name, next?.position ?? 0, timestamp],
+        `INSERT INTO workout_exercises (workout_id, exercise_id, exercise_name, position, rest_seconds, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [workoutId, exercise.exercise_id, exercise.name, next?.position ?? 0, exercise.rest_seconds ?? null, timestamp],
       ).lastInsertRowId;
       (exercise.sets ?? []).forEach((set, position) => {
         db.runSync(

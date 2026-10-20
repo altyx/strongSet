@@ -1,4 +1,5 @@
-import { StyleSheet, View } from 'react-native';
+import { Play } from 'lucide-react-native/icons';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
 import { fontFamily, palette, radius } from '@/src/constants/theme';
@@ -11,11 +12,22 @@ function initials(name: string) {
   return letters.toUpperCase();
 }
 
-export function ProgramRow({ template }: { template: Template }) {
+type ProgramRowProps = {
+  template: Template;
+  // Tap sur la ligne : modifier le programme
+  onPress: () => void;
+  onStart: () => void;
+};
+
+export function ProgramRow({ template, onPress, onStart }: ProgramRowProps) {
   const exerciseCount = template.exercises.length;
 
   return (
-    <View style={styles.row}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityHint="Modifier le programme"
+      style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
       <View style={styles.code}>
         <ThemedText style={styles.codeText} tone="accent">
           {initials(template.name)}
@@ -29,7 +41,17 @@ export function ProgramRow({ template }: { template: Template }) {
           {exerciseCount === 0 ? 'Aucun exercice' : `${exerciseCount} ${exerciseCount > 1 ? 'exercices' : 'exercice'}`}
         </ThemedText>
       </View>
-    </View>
+      {exerciseCount > 0 && (
+        <Pressable
+          onPress={onStart}
+          accessibilityRole="button"
+          accessibilityLabel={`Démarrer ${template.name}`}
+          hitSlop={4}
+          style={({ pressed }) => [styles.start, pressed && styles.pressed]}>
+          <Play size={18} color={palette.onAccent} fill={palette.onAccent} strokeWidth={2.5} pointerEvents="none" />
+        </Pressable>
+      )}
+    </Pressable>
   );
 }
 
@@ -41,6 +63,9 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 18,
     backgroundColor: palette.surface,
+  },
+  pressed: {
+    opacity: 0.8,
   },
   code: {
     width: 48,
@@ -58,5 +83,13 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
     gap: 2,
+  },
+  start: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.accent,
   },
 });
