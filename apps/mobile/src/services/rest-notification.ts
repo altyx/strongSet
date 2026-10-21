@@ -1,6 +1,9 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
+import { ActiveRest, restToResume } from '@/src/domain/rest';
+import { mmkvStorage, STORAGE_KEYS } from '@/src/hooks/use-mmkv-storage';
+
 // Identifiant fixe : programmer à nouveau remplace la notification précédente au lieu d'en empiler
 const REST_NOTIFICATION_ID = 'rest-timer';
 const REST_CHANNEL_ID = 'rest-timer';
@@ -32,6 +35,23 @@ export function configureNotifications() {
       sound: 'default',
     }).catch((error) => console.warn('Canal de notification', error));
   }
+}
+
+/**
+ * Autorisation des notifications, pour l'écran Réglages.
+ * `canAsk` : le système accepte encore d'afficher sa demande. Sinon (refus sur iOS, refus répétés sur Android), seuls
+ * les réglages du téléphone permettent de l'accorder.
+ */
+export type NotificationAccess = { granted: boolean; canAsk: boolean };
+
+export async function getNotificationAccess(): Promise<NotificationAccess> {
+  const permission = await Notifications.getPermissionsAsync();
+  return { granted: permission.granted, canAsk: !permission.granted && permission.canAskAgain };
+}
+
+export async function requestNotificationAccess(): Promise<NotificationAccess> {
+  const permission = await Notifications.requestPermissionsAsync();
+  return { granted: permission.granted, canAsk: !permission.granted && permission.canAskAgain };
 }
 
 // Demande l'autorisation la première fois ; ne redemande pas après un refus
@@ -67,4 +87,24 @@ export function cancelRestEnd() {
     await Notifications.cancelScheduledNotificationAsync(REST_NOTIFICATION_ID);
     await Notifications.dismissNotificationAsync(REST_NOTIFICATION_ID);
   });
+}
+
+/**
+ * Démarre ou ajuste le repos : il est enregistré (l'écran de séance peut être réduit ou l'app fermée) et la
+ * notification de fin est programmée.
+ */
+export function startRest(rest: ActiveRest) {
+  mmkvStorage.write(STORAGE_KEYS.ACTIVE_REST, rest);
+  scheduleRestEnd(rest.endsAt);
+}
+
+// Repos de cette séance à afficher en rouvrant l'écran, s'il n'est pas fini
+export function getActiveRest(workoutId: number): ActiveRest | null {
+  return restToResume(mmkvStorage.read<ActiveRest>(STORAGE_KEYS.ACTIVE_REST), workoutId, Date.now());
+}
+
+// Repos terminé, passé, ou séance finie : plus de repos enregistré ni de notification
+export function clearRest() {
+  mmkvStorage.remove(STORAGE_KEYS.ACTIVE_REST);
+  cancelRestEnd();
 }
