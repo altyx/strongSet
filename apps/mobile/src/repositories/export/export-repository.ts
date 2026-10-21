@@ -1,8 +1,8 @@
 import { getDatabase } from '@/src/db/database';
 import { ExportedSet } from '@/src/domain/export';
 
-// Tables sauvegardées, dans un ordre compatible avec les clés étrangères pour une future restauration
-const BACKUP_TABLES = [
+// Tables sauvegardées, dans un ordre compatible avec les clés étrangères (la restauration les réinsère dans cet ordre)
+export const BACKUP_TABLES = [
   'muscles',
   'exercises',
   'exercise_muscles',
