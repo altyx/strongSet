@@ -9,6 +9,7 @@ import { Button } from '@/src/components/ui/button';
 import { Card } from '@/src/components/ui/card';
 import { StatTile } from '@/src/components/ui/stat-tile';
 import { muscleLabel } from '@/src/constants/muscles';
+import { SET_TYPE_INFO, setLabels } from '@/src/constants/set-types';
 import { fontFamily, palette, radius, spacing, typography } from '@/src/constants/theme';
 import { findWeightRecords, setsPerMuscle, summarizeWorkout, volumeChange } from '@/src/domain/workout-summary';
 import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
@@ -185,21 +186,27 @@ export default function WorkoutSummaryScreen() {
 
         <View style={styles.section}>
           <ThemedText type="heading">Détail</ThemedText>
-          {workout.exercises.map((exercise) => (
-            <Card key={exercise.id} style={styles.exercise}>
-              <ThemedText type="defaultSemiBold">{exercise.name}</ThemedText>
-              {exercise.sets.map((set, index) => (
-                <View key={set.id} style={styles.setLine}>
-                  <ThemedText type="caption" style={styles.setNumber}>
-                    {index + 1}
-                  </ThemedText>
-                  <ThemedText style={styles.setValue}>
-                    {set.weight === null ? `${set.reps} reps` : `${formatWeight(set.weight, unit)} × ${set.reps}`}
-                  </ThemedText>
-                </View>
-              ))}
-            </Card>
-          ))}
+          {workout.exercises.map((exercise) => {
+            const labels = setLabels(exercise.sets.map((set) => set.type));
+            return (
+              <Card key={exercise.id} style={styles.exercise}>
+                <ThemedText type="defaultSemiBold">{exercise.name}</ThemedText>
+                {exercise.sets.map((set, index) => (
+                  <View key={set.id} style={styles.setLine}>
+                    <ThemedText
+                      type="caption"
+                      style={[styles.setNumber, SET_TYPE_INFO[set.type].color !== null && { color: SET_TYPE_INFO[set.type].color! }]}
+                      accessibilityLabel={set.type === 'normal' ? undefined : SET_TYPE_INFO[set.type].label}>
+                      {labels[index]}
+                    </ThemedText>
+                    <ThemedText style={styles.setValue}>
+                      {set.weight === null ? `${set.reps} reps` : `${formatWeight(set.weight, unit)} × ${set.reps}`}
+                    </ThemedText>
+                  </View>
+                ))}
+              </Card>
+            );
+          })}
         </View>
 
         <View style={styles.section}>

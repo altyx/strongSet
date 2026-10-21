@@ -1,10 +1,11 @@
 import { findWeightRecords, setsPerMuscle, summarizeWorkout, volumeChange } from '@/src/domain/workout-summary';
-import { Workout } from '@/src/repositories/workout/workout-type';
+import { SetType, Workout } from '@/src/repositories/workout/workout-type';
 
 let nextId = 1;
-const set = (weight: number | null, reps: number | null, completed = true) => ({
+const set = (weight: number | null, reps: number | null, completed = true, type: SetType = 'normal') => ({
   id: nextId++,
   position: 0,
+  type,
   weight,
   reps,
   completed_at: completed ? 1 : null,
@@ -68,4 +69,31 @@ it('setsPerMuscle compte les séries validées par muscle, du plus au moins trav
     { muscle: 'Back', sets: 2 },
     { muscle: 'Biceps', sets: 2 },
   ]);
+});
+
+describe('séries d’échauffement', () => {
+  const withWarmups: Workout = {
+    ...workout,
+    exercises: [
+      {
+        id: 1,
+        exercise_id: 1,
+        name: 'Bench Press',
+        position: 0,
+        rest_seconds: null,
+        exercise_note: null,
+        // L'échauffement est plus lourd que la série de travail : il ne doit battre aucun record
+        sets: [set(90, 1, true, 'warmup'), set(70, 8), set(50, 12, true, 'drop')],
+      },
+    ],
+  };
+
+  it('comptent dans les séries faites mais pas dans le volume', () => {
+    expect(summarizeWorkout(withWarmups)).toMatchObject({ volume: 70 * 8 + 50 * 12, completedSetCount: 3 });
+  });
+
+  it('ne battent pas de record et ne comptent pas par muscle', () => {
+    expect(findWeightRecords(withWarmups, { 1: 75 })).toEqual([]);
+    expect(setsPerMuscle(withWarmups, { 1: ['Chest'] })).toEqual([{ muscle: 'Chest', sets: 2 }]);
+  });
 });

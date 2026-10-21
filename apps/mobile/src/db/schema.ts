@@ -97,6 +97,8 @@ CREATE TABLE IF NOT EXISTS sets (
     -- Charge en kg, NULL tant qu'elle n'est pas saisie (0 pour le poids du corps)
     weight              REAL,
     reps                INTEGER,
+    -- normal, warmup (échauffement : hors volume, records et progression), drop (dégressive), failure (à l'échec)
+    type                TEXT NOT NULL DEFAULT 'normal' CHECK (type IN ('normal', 'warmup', 'drop', 'failure')),
     -- NULL tant que la série n'est pas validée
     completed_at        INTEGER,
     created_at          INTEGER NOT NULL,

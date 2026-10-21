@@ -1,6 +1,10 @@
+// Échauffement : compte dans les séries faites mais pas dans le volume, les records ni la progression
+export type SetType = 'normal' | 'warmup' | 'drop' | 'failure';
+
 export interface WorkoutSet {
   id: number;
   position: number;
+  type: SetType;
   // kg, null tant que la charge n'est pas saisie
   weight: number | null;
   reps: number | null;
@@ -57,11 +61,21 @@ export interface SetValues {
   reps: number | null;
 }
 
+// Série d'une séance passée (colonne « Précédent ») ; son type est repris par la série correspondante
+export interface PreviousSet extends SetValues {
+  type: SetType;
+}
+
+// Série à créer ; type absent = normal
+export interface NewSet extends SetValues {
+  type?: SetType;
+}
+
 export interface NewWorkoutExercise {
   exercise_id: number | null;
   name: string;
   // Repos entre les séries en secondes, repris du programme ; null ou absent = valeur par défaut des réglages
   rest_seconds?: number | null;
   // Séries créées d'emblée, ex. pré-remplies avec la dernière performance
-  sets?: SetValues[];
+  sets?: NewSet[];
 }

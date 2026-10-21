@@ -2,6 +2,8 @@ import {getDatabase} from "@/src/db/database";
 import {
   ExerciseSession,
   NewWorkoutExercise,
+  PreviousSet,
+  SetType,
   SetValues,
   Workout,
   WorkoutExercise,
@@ -18,7 +20,8 @@ const SUMMARY_SELECT = `
   SELECT w.id, w.name, w.started_at, w.finished_at,
          COUNT(DISTINCT we.id) AS exercise_count,
          COUNT(s.id) AS completed_set_count,
-         COALESCE(SUM(s.weight * s.reps), 0) AS volume
+         -- Les séries d'échauffement ne comptent pas dans le volume
+         COALESCE(SUM(CASE WHEN s.type != 'warmup' THEN s.weight * s.reps END), 0) AS volume
   FROM workouts w
   LEFT JOIN workout_exercises we ON we.workout_id = w.id
   LEFT JOIN sets s ON s.workout_exercise_id = we.id AND s.completed_at IS NOT NULL`;
@@ -93,8 +96,8 @@ export const WorkoutRepository = {
 
         (exercise.sets ?? []).forEach((set, setPosition) => {
           db.runSync(
-            'INSERT INTO sets (workout_exercise_id, position, weight, reps, created_at) VALUES (?, ?, ?, ?, ?)',
-            [workoutExerciseId, setPosition, set.weight, set.reps, timestamp],
+            'INSERT INTO sets (workout_exercise_id, position, weight, reps, type, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+            [workoutExerciseId, setPosition, set.weight, set.reps, set.type ?? 'normal', timestamp],
           );
         });
       });
@@ -130,7 +133,7 @@ export const WorkoutRepository = {
       [id],
     );
     const sets = db.getAllSync<SetRow>(
-      `SELECT s.id, s.workout_exercise_id, s.position, s.weight, s.reps, s.completed_at
+      `SELECT s.id, s.workout_exercise_id, s.position, s.type, s.weight, s.reps, s.completed_at
        FROM sets s
        JOIN workout_exercises we ON we.id = s.workout_exercise_id
        WHERE we.workout_id = ?
@@ -167,8 +170,8 @@ export const WorkoutRepository = {
       ).lastInsertRowId;
       (exercise.sets ?? []).forEach((set, position) => {
         db.runSync(
-          'INSERT INTO sets (workout_exercise_id, position, weight, reps, created_at) VALUES (?, ?, ?, ?, ?)',
-          [workoutExerciseId, position, set.weight, set.reps, timestamp],
+          'INSERT INTO sets (workout_exercise_id, position, weight, reps, type, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+          [workoutExerciseId, position, set.weight, set.reps, set.type ?? 'normal', timestamp],
         );
       });
     });
@@ -227,8 +230,8 @@ export const WorkoutRepository = {
 
       (replacement.sets ?? []).forEach((set, position) => {
         db.runSync(
-          'INSERT INTO sets (workout_exercise_id, position, weight, reps, created_at) VALUES (?, ?, ?, ?, ?)',
-          [replacementId, position, set.weight, set.reps, timestamp],
+          'INSERT INTO sets (workout_exercise_id, position, weight, reps, type, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+          [replacementId, position, set.weight, set.reps, set.type ?? 'normal', timestamp],
         );
       });
     });
@@ -268,15 +271,15 @@ export const WorkoutRepository = {
   },
 
   // Ajoute une série en fin d'exercice. @returns l'id de la série
-  addSet: (workoutExerciseId: number, values: SetValues): number => {
+  addSet: (workoutExerciseId: number, values: SetValues, type: SetType = 'normal'): number => {
     const db = getDatabase();
     const next = db.getFirstSync<{ position: number }>(
       'SELECT COALESCE(MAX(position) + 1, 0) AS position FROM sets WHERE workout_exercise_id = ?',
       [workoutExerciseId],
     );
     return db.runSync(
-      'INSERT INTO sets (workout_exercise_id, position, weight, reps, created_at) VALUES (?, ?, ?, ?, ?)',
-      [workoutExerciseId, next?.position ?? 0, values.weight, values.reps, now()],
+      'INSERT INTO sets (workout_exercise_id, position, weight, reps, type, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [workoutExerciseId, next?.position ?? 0, values.weight, values.reps, type, now()],
     ).lastInsertRowId;
   },
 
@@ -287,6 +290,10 @@ export const WorkoutRepository = {
       now(),
       setId,
     ]);
+  },
+
+  setType: (setId: number, type: SetType): void => {
+    getDatabase().runSync('UPDATE sets SET type = ?, updated_at = ? WHERE id = ?', [type, now(), setId]);
   },
 
   setCompleted: (setId: number, completed: boolean): void => {
@@ -346,7 +353,7 @@ export const WorkoutRepository = {
   },
 
   /**
-   * Charge maximale validée par exercice, sur les séances terminées commencées avant `before`.
+   * Charge maximale validée par exercice, sur les séances terminées commencées avant `before`, hors échauffement.
    * Les exercices jamais faits (ou sans charge) sont absents du résultat.
    */
   getBestWeightsBefore: (exerciseIds: number[], before: number): Record<number, number> => {
@@ -361,6 +368,7 @@ export const WorkoutRepository = {
        WHERE w.finished_at IS NOT NULL
          AND w.started_at < ?
          AND s.completed_at IS NOT NULL
+         AND s.type != 'warmup'
          AND s.weight IS NOT NULL
          AND we.exercise_id IN (${exerciseIds.map(() => '?').join(', ')})
        GROUP BY we.exercise_id`,
@@ -370,7 +378,8 @@ export const WorkoutRepository = {
   },
 
   /**
-   * Séries validées d'un exercice, séance terminée par séance terminée, de la plus récente à la plus ancienne.
+   * Séries validées d'un exercice hors échauffement, séance terminée par séance terminée, de la plus récente à la
+   * plus ancienne.
    * Un exercice fait deux fois dans la même séance donne deux entrées.
    */
   getExerciseSessions: (exerciseId: number): ExerciseSession[] => {
@@ -379,7 +388,7 @@ export const WorkoutRepository = {
        FROM sets s
        JOIN workout_exercises we ON we.id = s.workout_exercise_id
        JOIN workouts w ON w.id = we.workout_id
-       WHERE we.exercise_id = ? AND w.finished_at IS NOT NULL AND s.completed_at IS NOT NULL
+       WHERE we.exercise_id = ? AND w.finished_at IS NOT NULL AND s.completed_at IS NOT NULL AND s.type != 'warmup'
        ORDER BY w.started_at DESC, we.id, s.position, s.id`,
       [exerciseId],
     );
@@ -403,7 +412,9 @@ export const WorkoutRepository = {
        JOIN workouts w ON w.id = we.workout_id
        JOIN exercises e ON e.id = we.exercise_id
        WHERE w.finished_at IS NOT NULL
-         AND EXISTS (SELECT 1 FROM sets s WHERE s.workout_exercise_id = we.id AND s.completed_at IS NOT NULL)
+         AND EXISTS (
+           SELECT 1 FROM sets s WHERE s.workout_exercise_id = we.id AND s.completed_at IS NOT NULL AND s.type != 'warmup'
+         )
        GROUP BY e.id
        ORDER BY last_done DESC`,
     );
@@ -417,9 +428,9 @@ export const WorkoutRepository = {
    * Séries validées de la dernière séance terminée contenant cet exercice (colonne « Précédent »).
    * `before` : ne regarde que les séances commencées avant (modification d'une séance passée).
    */
-  getLastPerformance: (exerciseId: number, before = Number.MAX_SAFE_INTEGER): SetValues[] => {
-    return getDatabase().getAllSync<SetValues>(
-      `SELECT s.weight, s.reps
+  getLastPerformance: (exerciseId: number, before = Number.MAX_SAFE_INTEGER): PreviousSet[] => {
+    return getDatabase().getAllSync<PreviousSet>(
+      `SELECT s.weight, s.reps, s.type
        FROM sets s
        WHERE s.completed_at IS NOT NULL
          AND s.workout_exercise_id = (

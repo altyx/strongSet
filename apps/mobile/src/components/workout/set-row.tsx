@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
+import { SET_TYPE_INFO } from '@/src/constants/set-types';
 import { fontFamily, palette, radius } from '@/src/constants/theme';
 import { SetValues, WorkoutSet } from '@/src/repositories/workout/workout-type';
 import { parseDecimal, parseInteger } from '@/src/utils/number';
@@ -12,7 +13,8 @@ import { formatWeightValue, fromUnit, WeightUnit } from '@/src/utils/weight';
 export const SET_COLUMNS = { number: 28, weight: 68, reps: 56, check: 44 } as const;
 
 type SetRowProps = {
-  index: number;
+  // « É » pour l'échauffement, sinon numéro parmi les séries de travail (voir setLabels)
+  label: string;
   set: WorkoutSet;
   // Série correspondante de la dernière séance : affichée en indication et en placeholder
   previous?: SetValues;
@@ -24,7 +26,8 @@ type SetRowProps = {
   onChange: (values: SetValues) => void;
   // Reçoit la saisie en cours, qui n'a pas forcément encore été enregistrée (le champ peut avoir encore le focus)
   onToggle: (entered: SetValues) => void;
-  onDelete: () => void;
+  // Choix du type ou suppression de la série
+  onOptions: () => void;
 };
 
 function formatPrevious(unit: WeightUnit, previous?: SetValues) {
@@ -38,12 +41,15 @@ function formatPrevious(unit: WeightUnit, previous?: SetValues) {
  * Les champs gardent leur texte en local pendant la saisie et ne l'enregistrent qu'à la perte du focus.
  * Le parent remonte la ligne (via sa `key`) quand les valeurs enregistrées changent.
  */
-export function SetRow({ index, set, previous, defaultReps, unit, isCurrent, onChange, onToggle, onDelete }: SetRowProps) {
+export function SetRow({ label, set, previous, defaultReps, unit, isCurrent, onChange, onToggle, onOptions }: SetRowProps) {
   const savedWeightText = set.weight === null ? '' : formatWeightValue(set.weight, unit);
   const [weightText, setWeightText] = useState(savedWeightText);
   const [repsText, setRepsText] = useState(set.reps === null ? '' : String(set.reps));
   const done = set.completed_at !== null;
-  const number = index + 1;
+  const typeInfo = SET_TYPE_INFO[set.type];
+  // Nom lu par le lecteur d'écran : « série 2 », « série 3, dégressive », « échauffement »
+  const name =
+    set.type === 'warmup' ? 'échauffement' : `série ${label}${set.type === 'normal' ? '' : `, ${typeInfo.label.toLowerCase()}`}`;
 
   // Charge non retouchée : on garde la valeur enregistrée, que l'arrondi d'affichage en livres ne doit pas modifier
   const enteredWeight = () => {
@@ -67,12 +73,13 @@ export function SetRow({ index, set, previous, defaultReps, unit, isCurrent, onC
   return (
     <View style={[styles.row, done && styles.rowDone]}>
       <Pressable
-        onLongPress={onDelete}
+        onPress={onOptions}
         accessibilityRole="button"
-        accessibilityLabel={`Série ${number}`}
-        accessibilityHint="Appui long pour supprimer la série"
-        style={styles.number}>
-        <ThemedText style={styles.numberText}>{number}</ThemedText>
+        accessibilityLabel={name}
+        accessibilityHint="Changer le type de série ou la supprimer"
+        hitSlop={6}
+        style={[styles.number, typeInfo.color !== null && { borderColor: typeInfo.color }]}>
+        <ThemedText style={[styles.numberText, typeInfo.color !== null && { color: typeInfo.color }]}>{label}</ThemedText>
       </Pressable>
       <ThemedText type="caption" style={styles.previous} numberOfLines={1}>
         {formatPrevious(unit, previous)}
@@ -85,7 +92,7 @@ export function SetRow({ index, set, previous, defaultReps, unit, isCurrent, onC
         placeholderTextColor={palette.textTertiary}
         keyboardType="decimal-pad"
         selectTextOnFocus
-        accessibilityLabel={`Charge de la série ${number}, en ${unit === 'lb' ? 'livres' : 'kilos'}`}
+        accessibilityLabel={`Charge, ${name}, en ${unit === 'lb' ? 'livres' : 'kilos'}`}
         style={[inputStyle, { width: SET_COLUMNS.weight }]}
       />
       <TextInput
@@ -96,14 +103,14 @@ export function SetRow({ index, set, previous, defaultReps, unit, isCurrent, onC
         placeholderTextColor={palette.textTertiary}
         keyboardType="number-pad"
         selectTextOnFocus
-        accessibilityLabel={`Répétitions de la série ${number}`}
+        accessibilityLabel={`Répétitions, ${name}`}
         style={[inputStyle, { width: SET_COLUMNS.reps }]}
       />
       <Pressable
         onPress={() => onToggle(entered())}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: done }}
-        accessibilityLabel={done ? `Annuler la validation de la série ${number}` : `Valider la série ${number}`}
+        accessibilityLabel={done ? `Annuler la validation, ${name}` : `Valider, ${name}`}
         hitSlop={4}
         style={[styles.check, done && styles.checkDone]}>
         {/* pointerEvents none : sinon le SVG capte le toucher et le Pressable ne reçoit rien */}
@@ -128,6 +135,8 @@ const styles = StyleSheet.create({
     width: SET_COLUMNS.number,
     height: 28,
     borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: palette.surfaceRaised,
