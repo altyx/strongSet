@@ -1,6 +1,6 @@
-# my-fitness
+# StrongSet
 
-Monorepo de l'application my-fitness, géré avec les [workspaces npm](https://docs.npmjs.com/cli/using-npm/workspaces).
+Monorepo de l'application StrongSet (anciennement my-fitness), géré avec les [workspaces npm](https://docs.npmjs.com/cli/using-npm/workspaces).
 
 ## Structure
 
@@ -31,3 +31,7 @@ Pour ajouter une dépendance à l'app mobile : `npx expo install <paquet>` depui
 - **Ne pas lancer `npx expo …` à la racine** : Expo y prendrait la racine du repo pour le projet. Passer par les scripts npm ci-dessus, ou lancer `npx expo …` depuis `apps/mobile`.
 - **Après un `git pull` qui touche aux dépendances ou au passage en monorepo**, régénérer le natif : `npx expo prebuild --clean` dans `apps/mobile` (ou au minimum `pod install` dans `apps/mobile/ios`, avec `LANG=en_US.UTF-8`).
 - **Plusieurs simulateurs démarrés avec le même nom** (ex. deux « iPhone 17 Pro ») : préciser l'UDID avec `--device`, ou n'en garder qu'un seul démarré.
+
+## Publier
+
+Voir [apps/mobile/README.md](apps/mobile/README.md) : configuration EAS et étapes avant la première publication.

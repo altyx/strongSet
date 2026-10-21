@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<!-- Source de assets/images/icon.png (Graphite &amp; Ember). Les calques Android et le splash reprennent le même haltère sans le fond. -->
+
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#1E2125"/><stop offset="1" stop-color="#0B0C0E"/>
+  </linearGradient>
+  <radialGradient id="glow" cx="0.78" cy="0.2" r="0.6">
+    <stop offset="0" stop-color="#FF5A1F" stop-opacity="0.35"/><stop offset="1" stop-color="#FF5A1F" stop-opacity="0"/>
+  </radialGradient>
+</defs>
+<rect width="1024" height="1024" fill="url(#bg)"/>
+<rect width="1024" height="1024" fill="url(#glow)"/>
+<g transform="translate(512 512) scale(0.86) translate(-512 -512)" fill="#FF5A1F">
+<g transform="rotate(-35 512 512)">
+  <rect x="318" y="482" width="388" height="60" rx="18"/>
+  <rect x="244" y="352" width="86" height="320" rx="30"/>
+  <rect x="694" y="352" width="86" height="320" rx="30"/>
+  <rect x="166" y="412" width="70" height="200" rx="24"/>
+  <rect x="788" y="412" width="70" height="200" rx="24"/>
+</g></g></svg>

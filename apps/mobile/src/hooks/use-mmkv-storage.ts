@@ -27,7 +27,6 @@ async function getOrCreateMMKVKey(): Promise<string> {
       keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
     });
   }
-  console.log(key)
   return key;
 }
 
@@ -43,7 +42,6 @@ export async function initializeMMKVStorage(): Promise<void> {
   initializationPromise = (async () => {
     try {
       const key = await getOrCreateMMKVKey();
-      console.log('init with key')
       storage = createMMKV({
         id: 'my-fitness-storage',
         encryptionKey: key,
