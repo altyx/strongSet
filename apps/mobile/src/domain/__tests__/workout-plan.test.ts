@@ -23,7 +23,10 @@ describe('buildWorkoutExercises', () => {
       [2, 'Squat', 4],
     ]);
     // Les séries sont vides : la dernière performance ne sert que d'indication
-    expect(exercises[0].sets).toEqual([{ weight: null, reps: null }, { weight: null, reps: null }]);
+    expect(exercises[0].sets).toEqual([
+      { weight: null, reps: null, type: 'normal' },
+      { weight: null, reps: null, type: 'normal' },
+    ]);
   });
 
   it('applique les objectifs du programme : séries, répétitions sans historique, repos', () => {
@@ -41,12 +44,24 @@ describe('buildWorkoutExercises', () => {
     expect(bench.rest_seconds).toBe(150);
     // 3 séries visées ; la 1re a un historique (indication), les suivantes reçoivent les reps visées
     expect(bench.sets).toEqual([
-      { weight: null, reps: null },
-      { weight: null, reps: 8 },
-      { weight: null, reps: 8 },
+      { weight: null, reps: null, type: 'normal' },
+      { weight: null, reps: 8, type: 'normal' },
+      { weight: null, reps: 8, type: 'normal' },
     ]);
     expect(squat.rest_seconds).toBeNull();
     expect(squat.sets).toHaveLength(4);
+  });
+
+  it('reprend le type des séries de la dernière séance', () => {
+    const lastPerformance = () => [
+      { weight: 40, reps: 10, type: 'warmup' as const },
+      { weight: 80, reps: 5, type: 'normal' as const },
+      { weight: 60, reps: 8, type: 'drop' as const },
+    ];
+
+    const [bench] = buildWorkoutExercises(template, lastPerformance, 4);
+
+    expect(bench.sets?.map((set) => set.type)).toEqual(['warmup', 'normal', 'drop']);
   });
 
   it('crée au moins une série', () => {
@@ -60,7 +75,7 @@ describe('buildWorkoutExercise', () => {
       exercise_id: 2,
       name: 'Squat',
       rest_seconds: null,
-      sets: [{ weight: null, reps: null }],
+      sets: [{ weight: null, reps: null, type: 'normal' }],
     });
     expect(buildWorkoutExercise({ id: 2, name: 'Squat' }, [], 3).sets).toHaveLength(3);
   });

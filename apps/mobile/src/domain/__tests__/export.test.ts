@@ -9,6 +9,7 @@ const set = (overrides: Partial<ExportedSet>): ExportedSet => ({
   workout_note: null,
   exercise_name: 'Développé couché',
   set_number: 1,
+  type: 'normal',
   weight: 62.5,
   reps: 8,
   ...overrides,
@@ -16,12 +17,12 @@ const set = (overrides: Partial<ExportedSet>): ExportedSet => ({
 
 describe('buildSetsCsv', () => {
   it('écrit une ligne par série, séparateur « ; » et virgule décimale, précédé du BOM', () => {
-    const csv = buildSetsCsv([set({}), set({ set_number: 2, weight: null, reps: 12 })]);
+    const csv = buildSetsCsv([set({}), set({ set_number: 2, type: 'warmup', weight: null, reps: 12 })]);
 
     expect(csv.split('\r\n')).toEqual([
-      '﻿Date;Heure;Séance;Exercice;Série;Charge (kg);Répétitions;Note de séance',
-      '2026-10-20;18:05;Push;Développé couché;1;62,5;8;',
-      '2026-10-20;18:05;Push;Développé couché;2;;12;',
+      '﻿Date;Heure;Séance;Exercice;Série;Type;Charge (kg);Répétitions;Note de séance',
+      '2026-10-20;18:05;Push;Développé couché;1;Normale;62,5;8;',
+      '2026-10-20;18:05;Push;Développé couché;2;Échauffement;;12;',
       '',
     ]);
   });
@@ -29,11 +30,11 @@ describe('buildSetsCsv', () => {
   it('entoure de guillemets les cellules avec séparateur, guillemet ou retour à la ligne', () => {
     const csv = buildSetsCsv([set({ workout_name: null, workout_note: 'Dos; "un peu" serré\nà surveiller' })]);
 
-    expect(csv.split('\r\n')[1]).toBe('2026-10-20;18:05;;Développé couché;1;62,5;8;"Dos; ""un peu"" serré\nà surveiller"');
+    expect(csv.split('\r\n')[1]).toBe('2026-10-20;18:05;;Développé couché;1;Normale;62,5;8;"Dos; ""un peu"" serré\nà surveiller"');
   });
 
   it('ne contient que l’en-tête sans séance', () => {
-    expect(buildSetsCsv([])).toBe('﻿Date;Heure;Séance;Exercice;Série;Charge (kg);Répétitions;Note de séance\r\n');
+    expect(buildSetsCsv([])).toBe('﻿Date;Heure;Séance;Exercice;Série;Type;Charge (kg);Répétitions;Note de séance\r\n');
   });
 });
 

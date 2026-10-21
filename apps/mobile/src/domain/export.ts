@@ -1,3 +1,5 @@
+import { SetType } from '@/src/repositories/workout/workout-type';
+
 // Une série validée d'une séance terminée, à plat (export CSV)
 export interface ExportedSet {
   started_at: number;
@@ -5,6 +7,7 @@ export interface ExportedSet {
   workout_note: string | null;
   exercise_name: string | null;
   set_number: number;
+  type: SetType;
   // kg ; null pour une série au poids du corps sans charge saisie
   weight: number | null;
   reps: number | null;
@@ -12,7 +15,14 @@ export interface ExportedSet {
 
 // Séparateur « ; » et virgule décimale : le fichier s'ouvre directement en colonnes dans un tableur réglé en français
 const SEPARATOR = ';';
-const HEADER = ['Date', 'Heure', 'Séance', 'Exercice', 'Série', 'Charge (kg)', 'Répétitions', 'Note de séance'];
+const HEADER = ['Date', 'Heure', 'Séance', 'Exercice', 'Série', 'Type', 'Charge (kg)', 'Répétitions', 'Note de séance'];
+
+const TYPE_LABELS: Record<SetType, string> = {
+  normal: 'Normale',
+  warmup: 'Échauffement',
+  drop: 'Dégressive',
+  failure: 'Échec',
+};
 
 function escapeCell(value: string) {
   return /[;"\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
@@ -33,6 +43,7 @@ export function buildSetsCsv(sets: ExportedSet[]): string {
       set.workout_name ?? '',
       set.exercise_name ?? '',
       String(set.set_number),
+      TYPE_LABELS[set.type],
       set.weight === null ? '' : String(set.weight).replace('.', ','),
       set.reps === null ? '' : String(set.reps),
       set.workout_note ?? '',

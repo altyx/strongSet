@@ -13,6 +13,7 @@ import { Card } from '@/src/components/ui/card';
 import { ElapsedTime } from '@/src/components/workout/elapsed-time';
 import { ExerciseCard } from '@/src/components/workout/exercise-card';
 import { ExerciseOptionsSheet } from '@/src/components/workout/exercise-options-sheet';
+import { SetOptionsSheet } from '@/src/components/workout/set-options-sheet';
 import { RestTimer } from '@/src/components/workout/rest-timer';
 import { palette, radius, spacing } from '@/src/constants/theme';
 import { buildWorkoutExercise, resolveSetValues } from '@/src/domain/workout-plan';
@@ -20,7 +21,7 @@ import { useUserSettings } from '@/src/hooks/user/use-user-settings';
 import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
 import { ExerciseListItem, ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
-import { SetValues, Workout, WorkoutExercise, WorkoutSet } from '@/src/repositories/workout/workout-type';
+import { SetType, SetValues, Workout, WorkoutExercise, WorkoutSet } from '@/src/repositories/workout/workout-type';
 import { cancelRestEnd, scheduleRestEnd } from '@/src/services/rest-notification';
 import { formatLongDate } from '@/src/utils/date';
 
@@ -66,6 +67,8 @@ export default function WorkoutScreen() {
   const [workout, setWorkout] = useState(load);
   const [previousSets, setPreviousSets] = useState(() => loadPreviousSets(workout, editing));
   const [optionsFor, setOptionsFor] = useState<WorkoutExercise | null>(null);
+  // Série dont on choisit le type (feuille ouverte en touchant son numéro)
+  const [setSheet, setSetSheet] = useState<{ set: WorkoutSet; label: string } | null>(null);
   const [rest, setRest] = useState<{ endsAt: number; duration: number } | null>(null);
   // Choix d'un exercice : ajout en fin de séance, ou remplacement de `replacing`
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -164,11 +167,18 @@ export default function WorkoutScreen() {
     ]);
   };
 
-  // La nouvelle série reprend les valeurs de la dernière : souvent la même charge pour une série de plus
+  // La nouvelle série reprend les valeurs et le type de la dernière : souvent la même charge pour une série de plus
   const addSet = (exercise: WorkoutExercise) => {
     const last = exercise.sets[exercise.sets.length - 1];
-    WorkoutRepository.addSet(exercise.id, { weight: last?.weight ?? null, reps: last?.reps ?? null });
+    WorkoutRepository.addSet(exercise.id, { weight: last?.weight ?? null, reps: last?.reps ?? null }, last?.type);
     reload();
+  };
+
+  const changeSetType = (set: WorkoutSet, type: SetType) => {
+    if (type !== set.type) {
+      WorkoutRepository.setType(set.id, type);
+      reload();
+    }
   };
 
   const pickExercise = (exercise: ExerciseListItem) => {
@@ -369,7 +379,7 @@ export default function WorkoutScreen() {
                 // Repos prévu par le programme pour cet exercice, sinon celui des réglages
                 toggleSet(set, entered, previous[index], exercise.rest_seconds ?? restSeconds)
               }
-              onDeleteSet={deleteSet}
+              onSetOptions={(set, label) => setSetSheet({ set, label })}
               onAddSet={() => addSet(exercise)}
               onOptions={() => setOptionsFor(exercise)}
             />
@@ -393,6 +403,14 @@ export default function WorkoutScreen() {
           />
         )}
       </ScrollView>
+
+      <SetOptionsSheet
+        set={setSheet?.set ?? null}
+        label={setSheet?.label ?? ''}
+        onClose={() => setSetSheet(null)}
+        onSelectType={(type) => setSheet && changeSetType(setSheet.set, type)}
+        onDelete={() => setSheet && deleteSet(setSheet.set)}
+      />
 
       <ExerciseOptionsSheet
         exercise={optionsFor}

@@ -5,6 +5,7 @@ import { ThemedText } from '@/src/components/themed-text';
 import { Button } from '@/src/components/ui/button';
 import { Card } from '@/src/components/ui/card';
 import { SET_COLUMNS, SetRow } from '@/src/components/workout/set-row';
+import { setLabels } from '@/src/constants/set-types';
 import { palette } from '@/src/constants/theme';
 import { SetValues, WorkoutExercise, WorkoutSet } from '@/src/repositories/workout/workout-type';
 import { WeightUnit } from '@/src/utils/weight';
@@ -18,7 +19,8 @@ type ExerciseCardProps = {
   currentSetId: number | null;
   onChangeSet: (set: WorkoutSet, values: SetValues) => void;
   onToggleSet: (set: WorkoutSet, index: number, entered: SetValues) => void;
-  onDeleteSet: (set: WorkoutSet) => void;
+  // Type ou suppression d'une série
+  onSetOptions: (set: WorkoutSet, label: string) => void;
   onAddSet: () => void;
   // Note, déplacement, remplacement, retrait
   onOptions: () => void;
@@ -32,12 +34,13 @@ export function ExerciseCard({
   currentSetId,
   onChangeSet,
   onToggleSet,
-  onDeleteSet,
+  onSetOptions,
   onAddSet,
   onOptions,
 }: ExerciseCardProps) {
   const doneCount = exercise.sets.filter((set) => set.completed_at !== null).length;
   const allDone = exercise.sets.length > 0 && doneCount === exercise.sets.length;
+  const labels = setLabels(exercise.sets.map((set) => set.type));
 
   return (
     <Card variant={allDone ? 'default' : 'outlined'} style={styles.card}>
@@ -88,7 +91,7 @@ export function ExerciseCard({
           <SetRow
             // Remonte la ligne quand les valeurs enregistrées changent (ex. complétées à la validation)
             key={`${set.id}-${set.weight}-${set.reps}`}
-            index={index}
+            label={labels[index]}
             set={set}
             previous={previous[index]}
             defaultReps={defaultReps}
@@ -96,7 +99,7 @@ export function ExerciseCard({
             isCurrent={set.id === currentSetId}
             onChange={(values) => onChangeSet(set, values)}
             onToggle={(entered) => onToggleSet(set, index, entered)}
-            onDelete={() => onDeleteSet(set)}
+            onOptions={() => onSetOptions(set, labels[index])}
           />
         ))}
       </View>

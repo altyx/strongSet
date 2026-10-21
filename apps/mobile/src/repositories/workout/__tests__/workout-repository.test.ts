@@ -199,6 +199,40 @@ describe('finishWorkout', () => {
   });
 });
 
+describe('types de série', () => {
+  it('enregistre le type, normal par défaut, et le change', () => {
+    const id = WorkoutRepository.startWorkout({
+      name: 'Push',
+      exercises: [{ ...BENCH, sets: [{ weight: 40, reps: 10, type: 'warmup' }, { weight: 80, reps: 5 }] }],
+    });
+    const bench = WorkoutRepository.getWorkout(id)!.exercises[0];
+    expect(bench.sets.map((set) => set.type)).toEqual(['warmup', 'normal']);
+
+    WorkoutRepository.setType(bench.sets[1].id, 'failure');
+    WorkoutRepository.addSet(bench.id, { weight: 60, reps: 8 }, 'drop');
+
+    expect(WorkoutRepository.getWorkout(id)!.exercises[0].sets.map((set) => set.type)).toEqual(['warmup', 'failure', 'drop']);
+  });
+
+  it('exclut l’échauffement du volume, des records et de la progression, pas de « Précédent »', () => {
+    recordWorkout(T0, [{ ...BENCH, sets: [{ weight: 100, reps: 1, type: 'warmup' }, { weight: 80, reps: 5 }] }]);
+
+    expect(WorkoutRepository.getHistory()[0]).toMatchObject({ volume: 400, completed_set_count: 2 });
+    expect(WorkoutRepository.getBestWeightsBefore([BENCH.exercise_id], T0 + DAY)).toEqual({ [BENCH.exercise_id]: 80 });
+    expect(WorkoutRepository.getExerciseSessions(BENCH.exercise_id)[0].sets).toEqual([{ weight: 80, reps: 5 }]);
+    expect(WorkoutRepository.getLastPerformance(BENCH.exercise_id)).toEqual([
+      { weight: 100, reps: 1, type: 'warmup' },
+      { weight: 80, reps: 5, type: 'normal' },
+    ]);
+  });
+
+  it('un exercice fait uniquement en échauffement n’apparaît pas dans la progression', () => {
+    recordWorkout(T0, [{ ...BENCH, sets: [{ weight: 40, reps: 10, type: 'warmup' }] }]);
+
+    expect(WorkoutRepository.getTrainedExercises()).toEqual([]);
+  });
+});
+
 describe('modifier une séance terminée', () => {
   it('saveEditedWorkout garde la date de fin et retire les séries non validées ajoutées', () => {
     const id = recordWorkout(T0, [{ ...BENCH, sets: [{ weight: 60, reps: 10 }] }]);
@@ -229,8 +263,8 @@ describe('modifier une séance terminée', () => {
     recordWorkout(T0 + 2 * DAY, [{ ...BENCH, sets: [{ weight: 80, reps: 5 }] }]);
 
     const startedAt = WorkoutRepository.getWorkout(edited)!.started_at;
-    expect(WorkoutRepository.getLastPerformance(BENCH.exercise_id, startedAt)).toEqual([{ weight: 60, reps: 10 }]);
-    expect(WorkoutRepository.getLastPerformance(BENCH.exercise_id)).toEqual([{ weight: 80, reps: 5 }]);
+    expect(WorkoutRepository.getLastPerformance(BENCH.exercise_id, startedAt)).toEqual([{ weight: 60, reps: 10, type: 'normal' }]);
+    expect(WorkoutRepository.getLastPerformance(BENCH.exercise_id)).toEqual([{ weight: 80, reps: 5, type: 'normal' }]);
   });
 });
 

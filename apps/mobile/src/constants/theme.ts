@@ -20,6 +20,8 @@ export const palette = {
   onAccent: '#0B0C0E',
   // Actions destructives (supprimer, retirer) : rouge distinct de l'accent orange
   danger: '#FF6B6B',
+  // Séries d'échauffement
+  warmup: '#F5B83D',
   run: '#5AB8FF',
   runSoft: 'rgba(90, 184, 255, 0.14)',
 } as const;

@@ -35,9 +35,9 @@ it('getCompletedSets renvoie les séries validées des séances terminées, num�
   WorkoutRepository.setCompleted(WorkoutRepository.getWorkout(active)!.exercises[0].sets[0].id, true);
 
   expect(ExportRepository.getCompletedSets()).toEqual([
-    { started_at: T0, workout_name: 'Push', workout_note: 'Bonne séance', exercise_name: 'Bench Press', set_number: 1, weight: 62.5, reps: 8 },
-    { started_at: T0, workout_name: 'Push', workout_note: 'Bonne séance', exercise_name: 'Bench Press', set_number: 2, weight: 65, reps: 6 },
-    { started_at: T0, workout_name: 'Push', workout_note: 'Bonne séance', exercise_name: 'Squat', set_number: 1, weight: null, reps: 12 },
+    { started_at: T0, workout_name: 'Push', workout_note: 'Bonne séance', exercise_name: 'Bench Press', set_number: 1, type: 'normal', weight: 62.5, reps: 8 },
+    { started_at: T0, workout_name: 'Push', workout_note: 'Bonne séance', exercise_name: 'Bench Press', set_number: 2, type: 'normal', weight: 65, reps: 6 },
+    { started_at: T0, workout_name: 'Push', workout_note: 'Bonne séance', exercise_name: 'Squat', set_number: 1, type: 'normal', weight: null, reps: 12 },
   ]);
 });
 
