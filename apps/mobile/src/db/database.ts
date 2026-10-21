@@ -37,7 +37,9 @@ async function runMigrations(): Promise<void> {
       await database.execAsync(MIGRATIONS[version]);
       await database.execAsync(`PRAGMA user_version = ${version + 1}`);
     });
-    console.log(`Database migrated to version ${version + 1}`);
+    if (__DEV__) {
+      console.log(`Database migrated to version ${version + 1}`);
+    }
   }
 }
 

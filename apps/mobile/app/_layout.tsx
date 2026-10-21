@@ -59,7 +59,6 @@ export default function RootLayout() {
         await loadAppFonts();
 
         const user = read<UserSettings>(STORAGE_KEYS.USER_PREFERENCES);
-        console.log(user);
 
         setIsReady(true);
 
@@ -88,9 +87,9 @@ export default function RootLayout() {
     <ThemeProvider value={navigationTheme}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-          <Stack.Screen name="onboarding" options={{ headerShown: true, title: 'My fitness App' }} />
-          <Stack.Screen name="CGU" options={{ presentation: 'modal'  }} />
+          {/* Pas de retour possible : l'onboarding remplace l'accueil tant qu'il n'est pas terminé */}
+          <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
+          <Stack.Screen name="legal/[document]" options={{ presentation: 'modal', title: '' }} />
           {/* Plein écran sans geste de fermeture : une séance ne doit pas se perdre par un balayage accidentel */}
           <Stack.Screen
             name="workout"

@@ -1,5 +1,6 @@
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { ArchiveRestore, Database, FileSpreadsheet } from 'lucide-react-native/icons';
+import { ArchiveRestore, ChevronRight, Database, FileSpreadsheet } from 'lucide-react-native/icons';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +29,11 @@ const DEFAULT_SETTINGS: UserSettings = {
   repPerSeries: 12,
   restBetweenSeries: 90,
 };
+
+const LEGAL_LINKS = [
+  { document: 'cgu', label: "Conditions générales d'utilisation" },
+  { document: 'confidentialite', label: 'Politique de confidentialité' },
+] as const;
 
 const UNITS: { value: WeightUnit; label: string }[] = [
   { value: 'kg', label: 'Kilos (kg)' },
@@ -207,6 +213,25 @@ export default function SettingsScreen() {
           </ThemedText>
         </Card>
       </View>
+
+      <View style={styles.section}>
+        <ThemedText type="label">À propos</ThemedText>
+        <Card style={styles.links}>
+          {LEGAL_LINKS.map((link, index) => (
+            <Pressable
+              key={link.document}
+              onPress={() => router.push({ pathname: '/legal/[document]', params: { document: link.document } })}
+              accessibilityRole="link"
+              style={({ pressed }) => [styles.link, index > 0 && styles.linkSeparator, pressed && styles.pressed]}>
+              <ThemedText>{link.label}</ThemedText>
+              <ChevronRight size={20} color={palette.textTertiary} strokeWidth={2} pointerEvents="none" />
+            </Pressable>
+          ))}
+        </Card>
+        <ThemedText type="caption" tone="tertiary">
+          StrongSet {Constants.expoConfig?.version ?? ''}
+        </ThemedText>
+      </View>
     </ScrollView>
   );
 }
@@ -251,6 +276,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: radius.md,
     backgroundColor: palette.surface,
+  },
+  links: {
+    paddingVertical: 0,
+  },
+  link: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 52,
+  },
+  linkSeparator: {
+    borderTopWidth: 1,
+    borderTopColor: palette.border,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   unitSelected: {
     backgroundColor: palette.accent,

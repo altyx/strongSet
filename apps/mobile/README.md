@@ -1,50 +1,38 @@
-# Welcome to your Expo app
+# StrongSet — app mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Application Expo (iOS / Android). Identifiant : `com.altyx.strongset` sur les deux plateformes. Les commandes de développement sont décrites dans le [README à la racine](../../README.md).
 
-## Get started
+## Publier une version
 
-1. Install dependencies
+Les builds de store passent par [EAS](https://docs.expo.dev/build/introduction/). Profils dans `eas.json` :
+
+| Profil | Usage |
+| --- | --- |
+| `development` | Dev client pour le simulateur iOS |
+| `preview` | Build interne à installer sur un téléphone (APK pour Android) |
+| `production` | Build des stores ; le numéro de build est incrémenté par EAS (`appVersionSource: remote`) |
+
+### Une seule fois
+
+1. Compléter l'éditeur et son contact dans `src/constants/legal.ts` (`LEGAL_EDITOR`). Tant que c'est vide, les CGU et la politique de confidentialité affichent « [à compléter] ».
+2. Mettre la politique de confidentialité en ligne : App Store Connect et Google Play demandent une URL publique. Le texte est le même que dans l'app (`PRIVACY` dans `src/constants/legal.ts`).
+3. Se connecter à Expo et lier le projet (ajoute `extra.eas.projectId` dans `app.json`) :
 
    ```bash
-   npm install
+   npx eas-cli login
+   npx eas-cli init
    ```
 
-2. Start the app
+4. Créer les fiches de l'app sur App Store Connect et la Google Play Console, avec les captures d'écran.
+5. Déclarer la confidentialité : aucune donnée collectée (« Data Not Collected » sur l'App Store, section « Sécurité des données » vide sur Google Play).
+
+### À chaque version
+
+1. Augmenter `version` dans `app.json` (ex. `1.0.1`).
+2. Si le schéma SQLite change, ajouter une migration dans `src/db/migrations.ts` : **dès la première publication, le schéma v1 est figé**.
+3. Construire et envoyer :
 
    ```bash
-   npx expo start
+   npx eas-cli build --platform all --profile production
+   npx eas-cli submit --platform all --profile production
    ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
