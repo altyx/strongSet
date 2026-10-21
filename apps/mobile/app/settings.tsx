@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { NotificationSetting } from '@/src/components/settings/notification-setting';
 import { RestPicker } from '@/src/components/templates/rest-picker';
 import { ThemedText } from '@/src/components/themed-text';
 import { Button } from '@/src/components/ui/button';
@@ -17,7 +18,7 @@ import { BackupRepository } from '@/src/repositories/backup/backup-repository';
 import { Backup } from '@/src/repositories/export/export-repository';
 import { pickBackup } from '@/src/services/backup';
 import { shareBackupJson, shareSetsCsv } from '@/src/services/export';
-import { cancelRestEnd } from '@/src/services/rest-notification';
+import { clearRest } from '@/src/services/rest-notification';
 import { WeightUnit } from '@/src/utils/weight';
 
 // Valeurs de l'onboarding, si les préférences n'ont jamais été enregistrées
@@ -73,7 +74,7 @@ export default function SettingsScreen() {
       return;
     }
     // Le minuteur de repos éventuel concernait la séance remplacée
-    cancelRestEnd();
+    clearRest();
     // Les écrans rechargent leurs données au retour sur l'accueil
     router.dismissTo('/');
   };
@@ -155,6 +156,11 @@ export default function SettingsScreen() {
           </View>
           <RestPicker value={settings.restBetweenSeries} onChange={(restBetweenSeries) => update({ restBetweenSeries })} />
         </Card>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="label">Notifications</ThemedText>
+        <NotificationSetting />
       </View>
 
       <View style={styles.section}>

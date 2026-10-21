@@ -9,6 +9,8 @@ export const STORAGE_KEYS = {
   ONBOARDING_STATE: 'onboarding_state',
   LAST_SYNC: 'last_sync_timestamp',
   HAS_SEEN_TUTORIAL: 'has_seen_tutorial',
+  // Repos en cours de la séance active (voir src/services/rest-notification.ts)
+  ACTIVE_REST: 'active_rest',
 } as const;
 
 let storage: ReturnType<typeof createMMKV> | null = null;
@@ -161,6 +163,9 @@ function createStorageApi() {
 }
 
 const storageApi = createStorageApi();
+
+// Même accès que useMMKVStorage, pour les modules hors composants (services)
+export const mmkvStorage = storageApi;
 
 export function getMMKVInstance(): ReturnType<typeof createMMKV> | null {
   return getStorage();
