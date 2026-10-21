@@ -1,4 +1,5 @@
 import { DEFAULT_DESCRIPTIONS_SQL } from './exercise-descriptions';
+import { LIBRARY_VARIANTS_SQL } from './library-variants';
 
 /**
  * Default values for the database.
@@ -249,4 +250,7 @@ export const DEFAULT_VALUES_DATABASE = `
 
     -- Consignes d'exécution des exercices par défaut (exercise-descriptions.ts)
     ${DEFAULT_DESCRIPTIONS_SQL}
+
+    -- Variantes (library-variants.ts), ids 88 et plus
+    ${LIBRARY_VARIANTS_SQL}
 `;
