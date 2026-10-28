@@ -14,7 +14,9 @@ import { Card } from '@/src/components/ui/card';
 import { IconButton } from '@/src/components/ui/icon-button';
 import { StatTile } from '@/src/components/ui/stat-tile';
 import { ElapsedTime } from '@/src/components/workout/elapsed-time';
+import { RestCountdown } from '@/src/components/workout/rest-countdown';
 import { fontFamily, palette, radius, spacing } from '@/src/constants/theme';
+import { ActiveRest } from '@/src/domain/rest';
 import { buildWorkoutExercises } from '@/src/domain/workout-plan';
 import { useUserSettings } from '@/src/hooks/user/use-user-settings';
 import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
@@ -22,6 +24,7 @@ import { TemplateRepository } from '@/src/repositories/template/template-reposit
 import { Template } from '@/src/repositories/template/template-type';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { Workout, WorkoutSummary } from '@/src/repositories/workout/workout-type';
+import { getActiveRest } from '@/src/services/rest-notification';
 import { formatLongDate, getWeekDays, isSameDay, startOfWeek, toTimestamp } from '@/src/utils/date';
 
 type HomeData = {
@@ -29,6 +32,8 @@ type HomeData = {
   weekDays: WeekDay[];
   templates: Template[];
   activeWorkout: Workout | null;
+  // Repos en cours de la séance active (écran de séance réduit pendant le repos)
+  activeRest: ActiveRest | null;
   recentWorkouts: WorkoutSummary[];
   workoutCount: number;
   exerciseCount: number;
@@ -36,6 +41,7 @@ type HomeData = {
 
 function loadHomeData(): HomeData {
   const today = new Date();
+  const activeWorkout = WorkoutRepository.getActiveWorkout();
   const weekStart = startOfWeek(today);
   const weekEnd = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 7);
   const workoutDates = WorkoutRepository.getWorkoutTimestampsBetween(toTimestamp(weekStart), toTimestamp(weekEnd)).map(
@@ -50,7 +56,8 @@ function loadHomeData(): HomeData {
       hasWorkout: workoutDates.some((workoutDate) => isSameDay(workoutDate, date)),
     })),
     templates: TemplateRepository.getAllTemplates(),
-    activeWorkout: WorkoutRepository.getActiveWorkout(),
+    activeWorkout,
+    activeRest: activeWorkout ? getActiveRest(activeWorkout.id) : null,
     recentWorkouts: WorkoutRepository.getHistory(3),
     workoutCount: WorkoutRepository.count(),
     exerciseCount: ExerciseRepository.count(),
@@ -150,6 +157,7 @@ export default function HomeScreen() {
               </ThemedText>
             </View>
             <ElapsedTime startedAt={data.activeWorkout.started_at} />
+            {data.activeRest && <RestCountdown endsAt={data.activeRest.endsAt} />}
             <Button title="Reprendre la séance" icon={Play} iconFilled onPress={() => router.push('/workout')} />
           </Card>
         ) : nextTemplate ? (

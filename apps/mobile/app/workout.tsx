@@ -23,7 +23,7 @@ import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
 import { ExerciseListItem, ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { SetType, SetValues, Workout, WorkoutExercise, WorkoutSet } from '@/src/repositories/workout/workout-type';
-import { cancelRestEnd, scheduleRestEnd } from '@/src/services/rest-notification';
+import { clearRest, getActiveRest, startRest } from '@/src/services/rest-notification';
 import { formatLongDate } from '@/src/utils/date';
 
 const DEFAULT_REST_SECONDS = 90;
@@ -71,7 +71,10 @@ export default function WorkoutScreen() {
   const [optionsFor, setOptionsFor] = useState<WorkoutExercise | null>(null);
   // Série dont on choisit le type (feuille ouverte en touchant son numéro)
   const [setSheet, setSetSheet] = useState<{ set: WorkoutSet; label: string } | null>(null);
-  const [rest, setRest] = useState<{ endsAt: number; duration: number } | null>(null);
+  // Repos repris s'il tourne encore : l'écran a pu être réduit pendant le repos
+  const [rest, setRest] = useState<{ endsAt: number; duration: number } | null>(() =>
+    !editing && workout ? getActiveRest(workout.id) : null,
+  );
   // Choix d'un exercice : ajout en fin de séance, ou remplacement de `replacing`
   const [pickerVisible, setPickerVisible] = useState(false);
   const [replacing, setReplacing] = useState<WorkoutExercise | null>(null);
@@ -100,16 +103,24 @@ export default function WorkoutScreen() {
     };
   }, [editing]);
 
-  // Notification de fin de repos, pour l'app en arrière-plan ou l'écran verrouillé ; suit les ajustements ±15 s
+  /**
+   * Le repos est enregistré à chaque changement (début, ±15 s, fin) avec sa notification : il continue quand l'écran
+   * est réduit ou l'app fermée. Rien n'est touché en modification d'une séance passée, pour ne pas couper le repos
+   * de la séance en cours.
+   */
+  const workoutId = workout?.id ?? null;
   const restEndsAt = rest?.endsAt ?? null;
+  const restDuration = rest?.duration ?? null;
   useEffect(() => {
-    if (restEndsAt === null) {
-      cancelRestEnd();
-    } else {
-      scheduleRestEnd(restEndsAt);
+    if (editing || workoutId === null) {
+      return;
     }
-  }, [restEndsAt]);
-  useEffect(() => cancelRestEnd, []);
+    if (restEndsAt === null || restDuration === null) {
+      clearRest();
+    } else {
+      startRest({ workoutId, endsAt: restEndsAt, duration: restDuration });
+    }
+  }, [editing, workoutId, restEndsAt, restDuration]);
 
   // Pas de séance en cours (terminée ailleurs) ou séance introuvable : retour à l'écran précédent
   useEffect(() => {
@@ -293,7 +304,7 @@ export default function WorkoutScreen() {
           text: 'Abandonner',
           style: 'destructive',
           onPress: () => {
-            cancelRestEnd();
+            clearRest();
             WorkoutRepository.discardWorkout(workout.id);
             router.back();
           },
@@ -301,7 +312,7 @@ export default function WorkoutScreen() {
         {
           text: 'Terminer',
           onPress: () => {
-            cancelRestEnd();
+            clearRest();
             const saved = WorkoutRepository.finishWorkout(workout.id);
             if (!saved) {
               router.back();
