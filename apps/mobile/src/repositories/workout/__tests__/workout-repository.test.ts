@@ -2,6 +2,9 @@ import { ExerciseRepository } from '@/src/repositories/exercise/exercise-reposit
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { createTestDatabase, type TestDatabase } from '@/src/test-utils/test-database';
 
+// Durée et distance d'une série d'exercice à charge
+const NO_CARDIO = { duration_seconds: null, distance_meters: null };
+
 let mockDb: TestDatabase;
 jest.mock('@/src/db/database', () => ({ getDatabase: () => mockDb }));
 
@@ -219,10 +222,10 @@ describe('types de série', () => {
 
     expect(WorkoutRepository.getHistory()[0]).toMatchObject({ volume: 400, completed_set_count: 2 });
     expect(WorkoutRepository.getBestWeightsBefore([BENCH.exercise_id], T0 + DAY)).toEqual({ [BENCH.exercise_id]: 80 });
-    expect(WorkoutRepository.getExerciseSessions(BENCH.exercise_id)[0].sets).toEqual([{ weight: 80, reps: 5 }]);
+    expect(WorkoutRepository.getExerciseSessions(BENCH.exercise_id)[0].sets).toEqual([{ weight: 80, reps: 5, ...NO_CARDIO }]);
     expect(WorkoutRepository.getLastPerformance(BENCH.exercise_id)).toEqual([
-      { weight: 100, reps: 1, type: 'warmup' },
-      { weight: 80, reps: 5, type: 'normal' },
+      { weight: 100, reps: 1, ...NO_CARDIO, type: 'warmup' },
+      { weight: 80, reps: 5, ...NO_CARDIO, type: 'normal' },
     ]);
   });
 
@@ -263,8 +266,8 @@ describe('modifier une séance terminée', () => {
     recordWorkout(T0 + 2 * DAY, [{ ...BENCH, sets: [{ weight: 80, reps: 5 }] }]);
 
     const startedAt = WorkoutRepository.getWorkout(edited)!.started_at;
-    expect(WorkoutRepository.getLastPerformance(BENCH.exercise_id, startedAt)).toEqual([{ weight: 60, reps: 10, type: 'normal' }]);
-    expect(WorkoutRepository.getLastPerformance(BENCH.exercise_id)).toEqual([{ weight: 80, reps: 5, type: 'normal' }]);
+    expect(WorkoutRepository.getLastPerformance(BENCH.exercise_id, startedAt)).toEqual([{ weight: 60, reps: 10, ...NO_CARDIO, type: 'normal' }]);
+    expect(WorkoutRepository.getLastPerformance(BENCH.exercise_id)).toEqual([{ weight: 80, reps: 5, ...NO_CARDIO, type: 'normal' }]);
   });
 });
 
@@ -379,6 +382,32 @@ describe('récap', () => {
   });
 });
 
+describe('cardio', () => {
+  it('enregistre durée et distance, et indique le type de saisie de l’exercice', () => {
+    setNow(T0);
+    const id = WorkoutRepository.startWorkout({
+      name: 'Cardio',
+      exercises: [{ exercise_id: 172, name: 'Tapis de course', sets: [{ weight: null, reps: null }] }],
+    });
+    const [run] = WorkoutRepository.getWorkout(id)!.exercises;
+    expect(run.tracking).toBe('duration_distance');
+
+    WorkoutRepository.updateSet(run.sets[0].id, { weight: null, reps: null, duration_seconds: 1800, distance_meters: 5200 });
+    WorkoutRepository.setCompleted(run.sets[0].id, true);
+    WorkoutRepository.addSet(run.id, { weight: null, reps: null, duration_seconds: 300, distance_meters: null });
+    WorkoutRepository.finishWorkout(id);
+
+    expect(WorkoutRepository.getWorkout(id)!.exercises[0].sets).toEqual([
+      expect.objectContaining({ duration_seconds: 1800, distance_meters: 5200 }),
+    ]);
+    expect(WorkoutRepository.getLastPerformance(172)).toEqual([
+      { weight: null, reps: null, duration_seconds: 1800, distance_meters: 5200, type: 'normal' },
+    ]);
+    expect(WorkoutRepository.getHistory()[0]).toMatchObject({ volume: 0, completed_set_count: 1 });
+    expect(WorkoutRepository.getWorkout(id)!.exercises[0]).toMatchObject({ tracking: 'duration_distance' });
+  });
+});
+
 describe('progression', () => {
   it('getExerciseSessions renvoie les séries validées par séance terminée, la plus récente d’abord', () => {
     const first = recordWorkout(T0, [{ ...BENCH, sets: [{ weight: 70, reps: 8 }, { weight: 75, reps: 6 }] }]);
@@ -390,8 +419,8 @@ describe('progression', () => {
     WorkoutRepository.startWorkout({ name: 'En cours', exercises: [{ ...BENCH, sets: [{ weight: 90, reps: 1 }] }] });
 
     expect(WorkoutRepository.getExerciseSessions(BENCH.exercise_id)).toEqual([
-      { workout_id: second, started_at: T0 + DAY, sets: [{ weight: 80, reps: 5 }] },
-      { workout_id: first, started_at: T0, sets: [{ weight: 70, reps: 8 }, { weight: 75, reps: 6 }] },
+      { workout_id: second, started_at: T0 + DAY, sets: [{ weight: 80, reps: 5, ...NO_CARDIO }] },
+      { workout_id: first, started_at: T0, sets: [{ weight: 70, reps: 8, ...NO_CARDIO }, { weight: 75, reps: 6, ...NO_CARDIO }] },
     ]);
     expect(WorkoutRepository.getExerciseSessions(5)).toEqual([]);
   });

@@ -26,6 +26,8 @@ export const DEFAULT_VALUES_DATABASE = `
     VALUES (10, 'Abs', 1609459200, '#F6D365');
     INSERT OR IGNORE INTO muscles (id, name, created_at, color)
     VALUES (11, 'Forearms', 1609459200, '#8FB8DE');
+    INSERT OR IGNORE INTO muscles (id, name, created_at, color)
+    VALUES (12, 'Cardio', 1609459200, '#FF8FAB');
 
     INSERT OR IGNORE INTO exercises (id, name, equipment, created_at)
     VALUES (1, 'Développé couché', 'Barre', 1609459200);
@@ -442,6 +444,25 @@ export const DEFAULT_VALUES_DATABASE = `
            (168, 10),
            (169, 10),
            (170, 10);
+
+    -- Cardio (171 à 183) : séries en durée et distance. Muscle : 12 Cardio.
+    INSERT OR IGNORE INTO exercises (id, name, equipment, tracking, created_at)
+    VALUES (171, 'Course à pied', 'Poids du corps', 'duration_distance', 1609459200),
+           (172, 'Tapis de course', 'Machine', 'duration_distance', 1609459200),
+           (173, 'Marche inclinée sur tapis', 'Machine', 'duration_distance', 1609459200),
+           (174, 'Marche', 'Poids du corps', 'duration_distance', 1609459200),
+           (175, 'Vélo', 'Autre', 'duration_distance', 1609459200),
+           (176, 'Vélo d''intérieur', 'Machine', 'duration_distance', 1609459200),
+           (177, 'Vélo elliptique', 'Machine', 'duration_distance', 1609459200),
+           (178, 'Rameur', 'Machine', 'duration_distance', 1609459200),
+           (179, 'Simulateur d''escalier', 'Machine', 'duration_distance', 1609459200),
+           (180, 'Air bike', 'Machine', 'duration_distance', 1609459200),
+           (181, 'SkiErg', 'Machine', 'duration_distance', 1609459200),
+           (182, 'Natation', 'Autre', 'duration_distance', 1609459200),
+           (183, 'Corde à sauter', 'Autre', 'duration_distance', 1609459200);
+
+    INSERT OR IGNORE INTO exercise_muscles (exercise_id, muscle_id)
+    VALUES (171, 12), (172, 12), (173, 12), (174, 12), (175, 12), (176, 12), (177, 12), (178, 12), (179, 12), (180, 12), (181, 12), (182, 12), (183, 12);
 
     INSERT OR IGNORE INTO template_exercises (id, template_id, exercise_id, position, created_at)
     VALUES (1, 1, 1, 0, 1609459200),

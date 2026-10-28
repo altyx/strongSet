@@ -1,4 +1,5 @@
-import { formatDuration, formatMinutes } from '@/src/utils/duration';
+import { formatDistance, formatDistanceValue, parseDistance } from '@/src/utils/distance';
+import { formatDuration, formatMinutes, parseDuration } from '@/src/utils/duration';
 import { formatDecimal, parseDecimal, parseInteger } from '@/src/utils/number';
 
 describe('formatDecimal', () => {
@@ -41,4 +42,40 @@ it('formatMinutes arrondit à la minute et passe en heures au-delà de 60 min', 
   expect(formatMinutes(29)).toBe('0 min');
   expect(formatMinutes(54 * 60 + 12)).toBe('54 min');
   expect(formatMinutes(65 * 60)).toBe('1 h 05');
+});
+
+describe('parseDuration', () => {
+  it('lit des minutes seules, avec ou sans virgule', () => {
+    expect(parseDuration('30')).toBe(1800);
+    expect(parseDuration(' 2,5 ')).toBe(150);
+  });
+
+  it('lit minutes:secondes et heures:minutes:secondes', () => {
+    expect(parseDuration('25:30')).toBe(1530);
+    expect(parseDuration('1:05:00')).toBe(3900);
+    expect(parseDuration('90:00')).toBe(5400);
+  });
+
+  it('renvoie null pour une saisie vide ou invalide', () => {
+    expect(parseDuration('')).toBeNull();
+    expect(parseDuration('abc')).toBeNull();
+    expect(parseDuration('1:75')).toBeNull();
+    expect(parseDuration('1:75:00')).toBeNull();
+    expect(parseDuration('1:2:3:4')).toBeNull();
+    expect(parseDuration('-5')).toBeNull();
+  });
+});
+
+describe('distance', () => {
+  it('affiche des kilomètres avec la virgule', () => {
+    expect(formatDistanceValue(8500)).toBe('8,5');
+    expect(formatDistance(10000)).toBe('10 km');
+    expect(formatDistance(5234)).toBe('5,23 km');
+  });
+
+  it('convertit les kilomètres saisis en mètres', () => {
+    expect(parseDistance('8,5')).toBe(8500);
+    expect(parseDistance('0.75')).toBe(750);
+    expect(parseDistance('')).toBeNull();
+  });
 });

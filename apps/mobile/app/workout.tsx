@@ -131,14 +131,14 @@ export default function WorkoutScreen() {
     reload();
   };
 
-  const toggleSet = (set: WorkoutSet, entered: SetValues, previous: SetValues | undefined, restDuration: number) => {
+  const toggleSet = (exercise: WorkoutExercise, set: WorkoutSet, entered: SetValues, previous: SetValues | undefined) => {
     if (set.completed_at !== null) {
       WorkoutRepository.setCompleted(set.id, false);
       reload();
       return;
     }
 
-    const values = resolveSetValues(entered, previous, defaultReps);
+    const values = resolveSetValues(entered, previous, defaultReps, exercise.tracking);
     if (!values) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
@@ -146,8 +146,9 @@ export default function WorkoutScreen() {
     WorkoutRepository.updateSet(set.id, values);
     WorkoutRepository.setCompleted(set.id, true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Pas de repos quand on corrige une séance passée
-    if (!editing) {
+    // Pas de repos quand on corrige une séance passée, ni après du cardio ; sinon celui du programme ou des réglages
+    if (!editing && exercise.tracking !== 'duration_distance') {
+      const restDuration = exercise.rest_seconds ?? restSeconds;
       setRest({ endsAt: Date.now() + restDuration * 1000, duration: restDuration });
     }
     reload();
@@ -170,7 +171,16 @@ export default function WorkoutScreen() {
   // La nouvelle série reprend les valeurs et le type de la dernière : souvent la même charge pour une série de plus
   const addSet = (exercise: WorkoutExercise) => {
     const last = exercise.sets[exercise.sets.length - 1];
-    WorkoutRepository.addSet(exercise.id, { weight: last?.weight ?? null, reps: last?.reps ?? null }, last?.type);
+    WorkoutRepository.addSet(
+      exercise.id,
+      {
+        weight: last?.weight ?? null,
+        reps: last?.reps ?? null,
+        duration_seconds: last?.duration_seconds ?? null,
+        distance_meters: last?.distance_meters ?? null,
+      },
+      last?.type,
+    );
     reload();
   };
 
@@ -375,10 +385,7 @@ export default function WorkoutScreen() {
               unit={unit}
               currentSetId={currentSetId}
               onChangeSet={changeSet}
-              onToggleSet={(set, index, entered) =>
-                // Repos prévu par le programme pour cet exercice, sinon celui des réglages
-                toggleSet(set, entered, previous[index], exercise.rest_seconds ?? restSeconds)
-              }
+              onToggleSet={(set, index, entered) => toggleSet(exercise, set, entered, previous[index])}
               onSetOptions={(set, label) => setSetSheet({ set, label })}
               onAddSet={() => addSet(exercise)}
               onOptions={() => setOptionsFor(exercise)}

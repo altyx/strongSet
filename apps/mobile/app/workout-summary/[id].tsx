@@ -18,6 +18,7 @@ import { Workout } from '@/src/repositories/workout/workout-type';
 import { formatLongDate } from '@/src/utils/date';
 import { formatDuration } from '@/src/utils/duration';
 import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
+import { formatSetValues } from '@/src/utils/set-format';
 import { formatWeight, formatWeightValue } from '@/src/utils/weight';
 
 function loadSummary(workout: Workout) {
@@ -200,7 +201,7 @@ export default function WorkoutSummaryScreen() {
                       {labels[index]}
                     </ThemedText>
                     <ThemedText style={styles.setValue}>
-                      {set.weight === null ? `${set.reps} reps` : `${formatWeight(set.weight, unit)} × ${set.reps}`}
+                      {formatSetValues(set, unit, true)}
                     </ThemedText>
                   </View>
                 ))}

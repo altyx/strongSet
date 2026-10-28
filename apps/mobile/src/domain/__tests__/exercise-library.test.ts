@@ -2,9 +2,9 @@ import { filterExercises, validateNewExercise } from '@/src/domain/exercise-libr
 import { initials, normalizeSearch } from '@/src/utils/text';
 
 const exercises = [
-  { id: 1, name: 'Bench Press', equipment: 'Barre', muscles: ['Chest', 'Triceps'] },
-  { id: 2, name: 'Développé incliné haltères', equipment: 'Haltères', muscles: ['Chest'] },
-  { id: 3, name: 'Squat', equipment: 'Barre', muscles: ['Quadriceps', 'Glutes'] },
+  { id: 1, name: 'Bench Press', equipment: 'Barre', tracking: 'weight_reps' as const, muscles: ['Chest', 'Triceps'] },
+  { id: 2, name: 'Développé incliné haltères', equipment: 'Haltères', tracking: 'weight_reps' as const, muscles: ['Chest'] },
+  { id: 3, name: 'Squat', equipment: 'Barre', tracking: 'weight_reps' as const, muscles: ['Quadriceps', 'Glutes'] },
 ];
 
 describe('filterExercises', () => {

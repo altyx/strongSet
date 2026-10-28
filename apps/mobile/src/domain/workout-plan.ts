@@ -1,3 +1,4 @@
+import { Tracking } from '@/src/constants/tracking';
 import { Template, TemplateExercise } from '@/src/repositories/template/template-type';
 import { NewSet, NewWorkoutExercise, SetValues } from '@/src/repositories/workout/workout-type';
 
@@ -8,20 +9,22 @@ import { NewSet, NewWorkoutExercise, SetValues } from '@/src/repositories/workou
  *   on valide une série laissée vide. Sans historique pour une série, on pré-remplit les répétitions visées.
  * - Chaque série reprend le type de la série correspondante de la dernière séance (ex. échauffements en tête).
  * - Le repos visé par le programme est copié sur l'exercice de séance.
+ * - Cardio : une seule série par défaut (une sortie, une séance de tapis), sans répétitions visées.
  */
 export function buildWorkoutExercise(
-  exercise: Pick<TemplateExercise, 'id' | 'name' | 'target_sets' | 'target_reps' | 'rest_seconds'>,
+  exercise: Pick<TemplateExercise, 'id' | 'name' | 'tracking' | 'target_sets' | 'target_reps' | 'rest_seconds'>,
   lastPerformance: NewSet[],
   defaultSetCount: number,
 ): NewWorkoutExercise {
-  const setCount = exercise.target_sets ?? (lastPerformance.length || defaultSetCount);
+  const cardio = exercise.tracking === 'duration_distance';
+  const setCount = exercise.target_sets ?? (lastPerformance.length || (cardio ? 1 : defaultSetCount));
   return {
     exercise_id: exercise.id,
     name: exercise.name,
     rest_seconds: exercise.rest_seconds ?? null,
     sets: Array.from({ length: Math.max(1, setCount) }, (_, index) => ({
       weight: null,
-      reps: lastPerformance[index] ? null : (exercise.target_reps ?? null),
+      reps: lastPerformance[index] || cardio ? null : (exercise.target_reps ?? null),
       type: lastPerformance[index]?.type ?? 'normal',
     })),
   };
@@ -41,13 +44,27 @@ export function buildWorkoutExercises(
 /**
  * Valeurs à enregistrer quand on valide une série : la saisie, complétée par la série correspondante de la dernière
  * séance, puis par les répétitions par défaut.
- * @returns null si les répétitions restent inconnues (la série ne peut pas être validée)
+ * Cardio : la durée est obligatoire, la distance facultative (ex. simulateur d'escalier).
+ * @returns null si les répétitions (ou la durée en cardio) restent inconnues : la série ne peut pas être validée
  */
 export function resolveSetValues(
   entered: SetValues,
   previous: SetValues | undefined,
   defaultReps: number,
+  tracking: Tracking = 'weight_reps',
 ): SetValues | null {
+  if (tracking === 'duration_distance') {
+    const duration = entered.duration_seconds ?? previous?.duration_seconds ?? null;
+    if (duration === null || duration <= 0) {
+      return null;
+    }
+    return {
+      weight: null,
+      reps: null,
+      duration_seconds: duration,
+      distance_meters: entered.distance_meters ?? previous?.distance_meters ?? null,
+    };
+  }
   const reps = entered.reps ?? previous?.reps ?? defaultReps;
   if (reps === null || reps <= 0) {
     return null;

@@ -41,6 +41,7 @@ export function ExerciseCard({
   const doneCount = exercise.sets.filter((set) => set.completed_at !== null).length;
   const allDone = exercise.sets.length > 0 && doneCount === exercise.sets.length;
   const labels = setLabels(exercise.sets.map((set) => set.type));
+  const cardio = exercise.tracking === 'duration_distance';
 
   return (
     <Card variant={allDone ? 'default' : 'outlined'} style={styles.card}>
@@ -78,10 +79,10 @@ export function ExerciseCard({
           Précédent
         </ThemedText>
         <ThemedText type="label" tone="tertiary" style={[styles.center, { width: SET_COLUMNS.weight }]}>
-          {unit}
+          {cardio ? 'Durée' : unit}
         </ThemedText>
         <ThemedText type="label" tone="tertiary" style={[styles.center, { width: SET_COLUMNS.reps }]}>
-          Reps
+          {cardio ? 'km' : 'Reps'}
         </ThemedText>
         <View style={{ width: SET_COLUMNS.check }} />
       </View>
@@ -90,9 +91,10 @@ export function ExerciseCard({
         {exercise.sets.map((set, index) => (
           <SetRow
             // Remonte la ligne quand les valeurs enregistrées changent (ex. complétées à la validation)
-            key={`${set.id}-${set.weight}-${set.reps}`}
+            key={`${set.id}-${set.weight}-${set.reps}-${set.duration_seconds}-${set.distance_meters}`}
             label={labels[index]}
             set={set}
+            tracking={exercise.tracking}
             previous={previous[index]}
             defaultReps={defaultReps}
             unit={unit}

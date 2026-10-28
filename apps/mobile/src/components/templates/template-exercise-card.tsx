@@ -41,12 +41,15 @@ export function TemplateExerciseCard({ exercise, index, count, onChange, onMove,
           max={10}
           onChange={(target_sets) => onChange({ ...exercise, target_sets })}
         />
-        <Stepper
-          label="Répétitions"
-          value={exercise.target_reps}
-          max={50}
-          onChange={(target_reps) => onChange({ ...exercise, target_reps })}
-        />
+        {/* Cardio : la durée et la distance se saisissent en séance, pas de répétitions visées */}
+        {exercise.tracking !== 'duration_distance' && (
+          <Stepper
+            label="Répétitions"
+            value={exercise.target_reps}
+            max={50}
+            onChange={(target_reps) => onChange({ ...exercise, target_reps })}
+          />
+        )}
       </View>
       <RestPicker value={exercise.rest_seconds} onChange={(rest_seconds) => onChange({ ...exercise, rest_seconds })} />
     </Card>

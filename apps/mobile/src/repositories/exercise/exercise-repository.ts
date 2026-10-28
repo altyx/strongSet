@@ -1,3 +1,4 @@
+import { Tracking } from "@/src/constants/tracking";
 import {getDatabase} from "@/src/db/database";
 import {normalizeSearch} from "@/src/utils/text";
 
@@ -5,6 +6,7 @@ export interface ExerciseListItem {
   id: number;
   name: string;
   equipment: string | null;
+  tracking: Tracking;
   // Noms des muscles (en anglais en base, voir muscleLabel)
   muscles: string[];
 }
@@ -24,6 +26,8 @@ export interface NewExercise {
   equipment: string | null;
   muscleIds: number[];
   description?: string | null;
+  // Charge et répétitions si absent
+  tracking?: Tracking;
 }
 
 const now = () => Math.floor(Date.now() / 1000);
@@ -32,7 +36,7 @@ export const ExerciseRepository = {
   // Bibliothèque complète, par ordre alphabétique, avec les muscles de chaque exercice
   getAll: (): ExerciseListItem[] => {
     const exercises = getDatabase()
-      .getAllSync<{ id: number; name: string; equipment: string | null }>('SELECT id, name, equipment FROM exercises')
+      .getAllSync<Omit<ExerciseListItem, 'muscles'>>('SELECT id, name, equipment, tracking FROM exercises')
       // Tri en français : le tri SQLite (NOCASE) ne gère pas les accents et classerait « Écarté » après « Squat »
       .sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
     const muscles = ExerciseRepository.getMusclesByExercise(exercises.map((exercise) => exercise.id));
@@ -41,7 +45,7 @@ export const ExerciseRepository = {
 
   getById: (id: number): ExerciseDetail | null => {
     const exercise = getDatabase().getFirstSync<Omit<ExerciseDetail, 'muscles'>>(
-      'SELECT id, name, equipment, description FROM exercises WHERE id = ?',
+      'SELECT id, name, equipment, tracking, description FROM exercises WHERE id = ?',
       [id],
     );
     if (!exercise) {
@@ -69,12 +73,10 @@ export const ExerciseRepository = {
     let exerciseId = 0;
     db.withTransactionSync(() => {
       const description = exercise.description?.trim() || null;
-      exerciseId = db.runSync('INSERT INTO exercises (name, equipment, description, created_at) VALUES (?, ?, ?, ?)', [
-        exercise.name.trim(),
-        exercise.equipment,
-        description,
-        timestamp,
-      ]).lastInsertRowId;
+      exerciseId = db.runSync(
+        'INSERT INTO exercises (name, equipment, description, tracking, created_at) VALUES (?, ?, ?, ?, ?)',
+        [exercise.name.trim(), exercise.equipment, description, exercise.tracking ?? 'weight_reps', timestamp],
+      ).lastInsertRowId;
       exercise.muscleIds.forEach((muscleId) => {
         db.runSync('INSERT INTO exercise_muscles (exercise_id, muscle_id) VALUES (?, ?)', [exerciseId, muscleId]);
       });

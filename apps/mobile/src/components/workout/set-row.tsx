@@ -5,8 +5,12 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { ThemedText } from '@/src/components/themed-text';
 import { SET_TYPE_INFO } from '@/src/constants/set-types';
 import { fontFamily, palette, radius } from '@/src/constants/theme';
+import { Tracking } from '@/src/constants/tracking';
 import { SetValues, WorkoutSet } from '@/src/repositories/workout/workout-type';
+import { formatDistanceValue, parseDistance } from '@/src/utils/distance';
+import { formatDuration, parseDuration } from '@/src/utils/duration';
 import { parseDecimal, parseInteger } from '@/src/utils/number';
+import { formatSetValues } from '@/src/utils/set-format';
 import { formatWeightValue, fromUnit, WeightUnit } from '@/src/utils/weight';
 
 // Colonnes partagées avec l'en-tête du tableau (ExerciseCard)
@@ -16,6 +20,8 @@ type SetRowProps = {
   // « É » pour l'échauffement, sinon numéro parmi les séries de travail (voir setLabels)
   label: string;
   set: WorkoutSet;
+  // Cardio : durée et distance à la place de la charge et des répétitions
+  tracking: Tracking;
   // Série correspondante de la dernière séance : affichée en indication et en placeholder
   previous?: SetValues;
   defaultReps: number;
@@ -31,42 +37,81 @@ type SetRowProps = {
 };
 
 function formatPrevious(unit: WeightUnit, previous?: SetValues) {
-  if (!previous?.reps) {
+  if (!previous?.reps && !previous?.duration_seconds) {
     return '—';
   }
-  return previous.weight === null ? `${previous.reps} reps` : `${formatWeightValue(previous.weight, unit)} × ${previous.reps}`;
+  return formatSetValues(previous, unit);
 }
+
+// Texte d'un champ à partir de la valeur enregistrée, vide si elle n'est pas saisie
+const toText = (value: number | null | undefined, format: (value: number) => string) =>
+  value == null ? '' : format(value);
 
 /**
  * Les champs gardent leur texte en local pendant la saisie et ne l'enregistrent qu'à la perte du focus.
  * Le parent remonte la ligne (via sa `key`) quand les valeurs enregistrées changent.
  */
-export function SetRow({ label, set, previous, defaultReps, unit, isCurrent, onChange, onToggle, onOptions }: SetRowProps) {
-  const savedWeightText = set.weight === null ? '' : formatWeightValue(set.weight, unit);
-  const [weightText, setWeightText] = useState(savedWeightText);
-  const [repsText, setRepsText] = useState(set.reps === null ? '' : String(set.reps));
+export function SetRow({ label, set, tracking, previous, defaultReps, unit, isCurrent, onChange, onToggle, onOptions }: SetRowProps) {
+  const cardio = tracking === 'duration_distance';
+  // Cardio : le premier champ est la durée, le second la distance ; sinon la charge et les répétitions
+  const savedFirstText = cardio
+    ? toText(set.duration_seconds, formatDuration)
+    : toText(set.weight, (weight) => formatWeightValue(weight, unit));
+  const savedSecondText = cardio ? toText(set.distance_meters, formatDistanceValue) : toText(set.reps, String);
+  const [firstText, setFirstText] = useState(savedFirstText);
+  const [secondText, setSecondText] = useState(savedSecondText);
   const done = set.completed_at !== null;
   const typeInfo = SET_TYPE_INFO[set.type];
   // Nom lu par le lecteur d'écran : « série 2 », « série 3, dégressive », « échauffement »
   const name =
     set.type === 'warmup' ? 'échauffement' : `série ${label}${set.type === 'normal' ? '' : `, ${typeInfo.label.toLowerCase()}`}`;
 
-  // Charge non retouchée : on garde la valeur enregistrée, que l'arrondi d'affichage en livres ne doit pas modifier
-  const enteredWeight = () => {
-    if (weightText === savedWeightText) {
-      return set.weight;
+  // Champ non retouché : on garde la valeur enregistrée, que l'arrondi d'affichage (livres, km) ne doit pas modifier
+  const entered = (): SetValues => {
+    if (cardio) {
+      return {
+        weight: null,
+        reps: null,
+        duration_seconds: firstText === savedFirstText ? set.duration_seconds : parseDuration(firstText),
+        distance_meters: secondText === savedSecondText ? set.distance_meters : parseDistance(secondText),
+      };
     }
-    const value = parseDecimal(weightText);
-    return value === null ? null : fromUnit(value, unit);
+    const weight = parseDecimal(firstText);
+    return {
+      weight: firstText === savedFirstText ? set.weight : weight === null ? null : fromUnit(weight, unit),
+      reps: parseInteger(secondText),
+    };
   };
-  const entered = (): SetValues => ({ weight: enteredWeight(), reps: parseInteger(repsText) });
 
   const save = () => {
     const values = entered();
-    if (values.weight !== set.weight || values.reps !== set.reps) {
+    if (
+      values.weight !== set.weight ||
+      values.reps !== set.reps ||
+      (values.duration_seconds ?? null) !== set.duration_seconds ||
+      (values.distance_meters ?? null) !== set.distance_meters
+    ) {
       onChange(values);
     }
   };
+
+  const fields = cardio
+    ? {
+        firstPlaceholder: previous?.duration_seconds != null ? formatDuration(previous.duration_seconds) : 'min',
+        firstKeyboard: 'numbers-and-punctuation' as const,
+        firstLabel: `Durée, ${name}, en minutes ou minutes:secondes`,
+        secondPlaceholder: previous?.distance_meters != null ? formatDistanceValue(previous.distance_meters) : 'km',
+        secondKeyboard: 'decimal-pad' as const,
+        secondLabel: `Distance, ${name}, en kilomètres`,
+      }
+    : {
+        firstPlaceholder: previous?.weight != null ? formatWeightValue(previous.weight, unit) : unit,
+        firstKeyboard: 'decimal-pad' as const,
+        firstLabel: `Charge, ${name}, en ${unit === 'lb' ? 'livres' : 'kilos'}`,
+        secondPlaceholder: String(previous?.reps ?? defaultReps),
+        secondKeyboard: 'number-pad' as const,
+        secondLabel: `Répétitions, ${name}`,
+      };
 
   const inputStyle = [styles.input, done ? styles.inputDone : isCurrent && styles.inputCurrent];
 
@@ -85,25 +130,25 @@ export function SetRow({ label, set, previous, defaultReps, unit, isCurrent, onC
         {formatPrevious(unit, previous)}
       </ThemedText>
       <TextInput
-        value={weightText}
-        onChangeText={setWeightText}
+        value={firstText}
+        onChangeText={setFirstText}
         onEndEditing={save}
-        placeholder={previous?.weight != null ? formatWeightValue(previous.weight, unit) : unit}
+        placeholder={fields.firstPlaceholder}
         placeholderTextColor={palette.textTertiary}
-        keyboardType="decimal-pad"
+        keyboardType={fields.firstKeyboard}
         selectTextOnFocus
-        accessibilityLabel={`Charge, ${name}, en ${unit === 'lb' ? 'livres' : 'kilos'}`}
+        accessibilityLabel={fields.firstLabel}
         style={[inputStyle, { width: SET_COLUMNS.weight }]}
       />
       <TextInput
-        value={repsText}
-        onChangeText={setRepsText}
+        value={secondText}
+        onChangeText={setSecondText}
         onEndEditing={save}
-        placeholder={String(previous?.reps ?? defaultReps)}
+        placeholder={fields.secondPlaceholder}
         placeholderTextColor={palette.textTertiary}
-        keyboardType="number-pad"
+        keyboardType={fields.secondKeyboard}
         selectTextOnFocus
-        accessibilityLabel={`Répétitions, ${name}`}
+        accessibilityLabel={fields.secondLabel}
         style={[inputStyle, { width: SET_COLUMNS.reps }]}
       />
       <Pressable

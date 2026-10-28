@@ -50,6 +50,38 @@ export function sessionStats(sets: SetValues[]): SessionStats {
   return { bestOneRepMax, topSet, volume, setCount: sets.length, maxReps };
 }
 
+export type CardioStats = {
+  // Totaux de la séance (toutes les séries) ; 0 si non saisis
+  durationSeconds: number;
+  distanceMeters: number;
+  // Vitesse moyenne en km/h sur les séries où durée et distance sont saisies, null sinon
+  averageSpeed: number | null;
+};
+
+export function cardioStats(sets: SetValues[]): CardioStats {
+  let durationSeconds = 0;
+  let distanceMeters = 0;
+  let timedDuration = 0;
+  let timedDistance = 0;
+  sets.forEach((set) => {
+    const duration = set.duration_seconds ?? 0;
+    const distance = set.distance_meters ?? 0;
+    durationSeconds += duration;
+    distanceMeters += distance;
+    if (duration > 0 && distance > 0) {
+      timedDuration += duration;
+      timedDistance += distance;
+    }
+  });
+  const averageSpeed = timedDuration > 0 ? Math.round((timedDistance / 1000 / (timedDuration / 3600)) * 10) / 10 : null;
+  return { durationSeconds, distanceMeters, averageSpeed };
+}
+
+// Totaux d'une séance de cardio comme valeurs d'une série (affichage « 30:00 · 8,5 km »)
+export function toCardioValues(stats: CardioStats) {
+  return { duration_seconds: stats.durationSeconds, distance_meters: stats.distanceMeters || null };
+}
+
 export type WeekPoint = {
   // Lundi 00:00 de la semaine, timestamp en secondes
   weekStart: number;
@@ -59,6 +91,9 @@ export type WeekPoint = {
   maxReps: number | null;
   volume: number;
   setCount: number;
+  // Cardio : totaux de la semaine
+  durationSeconds: number;
+  distanceMeters: number;
 };
 
 // Les `count` dernières semaines (lundi), de la plus ancienne à la semaine de `now`
@@ -96,9 +131,9 @@ export function weeklyProgress(sessions: ExerciseSession[], now: Date, count = 8
   const weeks = lastWeeks(now, count).map(toTimestamp);
   return weeks.map((weekStart, index) => {
     const weekEnd = weeks[index + 1] ?? Number.POSITIVE_INFINITY;
-    const stats = sessions
-      .filter((session) => session.started_at >= weekStart && session.started_at < weekEnd)
-      .map((session) => sessionStats(session.sets));
+    const weekSessions = sessions.filter((session) => session.started_at >= weekStart && session.started_at < weekEnd);
+    const stats = weekSessions.map((session) => sessionStats(session.sets));
+    const cardio = weekSessions.map((session) => cardioStats(session.sets));
     const oneRepMaxes = stats.flatMap((stat) => (stat.bestOneRepMax === null ? [] : [stat.bestOneRepMax]));
     return {
       weekStart,
@@ -106,6 +141,8 @@ export function weeklyProgress(sessions: ExerciseSession[], now: Date, count = 8
       maxReps: stats.length > 0 ? Math.max(...stats.map((stat) => stat.maxReps)) : null,
       volume: stats.reduce((total, stat) => total + stat.volume, 0),
       setCount: stats.reduce((total, stat) => total + stat.setCount, 0),
+      durationSeconds: cardio.reduce((total, stat) => total + stat.durationSeconds, 0),
+      distanceMeters: cardio.reduce((total, stat) => total + stat.distanceMeters, 0),
     };
   });
 }
@@ -163,6 +200,36 @@ export function exerciseRecords(sessions: ExerciseSession[]): ExerciseRecords {
     }
   });
 
+  return records;
+}
+
+export type CardioRecords = {
+  longestDistance: Dated<{ meters: number }> | null;
+  longestDuration: Dated<{ seconds: number }> | null;
+  bestSpeed: Dated<{ kmh: number }> | null;
+};
+
+/**
+ * Records d'un exercice de cardio, séance par séance (totaux de la séance). En cas d'égalité, c'est la première fois
+ * qui compte.
+ */
+export function cardioRecords(sessions: ExerciseSession[]): CardioRecords {
+  const records: CardioRecords = { longestDistance: null, longestDuration: null, bestSpeed: null };
+  [...sessions]
+    .sort((a, b) => a.started_at - b.started_at)
+    .forEach((session) => {
+      const stats = cardioStats(session.sets);
+      const at = session.started_at;
+      if (stats.distanceMeters > 0 && (!records.longestDistance || stats.distanceMeters > records.longestDistance.meters)) {
+        records.longestDistance = { meters: stats.distanceMeters, at };
+      }
+      if (stats.durationSeconds > 0 && (!records.longestDuration || stats.durationSeconds > records.longestDuration.seconds)) {
+        records.longestDuration = { seconds: stats.durationSeconds, at };
+      }
+      if (stats.averageSpeed !== null && (!records.bestSpeed || stats.averageSpeed > records.bestSpeed.kmh)) {
+        records.bestSpeed = { kmh: stats.averageSpeed, at };
+      }
+    });
   return records;
 }
 

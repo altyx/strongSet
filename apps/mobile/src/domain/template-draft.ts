@@ -1,3 +1,4 @@
+import { Tracking } from '@/src/constants/tracking';
 import { Template, TemplateInput } from '@/src/repositories/template/template-type';
 
 // Exercice d'un programme en cours d'édition
@@ -6,6 +7,8 @@ export type DraftExercise = {
   key: string;
   exercise_id: number;
   name: string;
+  // Cardio : pas de répétitions visées
+  tracking: Tracking;
   target_sets: number;
   target_reps: number;
   rest_seconds: number;
@@ -16,12 +19,19 @@ export type DraftDefaults = { sets: number; reps: number; restSeconds: number };
 let keyCounter = 0;
 const nextKey = () => `draft-${++keyCounter}`;
 
-export function newDraftExercise(exercise: { id: number; name: string }, defaults: DraftDefaults): DraftExercise {
+// Cardio : une seule série par défaut (une sortie, une séance de tapis)
+const defaultSets = (tracking: Tracking, defaults: DraftDefaults) => (tracking === 'duration_distance' ? 1 : defaults.sets);
+
+export function newDraftExercise(
+  exercise: { id: number; name: string; tracking: Tracking },
+  defaults: DraftDefaults,
+): DraftExercise {
   return {
     key: nextKey(),
     exercise_id: exercise.id,
     name: exercise.name,
-    target_sets: defaults.sets,
+    tracking: exercise.tracking,
+    target_sets: defaultSets(exercise.tracking, defaults),
     target_reps: defaults.reps,
     rest_seconds: defaults.restSeconds,
   };
@@ -33,7 +43,8 @@ export function draftFromTemplate(template: Template, defaults: DraftDefaults): 
     key: nextKey(),
     exercise_id: exercise.id,
     name: exercise.name,
-    target_sets: exercise.target_sets ?? defaults.sets,
+    tracking: exercise.tracking,
+    target_sets: exercise.target_sets ?? defaultSets(exercise.tracking, defaults),
     target_reps: exercise.target_reps ?? defaults.reps,
     rest_seconds: exercise.rest_seconds ?? defaults.restSeconds,
   }));
@@ -53,10 +64,10 @@ export function validateDraft(name: string, exercises: DraftExercise[]): string 
 export function toTemplateInput(name: string, exercises: DraftExercise[]): TemplateInput {
   return {
     name: name.trim(),
-    exercises: exercises.map(({ exercise_id, target_sets, target_reps, rest_seconds }) => ({
+    exercises: exercises.map(({ exercise_id, tracking, target_sets, target_reps, rest_seconds }) => ({
       exercise_id,
       target_sets,
-      target_reps,
+      target_reps: tracking === 'duration_distance' ? null : target_reps,
       rest_seconds,
     })),
   };

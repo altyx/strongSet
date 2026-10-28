@@ -6,8 +6,8 @@ const template: Template = {
   name: 'Full Body',
   created_at: 0,
   exercises: [
-    { id: 1, name: 'Bench Press' },
-    { id: 2, name: 'Squat' },
+    { id: 1, name: 'Bench Press', tracking: 'weight_reps' },
+    { id: 2, name: 'Squat', tracking: 'weight_reps' },
   ],
 };
 
@@ -33,8 +33,8 @@ describe('buildWorkoutExercises', () => {
     const programmed: Template = {
       ...template,
       exercises: [
-        { id: 1, name: 'Bench Press', target_sets: 3, target_reps: 8, rest_seconds: 150 },
-        { id: 2, name: 'Squat', target_sets: null, target_reps: null, rest_seconds: null },
+        { id: 1, name: 'Bench Press', tracking: 'weight_reps', target_sets: 3, target_reps: 8, rest_seconds: 150 },
+        { id: 2, name: 'Squat', tracking: 'weight_reps', target_sets: null, target_reps: null, rest_seconds: null },
       ],
     };
     const lastPerformance = (exerciseId: number) => (exerciseId === 1 ? [{ weight: 70, reps: 8 }] : []);
@@ -71,13 +71,42 @@ describe('buildWorkoutExercises', () => {
 
 describe('buildWorkoutExercise', () => {
   it('prépare un exercice de la bibliothèque ajouté en cours de séance, sans objectifs', () => {
-    expect(buildWorkoutExercise({ id: 2, name: 'Squat' }, [{ weight: 100, reps: 5 }], 4)).toEqual({
+    expect(buildWorkoutExercise({ id: 2, name: 'Squat', tracking: 'weight_reps' }, [{ weight: 100, reps: 5 }], 4)).toEqual({
       exercise_id: 2,
       name: 'Squat',
       rest_seconds: null,
       sets: [{ weight: null, reps: null, type: 'normal' }],
     });
-    expect(buildWorkoutExercise({ id: 2, name: 'Squat' }, [], 3).sets).toHaveLength(3);
+    expect(buildWorkoutExercise({ id: 2, name: 'Squat', tracking: 'weight_reps' }, [], 3).sets).toHaveLength(3);
+  });
+});
+
+describe('cardio', () => {
+  const run = { id: 172, name: 'Tapis de course', tracking: 'duration_distance' as const };
+
+  it('prépare une seule série sans répétitions, ou autant que la dernière fois', () => {
+    expect(buildWorkoutExercise({ ...run, target_reps: 10 }, [], 4).sets).toEqual([{ weight: null, reps: null, type: 'normal' }]);
+    expect(buildWorkoutExercise(run, [{ weight: null, reps: null }, { weight: null, reps: null }], 4).sets).toHaveLength(2);
+  });
+
+  it('exige une durée, reprise de la dernière séance si besoin ; la distance est facultative', () => {
+    const empty = { weight: null, reps: null, duration_seconds: null, distance_meters: null };
+    expect(resolveSetValues({ ...empty, duration_seconds: 1800, distance_meters: 5000 }, undefined, 12, 'duration_distance')).toEqual(
+      { weight: null, reps: null, duration_seconds: 1800, distance_meters: 5000 },
+    );
+    expect(resolveSetValues(empty, { ...empty, duration_seconds: 1500, distance_meters: 4000 }, 12, 'duration_distance')).toEqual({
+      weight: null,
+      reps: null,
+      duration_seconds: 1500,
+      distance_meters: 4000,
+    });
+    expect(resolveSetValues({ ...empty, duration_seconds: 600 }, undefined, 12, 'duration_distance')).toEqual({
+      weight: null,
+      reps: null,
+      duration_seconds: 600,
+      distance_meters: null,
+    });
+    expect(resolveSetValues({ ...empty, distance_meters: 5000 }, undefined, 12, 'duration_distance')).toBeNull();
   });
 });
 

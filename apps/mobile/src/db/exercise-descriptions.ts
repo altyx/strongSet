@@ -898,6 +898,73 @@ export const EXERCISE_DESCRIPTIONS: Record<number, [string, string, string]> = {
     'Enroule le buste jusqu’à la verticale, puis redescends lentement.',
     'Plus l’inclinaison est forte, plus c’est difficile. Tiens un disque pour corser.',
   ],
+
+  // Cardio
+  171: [
+    'Chaussures de course, échauffement de quelques minutes en marchant ou en trottinant.',
+    'Cours à une allure régulière, foulée courte, pied qui se pose sous le corps, bras relâchés.',
+    'Tu dois pouvoir parler en courant pour une sortie d’endurance. Augmente la distance progressivement, pas plus de 10 % par semaine.',
+  ],
+  172: [
+    'Monte sur les côtés du tapis, démarre à vitesse lente, puis place-toi au centre de la bande.',
+    'Augmente la vitesse jusqu’à ton allure, foulée naturelle, sans te tenir aux poignées.',
+    'Une inclinaison de 1 % compense l’absence de résistance de l’air. Attache la clé de sécurité.',
+  ],
+  173: [
+    'Tapis réglé avec une forte inclinaison (10 à 15 %) et une vitesse de marche (4 à 6 km/h).',
+    'Marche à grands pas en poussant dans le talon, buste droit.',
+    'Ne te tiens pas aux poignées : ça annule l’effet de la pente. Baisse la vitesse plutôt que l’inclinaison si c’est trop dur.',
+  ],
+  174: [
+    'Chaussures confortables, parcours choisi à l’avance.',
+    'Marche d’un pas soutenu, bras qui accompagnent le mouvement, buste droit.',
+    'Accélère jusqu’à être légèrement essoufflé pour en faire une vraie séance d’endurance.',
+  ],
+  175: [
+    'Selle réglée pour que la jambe soit presque tendue en bas du pédalage, casque attaché.',
+    'Pédale à une cadence régulière (80 à 90 tours par minute), en changeant de vitesse plutôt qu’en forçant.',
+    'Une cadence trop lente fatigue les genoux : préfère un braquet plus léger.',
+  ],
+  176: [
+    'Selle à hauteur de hanche debout à côté du vélo, jambe presque tendue en bas du pédalage.',
+    'Pédale à une cadence régulière en ajustant la résistance selon l’effort voulu.',
+    'Note la résistance utilisée pour comparer tes séances. Hydrate-toi : on transpire beaucoup en intérieur.',
+  ],
+  177: [
+    'Pieds bien à plat sur les pédales, mains sur les poignées mobiles.',
+    'Pousse et tire les poignées en rythme avec les jambes, buste droit.',
+    'Sans impact : idéal pour s’échauffer ou ménager les genoux. Pédale aussi en arrière pour varier.',
+  ],
+  178: [
+    'Pieds sanglés, poignée en main, bras tendus, genoux fléchis, buste légèrement penché en avant.',
+    'Pousse d’abord avec les jambes, puis bascule le buste en arrière et tire la poignée vers le bas des côtes. Reviens dans l’ordre inverse.',
+    'La puissance vient des jambes (environ 60 %). Garde le dos droit, sans t’arrondir en fin de retour.',
+  ],
+  179: [
+    'Monte sur les marches, mains posées légèrement sur les rampes, vitesse lente au démarrage.',
+    'Monte les marches à un rythme régulier, en posant tout le pied sur chaque marche.',
+    'Ne t’appuie pas de tout ton poids sur les rampes : c’est aux jambes de travailler.',
+  ],
+  180: [
+    'Selle réglée comme sur un vélo, mains sur les poignées mobiles.',
+    'Pédale en poussant et tirant les poignées : plus tu vas vite, plus la résistance augmente.',
+    'Très intense : idéal pour des intervalles courts. Commence doucement pour t’échauffer.',
+  ],
+  181: [
+    'Face à la machine, poignées en main bras levés, pieds largeur de hanches.',
+    'Tire les poignées vers le bas en fléchissant les hanches et légèrement les genoux, puis remonte.',
+    'Le mouvement part des hanches et du dos, pas seulement des bras.',
+  ],
+  182: [
+    'Bonnet et lunettes, échauffement de quelques longueurs en souplesse.',
+    'Nage à une allure régulière en soufflant dans l’eau et en respirant tous les deux ou trois mouvements de bras.',
+    'Compte tes longueurs pour la distance : 25 m ou 50 m selon le bassin.',
+  ],
+  183: [
+    'Corde réglée pour que les poignées arrivent sous les aisselles, pied posé au milieu.',
+    'Saute sur la pointe des pieds, juste assez haut pour laisser passer la corde, en la faisant tourner avec les poignets.',
+    'Coudes près du corps. Alterne quelques minutes de saut et de récupération au début.',
+  ],
 };
 
 // Texte enregistré en base : une ligne par étape, préfixée de son nom

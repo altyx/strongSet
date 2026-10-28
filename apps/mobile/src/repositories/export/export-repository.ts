@@ -27,7 +27,7 @@ export const ExportRepository = {
     return getDatabase().getAllSync<ExportedSet>(
       `SELECT w.started_at, w.name AS workout_name, w.note AS workout_note, we.exercise_name,
               ROW_NUMBER() OVER (PARTITION BY we.id ORDER BY s.position, s.id) AS set_number,
-              s.type, s.weight, s.reps
+              s.type, s.weight, s.reps, s.duration_seconds, s.distance_meters
        FROM sets s
        JOIN workout_exercises we ON we.id = s.workout_exercise_id
        JOIN workouts w ON w.id = we.workout_id

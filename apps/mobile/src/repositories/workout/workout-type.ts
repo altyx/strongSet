@@ -1,3 +1,5 @@
+import { Tracking } from '@/src/constants/tracking';
+
 // Échauffement : compte dans les séries faites mais pas dans le volume, les records ni la progression
 export type SetType = 'normal' | 'warmup' | 'drop' | 'failure';
 
@@ -8,6 +10,9 @@ export interface WorkoutSet {
   // kg, null tant que la charge n'est pas saisie
   weight: number | null;
   reps: number | null;
+  // Cardio : durée en secondes et distance en mètres, null sinon ou tant qu'elles ne sont pas saisies
+  duration_seconds: number | null;
+  distance_meters: number | null;
   // null tant que la série n'est pas validée
   completed_at: number | null;
 }
@@ -17,6 +22,8 @@ export interface WorkoutExercise {
   // null si l'exercice a été supprimé de la bibliothèque depuis
   exercise_id: number | null;
   name: string;
+  // Charge et répétitions par défaut ; garde cette valeur si l'exercice a été supprimé de la bibliothèque
+  tracking: Tracking;
   position: number;
   // Repos entre les séries en secondes ; null = valeur par défaut des réglages
   rest_seconds: number | null;
@@ -55,10 +62,12 @@ export interface ExerciseSession {
   sets: SetValues[];
 }
 
-// Valeurs saisies pour une série (création ou mise à jour)
+// Valeurs saisies pour une série (création ou mise à jour) ; durée et distance absentes = null (exercice à charge)
 export interface SetValues {
   weight: number | null;
   reps: number | null;
+  duration_seconds?: number | null;
+  distance_meters?: number | null;
 }
 
 // Série d'une séance passée (colonne « Précédent ») ; son type est repris par la série correspondante

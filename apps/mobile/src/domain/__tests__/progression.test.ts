@@ -1,4 +1,6 @@
 import {
+  cardioRecords,
+  cardioStats,
   estimateOneRepMax,
   exerciseRecords,
   lastWeeks,
@@ -79,9 +81,9 @@ describe('weeklyProgress', () => {
   it('agrège par semaine : meilleur 1RM, reps max, volume et séries', () => {
     expect(weeklyProgress(sessions, NOW, 3)).toEqual([
       // 70×8 → 88,5 l'emporte sur 75×5 → 87,5
-      { weekStart: toTimestamp(new Date(2026, 9, 5)), oneRepMax: 88.5, maxReps: 8, volume: 560 + 750, setCount: 3 },
-      { weekStart: toTimestamp(new Date(2026, 9, 12)), oneRepMax: null, maxReps: null, volume: 0, setCount: 0 },
-      { weekStart: toTimestamp(new Date(2026, 9, 19)), oneRepMax: 93.5, maxReps: 5, volume: 400, setCount: 1 },
+      { weekStart: toTimestamp(new Date(2026, 9, 5)), oneRepMax: 88.5, maxReps: 8, volume: 560 + 750, setCount: 3, durationSeconds: 0, distanceMeters: 0 },
+      { weekStart: toTimestamp(new Date(2026, 9, 12)), oneRepMax: null, maxReps: null, volume: 0, setCount: 0, durationSeconds: 0, distanceMeters: 0 },
+      { weekStart: toTimestamp(new Date(2026, 9, 19)), oneRepMax: 93.5, maxReps: 5, volume: 400, setCount: 1, durationSeconds: 0, distanceMeters: 0 },
     ]);
   });
 });
@@ -137,4 +139,40 @@ it('weekLabel nomme la semaine en cours et préfixe les autres par « sem. »', 
   expect(weekLabel(toTimestamp(new Date(2026, 9, 12)), NOW)).toBe('sem.\n12/10');
   expect(weekSpokenLabel(toTimestamp(new Date(2026, 9, 19)), NOW)).toBe('cette semaine');
   expect(weekSpokenLabel(toTimestamp(new Date(2026, 8, 28)), NOW)).toBe('semaine du 28/9');
+});
+
+describe('cardio', () => {
+  const run = (duration_seconds: number | null, distance_meters: number | null) => ({
+    weight: null,
+    reps: null,
+    duration_seconds,
+    distance_meters,
+  });
+
+  it('cardioStats additionne durée et distance, vitesse sur les séries complètes', () => {
+    expect(cardioStats([run(1800, 6000), run(600, null)])).toEqual({
+      durationSeconds: 2400,
+      distanceMeters: 6000,
+      averageSpeed: 12,
+    });
+    expect(cardioStats([run(600, null)]).averageSpeed).toBeNull();
+  });
+
+  it('cardioRecords garde la plus longue distance, la plus longue durée et la meilleure vitesse', () => {
+    expect(
+      cardioRecords([
+        { workout_id: 2, started_at: at(9, 13), sets: [run(3600, 10000)] },
+        { workout_id: 1, started_at: at(9, 6), sets: [run(1800, 6000)] },
+      ]),
+    ).toEqual({
+      longestDistance: { meters: 10000, at: at(9, 13) },
+      longestDuration: { seconds: 3600, at: at(9, 13) },
+      bestSpeed: { kmh: 12, at: at(9, 6) },
+    });
+  });
+
+  it('weeklyProgress additionne durée et distance par semaine', () => {
+    const [week] = weeklyProgress([{ workout_id: 1, started_at: at(9, 20), sets: [run(1800, 5000)] }], NOW, 1);
+    expect(week).toMatchObject({ durationSeconds: 1800, distanceMeters: 5000, setCount: 1, oneRepMax: null });
+  });
 });

@@ -1,3 +1,4 @@
+import { Tracking } from "@/src/constants/tracking";
 import {Template, TemplateExercise, TemplateInput} from "@/src/repositories/template/template-type";
 import {getDatabase} from "@/src/db/database";
 
@@ -10,6 +11,7 @@ type TemplateRow = {
   template_updated_at: number | null;
   exercise_id: number | null;
   exercise_name: string | null;
+  tracking: Tracking | null;
   equipment: string | null;
   exercise_note: string | null;
   template_exercise_note: string | null;
@@ -30,6 +32,7 @@ const TEMPLATE_SELECT = `
     te.rest_seconds,
     e.id as exercise_id,
     e.name as exercise_name,
+    e.tracking,
     e.equipment,
     e.note as exercise_note
   FROM templates t
@@ -57,6 +60,7 @@ function toTemplates(rows: TemplateRow[]): Template[] {
       const exercise: TemplateExercise = {
         id: row.exercise_id,
         name: row.exercise_name ?? '',
+        tracking: row.tracking ?? 'weight_reps',
         equipment: row.equipment ?? undefined,
         note: row.exercise_note ?? undefined,
         template_exercise_note: row.template_exercise_note ?? undefined,

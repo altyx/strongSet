@@ -8,11 +8,21 @@ import { ThemedText } from '@/src/components/themed-text';
 import { BarChart } from '@/src/components/ui/bar-chart';
 import { Card } from '@/src/components/ui/card';
 import { palette, radius, spacing } from '@/src/constants/theme';
-import { lastWeeks, oneRepMaxChange, sessionStats, weekLabel, weeklyTotals, weekSpokenLabel } from '@/src/domain/progression';
+import {
+  cardioStats,
+  lastWeeks,
+  oneRepMaxChange,
+  sessionStats,
+  toCardioValues,
+  weekLabel,
+  weeklyTotals,
+  weekSpokenLabel,
+} from '@/src/domain/progression';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { formatShortDate, toTimestamp } from '@/src/utils/date';
 import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
-import { formatWeight, formatWeightValue, spokenWeight, WeightUnit } from '@/src/utils/weight';
+import { formatSetValues } from '@/src/utils/set-format';
+import { formatWeight, spokenWeight, WeightUnit } from '@/src/utils/weight';
 
 const WEEKS = 8;
 const HISTORY_LIMIT = 500;
@@ -38,12 +48,19 @@ function loadProgress(unit: WeightUnit) {
   );
   const exercises: TrainedExercise[] = WorkoutRepository.getTrainedExercises().map((exercise) => {
     const sessions = WorkoutRepository.getExerciseSessions(exercise.id);
-    const last = sessionStats(sessions[0]?.sets ?? []);
+    const lastSets = sessions[0]?.sets ?? [];
+    const last = sessionStats(lastSets);
+    const cardio = cardioStats(lastSets);
     return {
       id: exercise.id,
       name: exercise.name,
       lastDone: exercise.last_done,
-      lastBest: last.topSet ? `${formatWeightValue(last.topSet.weight, unit)} × ${last.topSet.reps}` : `${last.maxReps} reps`,
+      lastBest:
+        cardio.durationSeconds > 0
+          ? formatSetValues({ weight: null, reps: null, ...toCardioValues(cardio) }, unit)
+          : last.topSet
+            ? formatSetValues(last.topSet, unit)
+            : `${last.maxReps} reps`,
       change: oneRepMaxChange(sessions, since),
     };
   });

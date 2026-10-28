@@ -12,17 +12,22 @@ const set = (overrides: Partial<ExportedSet>): ExportedSet => ({
   type: 'normal',
   weight: 62.5,
   reps: 8,
+  duration_seconds: null,
+  distance_meters: null,
   ...overrides,
 });
 
 describe('buildSetsCsv', () => {
   it('écrit une ligne par série, séparateur « ; » et virgule décimale, précédé du BOM', () => {
-    const csv = buildSetsCsv([set({}), set({ set_number: 2, type: 'warmup', weight: null, reps: 12 })]);
+    const csv = buildSetsCsv([set({}), set({ set_number: 2, type: 'warmup', weight: null, reps: 12 }),
+      set({ exercise_name: 'Tapis de course', weight: null, reps: null, duration_seconds: 1950, distance_meters: 5250 }),
+    ]);
 
     expect(csv.split('\r\n')).toEqual([
-      '﻿Date;Heure;Séance;Exercice;Série;Type;Charge (kg);Répétitions;Note de séance',
-      '2026-10-20;18:05;Push;Développé couché;1;Normale;62,5;8;',
-      '2026-10-20;18:05;Push;Développé couché;2;Échauffement;;12;',
+      '﻿Date;Heure;Séance;Exercice;Série;Type;Charge (kg);Répétitions;Durée;Distance (km);Note de séance',
+      '2026-10-20;18:05;Push;Développé couché;1;Normale;62,5;8;;;',
+      '2026-10-20;18:05;Push;Développé couché;2;Échauffement;;12;;;',
+      '2026-10-20;18:05;Push;Tapis de course;1;Normale;;;32:30;5,25;',
       '',
     ]);
   });
@@ -30,11 +35,11 @@ describe('buildSetsCsv', () => {
   it('entoure de guillemets les cellules avec séparateur, guillemet ou retour à la ligne', () => {
     const csv = buildSetsCsv([set({ workout_name: null, workout_note: 'Dos; "un peu" serré\nà surveiller' })]);
 
-    expect(csv.split('\r\n')[1]).toBe('2026-10-20;18:05;;Développé couché;1;Normale;62,5;8;"Dos; ""un peu"" serré\nà surveiller"');
+    expect(csv.split('\r\n')[1]).toBe('2026-10-20;18:05;;Développé couché;1;Normale;62,5;8;;;"Dos; ""un peu"" serré\nà surveiller"');
   });
 
   it('ne contient que l’en-tête sans séance', () => {
-    expect(buildSetsCsv([])).toBe('﻿Date;Heure;Séance;Exercice;Série;Type;Charge (kg);Répétitions;Note de séance\r\n');
+    expect(buildSetsCsv([])).toBe('﻿Date;Heure;Séance;Exercice;Série;Type;Charge (kg);Répétitions;Durée;Distance (km);Note de séance\r\n');
   });
 });
 

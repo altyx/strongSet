@@ -1,7 +1,10 @@
+import { Tracking } from '@/src/constants/tracking';
+
 export interface TemplateExercise {
   // id de l'exercice dans la bibliothèque (table exercises)
   id: number;
   name: string;
+  tracking: Tracking;
   primary_focus?: string;
   secondary_focus?: string;
   equipment?: string;
