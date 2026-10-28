@@ -373,6 +373,76 @@ export const DEFAULT_VALUES_DATABASE = `
            (143, 10),
            (144, 10);
 
+    -- Compléments : dos (145 à 146), épaules (147 à 150), biceps (151 à 153), triceps (154), avant-bras (155 à
+    -- 156), jambes (157 à 166), abdominaux (167 à 170).
+    INSERT OR IGNORE INTO exercises (id, name, equipment, created_at)
+    VALUES (145, 'Soulevé de terre trap bar', 'Barre', 1609459200),
+           (146, 'Lombaires à la machine', 'Machine', 1609459200),
+
+           (147, 'Développé militaire assis', 'Barre', 1609459200),
+           (148, 'Développé militaire machine guidée', 'Machine', 1609459200),
+           (149, 'Développé landmine', 'Barre', 1609459200),
+           (150, 'Rotation externe à la poulie', 'Poulie', 1609459200),
+
+           (151, 'Curl araignée', 'Barre', 1609459200),
+           (152, 'Curl Bayesian à la poulie', 'Poulie', 1609459200),
+           (153, 'Curl Zottman', 'Haltères', 1609459200),
+
+           (154, 'Dips à la machine', 'Machine', 1609459200),
+
+           (155, 'Rouleau à poignets', 'Autre', 1609459200),
+           (156, 'Suspension à la barre', 'Poids du corps', 1609459200),
+
+           (157, 'Pendulum squat', 'Machine', 1609459200),
+           (158, 'Presse à cuisses horizontale', 'Machine', 1609459200),
+           (159, 'Sissy squat', 'Poids du corps', 1609459200),
+           (160, 'Squat sumo haltère', 'Haltères', 1609459200),
+           (161, 'Soulevé de terre roumain à une jambe', 'Haltères', 1609459200),
+           (162, 'Glute ham raise', 'Machine', 1609459200),
+           (163, 'Kickback fessier à la machine', 'Machine', 1609459200),
+           (164, 'Adduction à la poulie', 'Poulie', 1609459200),
+           (165, 'Mollets à la machine guidée', 'Machine', 1609459200),
+           (166, 'Mollets à une jambe haltère', 'Haltères', 1609459200),
+
+           (167, 'Flexions latérales haltère', 'Haltères', 1609459200),
+           (168, 'Dead bug', 'Poids du corps', 1609459200),
+           (169, 'Crunch bicyclette', 'Poids du corps', 1609459200),
+           (170, 'Sit-up décliné', 'Poids du corps', 1609459200);
+
+    INSERT OR IGNORE INTO exercise_muscles (exercise_id, muscle_id)
+    VALUES (145, 6), (145, 8), (145, 9), (145, 4),
+           (146, 4), (146, 8),
+
+           (147, 5), (147, 2),
+           (148, 5), (148, 2),
+           (149, 5), (149, 1), (149, 2),
+           (150, 5),
+
+           (151, 3),
+           (152, 3),
+           (153, 3), (153, 11),
+
+           (154, 2), (154, 1),
+
+           (155, 11),
+           (156, 11), (156, 4),
+
+           (157, 6), (157, 8),
+           (158, 6), (158, 8),
+           (159, 6),
+           (160, 6), (160, 8),
+           (161, 9), (161, 8),
+           (162, 9), (162, 8),
+           (163, 8),
+           (164, 6),
+           (165, 7),
+           (166, 7),
+
+           (167, 10),
+           (168, 10),
+           (169, 10),
+           (170, 10);
+
     INSERT OR IGNORE INTO template_exercises (id, template_id, exercise_id, position, created_at)
     VALUES (1, 1, 1, 0, 1609459200),
            (2, 1, 2, 1, 1609459200),

@@ -12,8 +12,8 @@ afterEach(() => {
   mockDb.close();
 });
 
-// Bibliothèque par défaut : ids 1 à 144
-const DEFAULT_EXERCISE_COUNT = 144;
+// Bibliothèque par défaut : ids 1 à 170
+const DEFAULT_EXERCISE_COUNT = 170;
 
 it('count compte les exercices de la bibliothèque', () => {
   expect(ExerciseRepository.count()).toBe(DEFAULT_EXERCISE_COUNT);

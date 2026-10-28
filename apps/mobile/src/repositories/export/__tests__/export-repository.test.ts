@@ -58,6 +58,6 @@ it('getBackup copie toutes les tables avec la version du schéma', () => {
     'workout_exercises',
     'sets',
   ]);
-  expect(backup.tables.exercises).toHaveLength(144);
+  expect(backup.tables.exercises).toHaveLength(170);
   expect(backup.tables.sets).toEqual([expect.objectContaining({ weight: 60, reps: 10 })]);
 });
