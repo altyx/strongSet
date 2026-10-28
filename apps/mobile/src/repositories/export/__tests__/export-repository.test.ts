@@ -1,4 +1,3 @@
-import { LIBRARY_VARIANTS } from '@/src/db/library-variants';
 import { ExportRepository } from '@/src/repositories/export/export-repository';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { createTestDatabase, type TestDatabase } from '@/src/test-utils/test-database';
@@ -59,6 +58,6 @@ it('getBackup copie toutes les tables avec la version du schéma', () => {
     'workout_exercises',
     'sets',
   ]);
-  expect(backup.tables.exercises).toHaveLength(87 + LIBRARY_VARIANTS.length);
+  expect(backup.tables.exercises).toHaveLength(144);
   expect(backup.tables.sets).toEqual([expect.objectContaining({ weight: 60, reps: 10 })]);
 });

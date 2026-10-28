@@ -1,5 +1,4 @@
 import { DEFAULT_DESCRIPTIONS_SQL } from './exercise-descriptions';
-import { LIBRARY_VARIANTS_SQL } from './library-variants';
 
 /**
  * Default values for the database.
@@ -242,6 +241,138 @@ export const DEFAULT_VALUES_DATABASE = `
            (86, 10),
            (87, 10), (87, 6);
 
+    -- Variantes : triceps (88 à 97), biceps (98 à 104), avant-bras (105), dos (106 à 119), épaules (120 à 124),
+    -- jambes (125 à 138), abdominaux (139 à 144).
+    INSERT OR IGNORE INTO exercises (id, name, equipment, created_at)
+    VALUES (88, 'Extension triceps poulie haute à un bras', 'Poulie', 1609459200),
+           (89, 'Extension triceps poulie haute prise inversée', 'Poulie', 1609459200),
+           (90, 'Extension triceps poulie haute barre en V', 'Poulie', 1609459200),
+           (91, 'Extension triceps au-dessus de la tête à la poulie', 'Poulie', 1609459200),
+           (92, 'Extension nuque à un bras haltère', 'Haltères', 1609459200),
+           (93, 'Barre au front haltères', 'Haltères', 1609459200),
+           (94, 'Kickback à la poulie', 'Poulie', 1609459200),
+           (95, 'Extension triceps machine', 'Machine', 1609459200),
+           (96, 'Dips assistés', 'Machine', 1609459200),
+           (97, 'Pompes diamant', 'Poids du corps', 1609459200),
+
+           (98, 'Curl barre EZ', 'Barre', 1609459200),
+           (99, 'Curl pupitre haltère', 'Haltères', 1609459200),
+           (100, 'Curl pupitre machine', 'Machine', 1609459200),
+           (101, 'Curl marteau à la corde', 'Poulie', 1609459200),
+           (102, 'Curl à la poulie à un bras', 'Poulie', 1609459200),
+           (103, 'Curl poulie haute', 'Poulie', 1609459200),
+           (104, 'Curl inversé', 'Barre', 1609459200),
+
+           (105, 'Curl poignets inversé', 'Barre', 1609459200),
+
+           (106, 'Tirage vertical prise inversée', 'Poulie', 1609459200),
+           (107, 'Tirage vertical à un bras', 'Poulie', 1609459200),
+           (108, 'Tirage vertical machine', 'Machine', 1609459200),
+           (109, 'Rowing à la poulie à un bras', 'Poulie', 1609459200),
+           (110, 'Rowing assis prise large', 'Poulie', 1609459200),
+           (111, 'Rowing Pendlay', 'Barre', 1609459200),
+           (112, 'Rowing barre supination', 'Barre', 1609459200),
+           (113, 'Rowing poitrine appuyée haltères', 'Haltères', 1609459200),
+           (114, 'Tractions prise neutre', 'Poids du corps', 1609459200),
+           (115, 'Tractions assistées', 'Machine', 1609459200),
+           (116, 'Rowing inversé', 'Poids du corps', 1609459200),
+           (117, 'Haussements d''épaules barre', 'Barre', 1609459200),
+           (118, 'Good morning', 'Barre', 1609459200),
+           (119, 'Rack pull', 'Barre', 1609459200),
+
+           (120, 'Élévations latérales à la machine', 'Machine', 1609459200),
+           (121, 'Élévations frontales à la poulie', 'Poulie', 1609459200),
+           (122, 'Élévations frontales disque', 'Autre', 1609459200),
+           (123, 'Oiseau à la poulie', 'Poulie', 1609459200),
+           (124, 'Rowing menton', 'Barre', 1609459200),
+
+           (125, 'Squat machine guidée', 'Machine', 1609459200),
+           (126, 'Fentes barre', 'Barre', 1609459200),
+           (127, 'Fentes marchées haltères', 'Haltères', 1609459200),
+           (128, 'Fentes arrière haltères', 'Haltères', 1609459200),
+           (129, 'Step-up haltères', 'Haltères', 1609459200),
+           (130, 'Leg curl debout', 'Machine', 1609459200),
+           (131, 'Soulevé de terre roumain haltères', 'Haltères', 1609459200),
+           (132, 'Hip thrust machine', 'Machine', 1609459200),
+           (133, 'Glute bridge', 'Poids du corps', 1609459200),
+           (134, 'Pull-through à la poulie', 'Poulie', 1609459200),
+           (135, 'Abduction à la poulie', 'Poulie', 1609459200),
+           (136, 'Mollets à la presse', 'Machine', 1609459200),
+           (137, 'Nordic curl', 'Poids du corps', 1609459200),
+           (138, 'Kettlebell swing', 'Kettlebell', 1609459200),
+
+           (139, 'Crunch inversé', 'Poids du corps', 1609459200),
+           (140, 'Relevés de jambes allongé', 'Poids du corps', 1609459200),
+           (141, 'Relevés de genoux à la chaise romaine', 'Poids du corps', 1609459200),
+           (142, 'Crunch machine', 'Machine', 1609459200),
+           (143, 'Bûcheron à la poulie', 'Poulie', 1609459200),
+           (144, 'Pallof press', 'Poulie', 1609459200);
+
+    INSERT OR IGNORE INTO exercise_muscles (exercise_id, muscle_id)
+    VALUES (88, 2),
+           (89, 2),
+           (90, 2),
+           (91, 2),
+           (92, 2),
+           (93, 2),
+           (94, 2),
+           (95, 2),
+           (96, 2), (96, 1), (96, 5),
+           (97, 2), (97, 1),
+
+           (98, 3), (98, 11),
+           (99, 3),
+           (100, 3),
+           (101, 3), (101, 11),
+           (102, 3),
+           (103, 3),
+           (104, 11), (104, 3),
+
+           (105, 11),
+
+           (106, 4), (106, 3),
+           (107, 4), (107, 3),
+           (108, 4), (108, 3),
+           (109, 4), (109, 3),
+           (110, 4), (110, 5),
+           (111, 4), (111, 3),
+           (112, 4), (112, 3),
+           (113, 4), (113, 3),
+           (114, 4), (114, 3),
+           (115, 4), (115, 3),
+           (116, 4), (116, 3),
+           (117, 4),
+           (118, 9), (118, 8), (118, 4),
+           (119, 4), (119, 8), (119, 9),
+
+           (120, 5),
+           (121, 5),
+           (122, 5),
+           (123, 5), (123, 4),
+           (124, 5), (124, 4),
+
+           (125, 6), (125, 8),
+           (126, 6), (126, 8),
+           (127, 6), (127, 8),
+           (128, 6), (128, 8),
+           (129, 6), (129, 8),
+           (130, 9),
+           (131, 9), (131, 8), (131, 4),
+           (132, 8), (132, 9),
+           (133, 8), (133, 9),
+           (134, 8), (134, 9),
+           (135, 8),
+           (136, 7),
+           (137, 9),
+           (138, 8), (138, 9), (138, 4),
+
+           (139, 10),
+           (140, 10),
+           (141, 10),
+           (142, 10),
+           (143, 10),
+           (144, 10);
+
     INSERT OR IGNORE INTO template_exercises (id, template_id, exercise_id, position, created_at)
     VALUES (1, 1, 1, 0, 1609459200),
            (2, 1, 2, 1, 1609459200),
@@ -250,7 +381,4 @@ export const DEFAULT_VALUES_DATABASE = `
 
     -- Consignes d'exécution des exercices par défaut (exercise-descriptions.ts)
     ${DEFAULT_DESCRIPTIONS_SQL}
-
-    -- Variantes (library-variants.ts), ids 88 et plus
-    ${LIBRARY_VARIANTS_SQL}
 `;
