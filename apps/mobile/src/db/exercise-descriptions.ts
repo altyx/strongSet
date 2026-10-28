@@ -455,6 +455,449 @@ export const EXERCISE_DESCRIPTIONS: Record<number, [string, string, string]> = {
     'Ramène un genou vers la poitrine puis l’autre, en alternance rapide.',
     'Garde le bassin bas et les épaules au-dessus des mains.',
   ],
+
+  // Triceps (variantes)
+  88: [
+    'Face à la poulie haute, poignée simple en main, coude collé au corps et fléchi à 90°.',
+    'Tends le bras vers le bas jusqu’à l’extension complète, puis remonte lentement jusqu’à l’angle de départ.',
+    'Travailler un bras à la fois corrige les déséquilibres. Commence par le bras le plus faible.',
+  ],
+  89: [
+    'Face à la poulie haute, barre droite tenue en supination (paumes vers le haut), coudes collés au corps.',
+    'Pousse la barre vers le bas jusqu’à bras tendus, puis remonte jusqu’à 90°.',
+    'Charge plus légère qu’en pronation : la prise inversée sollicite davantage les poignets.',
+  ],
+  90: [
+    'Face à la poulie haute, barre en V en main, coudes collés au corps et fléchis à 90°.',
+    'Pousse la barre vers le bas jusqu’à bras tendus, puis remonte jusqu’à l’angle de départ.',
+    'La prise neutre est plus confortable pour les poignets et permet souvent de charger plus lourd.',
+  ],
+  91: [
+    'Dos à la poulie (réglée basse ou haute), corde en main derrière la tête, coudes pointés vers l’avant, un pied devant.',
+    'Tends les bras vers l’avant et le haut en écartant la corde en fin de mouvement, puis reviens lentement derrière la tête.',
+    'Le bras en position haute étire la longue portion du triceps. Garde les coudes fixes et le dos neutre.',
+  ],
+  92: [
+    'Assis, dos droit, un haltère tenu bras tendu au-dessus de la tête.',
+    'Descends l’haltère derrière la tête en fléchissant le coude, puis tends le bras.',
+    'Le coude reste pointé vers le plafond. Aide-toi de l’autre main pour stabiliser le bras.',
+  ],
+  93: [
+    'Allongé sur un banc plat, un haltère dans chaque main, bras tendus au-dessus de la poitrine, paumes face à face.',
+    'Fléchis les coudes pour descendre les haltères de chaque côté de la tête, puis tends les bras.',
+    'La prise neutre ménage les coudes. Les bras restent verticaux, seuls les avant-bras bougent.',
+  ],
+  94: [
+    'Face à la poulie basse, buste penché en avant, poignée en main, bras collé au corps et coude fléchi.',
+    'Tends le bras vers l’arrière jusqu’à l’alignement avec le buste, puis reviens lentement.',
+    'La poulie garde la tension en bas du mouvement, contrairement à l’haltère.',
+  ],
+  95: [
+    'Assis, coudes posés sur l’appui, poignées en main, bras fléchis.',
+    'Tends les bras jusqu’à l’extension complète, puis reviens lentement.',
+    'Règle le siège pour que les coudes soient alignés avec l’axe de rotation de la machine.',
+  ],
+  96: [
+    'Genoux ou pieds sur la plateforme de la machine d’assistance, mains sur les barres parallèles, bras tendus.',
+    'Descends en fléchissant les coudes jusqu’à environ 90°, puis pousse jusqu’à bras tendus.',
+    'Plus le contrepoids est lourd, plus l’exercice est facile. Réduis-le au fil des séances.',
+  ],
+  97: [
+    'En position de pompe, mains rapprochées sous la poitrine, pouces et index formant un losange.',
+    'Descends la poitrine vers les mains en gardant les coudes près du corps, puis pousse jusqu’à bras tendus.',
+    'Corps gainé du début à la fin. Trop difficile : fais-les genoux au sol.',
+  ],
+
+  // Biceps (variantes)
+  98: [
+    'Debout, barre EZ tenue sur les parties inclinées, bras tendus, coudes près du corps.',
+    'Monte la barre vers les épaules en fléchissant les coudes, puis redescends lentement.',
+    'La barre EZ soulage les poignets par rapport à la barre droite. Évite de balancer le buste.',
+  ],
+  99: [
+    'Assis au pupitre, arrière du bras à plat sur l’appui, haltère en main, bras presque tendu.',
+    'Monte l’haltère vers l’épaule, puis redescends lentement sans verrouiller le coude en bas.',
+    'Un bras à la fois pour bien sentir la contraction. Contrôle la descente, c’est là que le coude est exposé.',
+  ],
+  100: [
+    'Assis, bras à plat sur l’appui, poignées en main, coudes alignés avec l’axe de la machine.',
+    'Fléchis les coudes pour monter les poignées, puis redescends lentement.',
+    'Règle le siège pour que les aisselles touchent le haut de l’appui.',
+  ],
+  101: [
+    'Face à la poulie basse, corde en main, paumes face à face, bras tendus, coudes près du corps.',
+    'Monte la corde vers les épaules en gardant la prise neutre, puis redescends lentement.',
+    'Travaille aussi le brachial et les avant-bras. Les coudes ne doivent pas avancer.',
+  ],
+  102: [
+    'Face à la poulie basse, poignée simple en supination, bras tendu, coude près du corps.',
+    'Monte la poignée vers l’épaule, marque une pause, puis redescends lentement.',
+    'Un bras à la fois pour corriger les déséquilibres. Le buste reste immobile.',
+  ],
+  103: [
+    'Entre les deux poulies hautes d’un vis-à-vis, une poignée dans chaque main, bras tendus à hauteur d’épaules.',
+    'Fléchis les coudes pour amener les poignées vers les oreilles, puis tends les bras lentement.',
+    'Les bras restent à l’horizontale pendant tout le mouvement : seuls les avant-bras bougent.',
+  ],
+  104: [
+    'Debout, barre tenue en pronation (paumes vers le sol), bras tendus, coudes près du corps.',
+    'Monte la barre vers les épaules en fléchissant les coudes, puis redescends lentement.',
+    'Cible les avant-bras et le brachial. Charge nettement plus légère qu’un curl classique.',
+  ],
+
+  // Avant-bras (variantes)
+  105: [
+    'Assis, avant-bras posés sur les cuisses, barre tenue en pronation, poignets dans le vide.',
+    'Relève les poignets le plus haut possible, puis redescends lentement.',
+    'Charge légère et amplitude complète : les extenseurs du poignet sont peu puissants.',
+  ],
+
+  // Dos (variantes)
+  106: [
+    'Assis, cuisses calées, barre tenue en supination largeur d’épaules, bras tendus.',
+    'Tire la barre vers le haut de la poitrine en abaissant les coudes le long du corps, puis remonte contrôlé.',
+    'Les biceps participent davantage qu’en pronation. Garde la poitrine haute sans te pencher en arrière.',
+  ],
+  107: [
+    'Assis ou à genoux face à la poulie haute, poignée simple en main, bras tendu au-dessus de la tête.',
+    'Tire la poignée vers l’épaule en abaissant le coude le long du corps, puis remonte lentement jusqu’à l’étirement.',
+    'Permet une grande amplitude et corrige les déséquilibres entre les deux côtés.',
+  ],
+  108: [
+    'Assis, cuisses calées sous les boudins, poignées en main, bras tendus.',
+    'Tire les poignées vers le bas en abaissant les coudes vers les côtes, puis remonte contrôlé.',
+    'Initie le mouvement en abaissant les épaules, pas en tirant avec les bras.',
+  ],
+  109: [
+    'Assis ou debout face à la poulie, poignée simple en main, bras tendu, buste droit.',
+    'Tire la poignée vers la hanche en gardant le coude près du corps, puis reviens lentement jusqu’à l’étirement.',
+    'Laisse l’épaule avancer en fin de retour pour étirer le dos, sans tourner le buste.',
+  ],
+  110: [
+    'Assis à la poulie, barre large tenue en pronation, bras tendus, buste droit.',
+    'Tire la barre vers le bas de la poitrine en écartant les coudes, puis reviens lentement.',
+    'Cible le haut du dos et l’arrière des épaules. Serre les omoplates en fin de tirage.',
+  ],
+  111: [
+    'Buste parallèle au sol, dos neutre, barre posée au sol sous les épaules, prise en pronation.',
+    'Tire la barre de façon explosive jusqu’au bas de la poitrine, puis repose-la au sol à chaque répétition.',
+    'Le buste ne remonte pas pendant le tirage. Le repos au sol permet de repartir d’une position propre.',
+  ],
+  112: [
+    'Debout, buste penché à environ 45°, dos neutre, barre tenue en supination largeur d’épaules.',
+    'Tire la barre vers le nombril en gardant les coudes près du corps, puis redescends contrôlé.',
+    'Sollicite davantage les biceps et le bas des dorsaux que la prise en pronation.',
+  ],
+  113: [
+    'Allongé sur le ventre sur un banc incliné, un haltère dans chaque main, bras tendus vers le sol.',
+    'Tire les haltères vers les hanches en serrant les omoplates, puis redescends lentement.',
+    'L’appui supprime l’élan et soulage le bas du dos.',
+  ],
+  114: [
+    'Suspendu aux poignées parallèles, paumes face à face, bras tendus.',
+    'Tire en abaissant les coudes vers les côtes jusqu’à passer le menton au-dessus des poignées, puis redescends contrôlé.',
+    'La prise neutre est la plus confortable pour les épaules et les coudes.',
+  ],
+  115: [
+    'Genoux sur la plateforme de la machine d’assistance, mains sur la barre en pronation, bras tendus.',
+    'Tire jusqu’à passer le menton au-dessus de la barre, puis redescends contrôlé jusqu’aux bras tendus.',
+    'Plus le contrepoids est lourd, plus l’exercice est facile. Réduis-le au fil des séances.',
+  ],
+  116: [
+    'Allongé sous une barre fixée à hauteur de hanches, mains en pronation, corps tendu, talons au sol.',
+    'Tire la poitrine vers la barre en serrant les omoplates, puis redescends jusqu’aux bras tendus.',
+    'Corps gainé et aligné. Plus les pieds sont avancés, plus c’est difficile.',
+  ],
+  117: [
+    'Debout, barre tenue devant les cuisses, bras tendus, prise largeur d’épaules.',
+    'Monte les épaules vers les oreilles, marque une pause, puis redescends lentement.',
+    'Ne roule pas les épaules : le mouvement est vertical. Les bras ne fléchissent pas.',
+  ],
+  118: [
+    'Barre posée sur les trapèzes, pieds largeur de hanches, genoux légèrement fléchis.',
+    'Penche le buste en avant en reculant les hanches, dos neutre, jusqu’à sentir l’étirement des ischios, puis remonte.',
+    'Commence très léger : le dos doit rester neutre tout du long.',
+  ],
+  119: [
+    'Barre posée sur les sécurités du rack, juste sous ou au-dessus des genoux. Prise comme au soulevé de terre.',
+    'Gaine-toi et tire la barre en poussant les hanches vers l’avant jusqu’à être debout, puis repose-la contrôlé.',
+    'Permet de charger plus lourd que le soulevé de terre : garde le dos neutre et ne te penche pas en arrière.',
+  ],
+
+  // Épaules (variantes)
+  120: [
+    'Assis, épaules alignées avec l’axe de la machine, avant-bras ou mains contre les appuis.',
+    'Monte les bras sur les côtés jusqu’à hauteur d’épaules, puis redescends lentement.',
+    'Ne hausse pas les épaules : ce sont les deltoïdes qui travaillent, pas les trapèzes.',
+  ],
+  121: [
+    'Dos à la poulie basse, poignée ou corde passée entre les jambes, bras tendus.',
+    'Monte les bras devant toi jusqu’à hauteur d’épaules, puis redescends lentement.',
+    'Coudes légèrement fléchis et buste immobile, sans élan.',
+  ],
+  122: [
+    'Debout, un disque tenu à deux mains devant les cuisses, bras tendus.',
+    'Monte le disque devant toi jusqu’à hauteur d’yeux, puis redescends lentement.',
+    'Garde les côtes basses et le bas du dos neutre, sans balancer.',
+  ],
+  123: [
+    'Entre les deux poulies d’un vis-à-vis réglées à hauteur d’épaules, câbles croisés : main droite sur la poulie gauche et inversement.',
+    'Écarte les bras vers l’arrière, coudes légèrement fléchis, jusqu’à l’alignement avec les épaules, puis reviens lentement.',
+    'Cible l’arrière des épaules. Charge légère, sans serrer exagérément les omoplates.',
+  ],
+  124: [
+    'Debout, barre tenue devant les cuisses en pronation, prise largeur d’épaules.',
+    'Tire la barre le long du corps jusqu’au bas de la poitrine en menant avec les coudes, puis redescends lentement.',
+    'Ne monte pas les coudes au-dessus des épaules : une prise plus large ménage les épaules.',
+  ],
+
+  // Jambes (variantes)
+  125: [
+    'Barre guidée posée sur les trapèzes, pieds légèrement avancés, écartés largeur d’épaules.',
+    'Descends en fléchissant les genoux jusqu’à ce que les cuisses soient parallèles au sol, puis remonte.',
+    'Mets les sécurités à la bonne hauteur. Genoux dans l’axe des pieds, talons au sol.',
+  ],
+  126: [
+    'Barre posée sur les trapèzes, debout, pieds largeur de hanches.',
+    'Fais un grand pas en avant et descends jusqu’à ce que le genou arrière frôle le sol, puis reviens et change de jambe.',
+    'Buste droit. Plus délicat en équilibre qu’avec des haltères : commence léger.',
+  ],
+  127: [
+    'Debout, un haltère dans chaque main, bras le long du corps.',
+    'Avance d’un grand pas et descends jusqu’à ce que le genou arrière frôle le sol, puis enchaîne avec l’autre jambe en avançant.',
+    'Compte une répétition par jambe. Le genou avant reste dans l’axe du pied.',
+  ],
+  128: [
+    'Debout, un haltère dans chaque main, pieds largeur de hanches.',
+    'Recule une jambe d’un grand pas et descends jusqu’à ce que le genou arrière frôle le sol, puis reviens en poussant sur le talon avant.',
+    'Plus douce pour les genoux que la fente avant. Le poids reste sur la jambe avant.',
+  ],
+  129: [
+    'Face à un banc ou une box à hauteur de genou, un haltère dans chaque main.',
+    'Pose un pied entier sur le banc et monte en poussant sur ce talon, puis redescends contrôlé. Enchaîne les répétitions puis change de jambe.',
+    'Ne pousse pas avec la jambe restée au sol : c’est la jambe sur le banc qui fait le travail.',
+  ],
+  130: [
+    'Debout face à la machine, cuisse contre l’appui, boudin derrière la cheville.',
+    'Fléchis le genou pour monter le talon vers les fesses, puis redescends lentement.',
+    'Une jambe à la fois. Le bassin reste plaqué contre l’appui.',
+  ],
+  131: [
+    'Debout, un haltère dans chaque main devant les cuisses, genoux légèrement fléchis.',
+    'Descends les haltères le long des jambes en reculant les hanches, dos neutre, jusqu’à sentir l’étirement des ischios, puis remonte.',
+    'Les genoux restent fixes, c’est la hanche qui bouge. Le dos ne s’arrondit pas.',
+  ],
+  132: [
+    'Assis dans la machine, haut du dos contre l’appui, ceinture ou coussin sur les hanches, pieds à plat.',
+    'Monte le bassin jusqu’à aligner épaules, hanches et genoux en serrant les fessiers, puis redescends.',
+    'Garde le menton rentré et les côtes basses : ne cambre pas en haut.',
+  ],
+  133: [
+    'Allongé sur le dos, genoux fléchis, pieds à plat au sol largeur de hanches.',
+    'Monte le bassin en poussant dans les talons jusqu’à aligner épaules, hanches et genoux, puis redescends.',
+    'Serre les fessiers en haut. Ajoute un disque ou un haltère sur les hanches pour corser.',
+  ],
+  134: [
+    'Dos à la poulie basse, corde passée entre les jambes, pieds un peu plus larges que les hanches.',
+    'Recule les hanches en laissant la corde passer entre les jambes, dos neutre, puis pousse les hanches vers l’avant pour te redresser.',
+    'Les bras ne tirent pas : c’est l’extension de hanche qui ramène la corde.',
+  ],
+  135: [
+    'De profil à la poulie basse, sangle à la cheville extérieure, main en appui pour l’équilibre.',
+    'Écarte la jambe sur le côté, jambe tendue, puis reviens lentement.',
+    'Mouvement court et contrôlé : le buste ne se penche pas.',
+  ],
+  136: [
+    'Assis à la presse à cuisses, avant des pieds sur le bas du plateau, jambes tendues sans verrouiller.',
+    'Pousse le plateau avec la pointe des pieds le plus loin possible, puis reviens lentement jusqu’à l’étirement.',
+    'Garde les sécurités engagées : le plateau ne doit pas glisser des pieds.',
+  ],
+  137: [
+    'À genoux sur un tapis, chevilles bloquées sous un appui ou tenues par un partenaire, corps droit.',
+    'Penche-toi en avant le plus lentement possible en gardant hanches et genoux alignés, puis amortis avec les mains et remonte.',
+    'Exercice très exigeant : la descente lente suffit au début.',
+  ],
+  138: [
+    'Debout, pieds un peu plus larges que les hanches, kettlebell tenu à deux mains devant toi.',
+    'Fais passer le kettlebell entre les jambes en reculant les hanches, puis projette-le jusqu’à hauteur de poitrine par une extension de hanches explosive.',
+    'Ce sont les hanches qui donnent l’élan, pas les bras ni les épaules. Dos neutre tout du long.',
+  ],
+
+  // Abdominaux (variantes)
+  139: [
+    'Allongé sur le dos, bras le long du corps, genoux fléchis à 90°, pieds décollés.',
+    'Enroule le bassin pour ramener les genoux vers la poitrine en décollant les fesses, puis redescends lentement.',
+    'Pas d’élan : c’est le bassin qui s’enroule, pas les jambes qui se balancent.',
+  ],
+  140: [
+    'Allongé sur le dos, jambes tendues, mains sous les fesses ou le long du corps.',
+    'Monte les jambes jusqu’à la verticale, puis redescends lentement sans toucher le sol.',
+    'Le bas du dos reste plaqué au sol. Plie les genoux pour faciliter.',
+  ],
+  141: [
+    'Avant-bras sur les appuis, dos contre le dossier, jambes pendantes.',
+    'Monte les genoux vers la poitrine en enroulant le bassin, puis redescends lentement.',
+    'Plus accessible que suspendu. Jambes tendues pour corser.',
+  ],
+  142: [
+    'Assis, poignées ou appuis en main, pieds calés.',
+    'Enroule le buste vers les genoux en contractant les abdos, puis reviens lentement.',
+    'Ce sont les abdos qui tirent, pas les bras. Expire en enroulant.',
+  ],
+  143: [
+    'De profil à la poulie réglée haute, poignée tenue à deux mains, bras tendus, pieds écartés.',
+    'Tire la poignée en diagonale vers la hanche opposée en tournant le buste, puis reviens lentement.',
+    'La rotation vient du tronc, les bras restent tendus. Fais les deux côtés.',
+  ],
+  144: [
+    'De profil à la poulie réglée à hauteur de poitrine, poignée tenue à deux mains contre le sternum.',
+    'Tends les bras devant toi sans laisser le buste tourner, tiens une seconde, puis ramène la poignée.',
+    'Exercice d’anti-rotation : le buste reste immobile. Fais les deux côtés.',
+  ],
+
+  // Dos (compléments)
+  145: [
+    'Debout au centre de la trap bar, pieds largeur de hanches, poignées saisies de chaque côté.',
+    'Gaine-toi, puis pousse dans le sol pour te redresser jusqu’à être debout hanches verrouillées. Redescends en reculant les hanches et en fléchissant les genoux.',
+    'La charge alignée avec le corps soulage le bas du dos : plus accessible que le soulevé de terre classique.',
+  ],
+  146: [
+    'Assis, haut du dos contre l’appui, pieds calés, bassin bien plaqué au siège.',
+    'Pousse l’appui vers l’arrière en étendant le buste, puis reviens lentement.',
+    'Amplitude contrôlée, sans à-coups : le mouvement s’arrête quand le buste est aligné avec les cuisses.',
+  ],
+
+  // Épaules (compléments)
+  147: [
+    'Assis sur un banc à dossier vertical, barre devant les épaules, prise un peu plus large que les épaules.',
+    'Pousse la barre à la verticale au-dessus de la tête jusqu’à bras tendus, puis redescends aux épaules.',
+    'Le dossier limite la cambrure : garde le dos plaqué contre lui.',
+  ],
+  148: [
+    'Assis sous la barre guidée, banc à dossier vertical, barre à hauteur du menton.',
+    'Déverrouille la barre, pousse-la au-dessus de la tête jusqu’à bras tendus, puis redescends au menton.',
+    'Place le banc pour que la barre passe juste devant le visage.',
+  ],
+  149: [
+    'Debout ou à genoux, extrémité de la barre (calée dans un coin ou un landmine) tenue d’une main à hauteur d’épaule.',
+    'Pousse la barre vers le haut et l’avant jusqu’à bras tendu, puis redescends à l’épaule. Change de côté.',
+    'La trajectoire en arc est douce pour les épaules. Garde le buste gainé, sans pencher.',
+  ],
+  150: [
+    'De profil à la poulie réglée à hauteur de coude, poignée tenue par la main la plus éloignée, coude collé au corps et fléchi à 90°.',
+    'Tourne l’avant-bras vers l’extérieur en gardant le coude contre le corps, puis reviens lentement.',
+    'Travail de la coiffe des rotateurs : charge très légère, idéal en échauffement.',
+  ],
+
+  // Biceps (compléments)
+  151: [
+    'Allongé sur le ventre sur un banc incliné, barre EZ tenue bras tendus vers le sol.',
+    'Monte la barre vers les épaules en fléchissant les coudes, puis redescends lentement.',
+    'Les bras restent verticaux : impossible de tricher avec l’élan.',
+  ],
+  152: [
+    'Dos à la poulie basse, poignée simple en main, un pied devant, bras tiré vers l’arrière.',
+    'Fléchis le coude pour monter la poignée vers l’épaule sans avancer le bras, puis redescends lentement.',
+    'Le bras en arrière étire le biceps au départ du mouvement. Un bras à la fois.',
+  ],
+  153: [
+    'Debout, un haltère dans chaque main, bras tendus, paumes vers l’avant.',
+    'Monte en supination, tourne les poignets en pronation en haut, puis redescends lentement paumes vers le sol.',
+    'La descente en pronation travaille les avant-bras : prends une charge que tu contrôles en descente.',
+  ],
+
+  // Triceps (compléments)
+  154: [
+    'Assis, poignées de chaque côté du corps, coudes fléchis, dos contre le dossier.',
+    'Pousse les poignées vers le bas jusqu’à bras tendus, puis remonte lentement.',
+    'Garde les épaules basses et les coudes près du corps.',
+  ],
+
+  // Avant-bras (compléments)
+  155: [
+    'Debout, rouleau tenu bras tendus devant toi, poids suspendu à la corde.',
+    'Enroule la corde en tournant les poignets jusqu’à remonter le poids, puis déroule lentement.',
+    'Les bras restent tendus et immobiles : ce sont les poignets qui travaillent.',
+  ],
+  156: [
+    'Suspendu à la barre de traction, prise en pronation largeur d’épaules, bras tendus.',
+    'Tiens la position le plus longtemps possible, épaules légèrement engagées.',
+    'Travaille la poigne et décompresse le dos. Ajoute du poids quand tu tiens une minute.',
+  ],
+
+  // Jambes (compléments)
+  157: [
+    'Dos contre l’appui, épaules sous les boudins, pieds au milieu de la plateforme.',
+    'Descends en fléchissant les genoux aussi bas que possible, puis remonte en poussant sur toute la plante des pieds.',
+    'La trajectoire guidée permet de descendre profond en ménageant le dos.',
+  ],
+  158: [
+    'Assis, dos contre le dossier, pieds sur la plateforme largeur de hanches.',
+    'Pousse jusqu’à jambes presque tendues, puis reviens en fléchissant les genoux jusqu’à environ 90°.',
+    'Ne verrouille pas les genoux en fin de poussée et garde le bas du dos contre le dossier.',
+  ],
+  159: [
+    'Debout, une main sur un appui, pieds largeur de hanches, sur la pointe des pieds.',
+    'Fléchis les genoux en les avançant et en penchant le corps en arrière, hanches tendues, puis remonte.',
+    'Cible le quadriceps en étirement. Commence avec une petite amplitude pour habituer les genoux.',
+  ],
+  160: [
+    'Debout, pieds bien écartés, pointes vers l’extérieur, un haltère tenu à deux mains entre les jambes.',
+    'Descends en fléchissant les genoux dans l’axe des pieds, buste droit, puis remonte en poussant dans les talons.',
+    'L’écartement sollicite davantage les adducteurs et les fessiers.',
+  ],
+  161: [
+    'Debout sur une jambe, genou légèrement fléchi, haltère dans la main opposée.',
+    'Penche le buste en avant en levant la jambe libre derrière toi, dos neutre, jusqu’à sentir l’étirement de l’ischio, puis remonte.',
+    'Hanches parallèles au sol, sans ouvrir le bassin. Aide-toi d’un appui pour l’équilibre au début.',
+  ],
+  162: [
+    'Genoux sur le coussin du banc GHD, chevilles calées, corps droit à l’horizontale.',
+    'Fléchis les genoux pour remonter le buste jusqu’à la verticale, puis redescends lentement.',
+    'Hanches tendues tout du long. Aide-toi des mains en bas tant que tu ne remontes pas seul.',
+  ],
+  163: [
+    'Buste en appui sur la machine, un pied contre la plateforme ou le levier.',
+    'Pousse la jambe vers l’arrière et le haut en contractant le fessier, puis reviens lentement.',
+    'Ne cambre pas en fin de poussée : c’est la hanche qui s’étend, pas le bas du dos.',
+  ],
+  164: [
+    'De profil à la poulie basse, sangle à la cheville la plus proche, main en appui pour l’équilibre.',
+    'Ramène la jambe devant l’autre en la croisant légèrement, puis reviens lentement.',
+    'Mouvement contrôlé, buste droit.',
+  ],
+  165: [
+    'Sous la barre guidée posée sur les trapèzes, avant des pieds sur une cale, talons dans le vide.',
+    'Monte sur la pointe des pieds le plus haut possible, puis descends lentement sous le niveau de la cale.',
+    'Marque une pause en haut et en bas, sans rebond.',
+  ],
+  166: [
+    'Debout sur une marche sur un pied, haltère dans la main du même côté, l’autre main en appui.',
+    'Monte sur la pointe du pied le plus haut possible, puis descends lentement sous le niveau de la marche.',
+    'Une jambe à la fois corrige les déséquilibres. Amplitude complète.',
+  ],
+
+  // Abdominaux (compléments)
+  167: [
+    'Debout, un haltère dans une main, bras le long du corps, l’autre main sur la hanche.',
+    'Penche le buste du côté de l’haltère, puis remonte en contractant les obliques opposés. Change de côté.',
+    'Le buste reste de face, sans tourner ni pencher en avant.',
+  ],
+  168: [
+    'Allongé sur le dos, bras tendus vers le plafond, genoux fléchis à 90° au-dessus des hanches.',
+    'Étends un bras derrière la tête et la jambe opposée vers le sol, puis reviens et change de côté.',
+    'Le bas du dos reste plaqué au sol. Mouvement lent et contrôlé.',
+  ],
+  169: [
+    'Allongé sur le dos, mains derrière la tête, jambes décollées, genoux fléchis.',
+    'Amène un coude vers le genou opposé en tendant l’autre jambe, puis alterne.',
+    'C’est le buste qui tourne, pas les coudes qui tirent sur la nuque.',
+  ],
+  170: [
+    'Sur un banc décliné, pieds calés, buste allongé, bras croisés sur la poitrine.',
+    'Enroule le buste jusqu’à la verticale, puis redescends lentement.',
+    'Plus l’inclinaison est forte, plus c’est difficile. Tiens un disque pour corser.',
+  ],
 };
 
 // Texte enregistré en base : une ligne par étape, préfixée de son nom

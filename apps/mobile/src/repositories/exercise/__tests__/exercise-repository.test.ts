@@ -12,8 +12,8 @@ afterEach(() => {
   mockDb.close();
 });
 
-// Bibliothèque par défaut : ids 1 à 87
-const DEFAULT_EXERCISE_COUNT = 87;
+// Bibliothèque par défaut : ids 1 à 170
+const DEFAULT_EXERCISE_COUNT = 170;
 
 it('count compte les exercices de la bibliothèque', () => {
   expect(ExerciseRepository.count()).toBe(DEFAULT_EXERCISE_COUNT);
@@ -69,6 +69,11 @@ describe('bibliothèque par défaut', () => {
       'Développé militaire',
     ]);
   });
+});
+
+it('associe chaque variante à ses muscles', () => {
+  const exercise = ExerciseRepository.getAll().find(({ name }) => name === 'Extension triceps poulie haute à un bras');
+  expect(exercise).toMatchObject({ equipment: 'Poulie', muscles: ['Triceps'] });
 });
 
 it('getMuscles liste les muscles par défaut', () => {
