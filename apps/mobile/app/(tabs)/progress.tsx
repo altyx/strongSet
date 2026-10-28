@@ -1,3 +1,4 @@
+import { useIsFocused } from '@react-navigation/native';
 import { router, useFocusEffect } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native/icons';
 import { useCallback, useState } from 'react';
@@ -8,11 +9,23 @@ import { ThemedText } from '@/src/components/themed-text';
 import { BarChart } from '@/src/components/ui/bar-chart';
 import { Card } from '@/src/components/ui/card';
 import { palette, radius, spacing } from '@/src/constants/theme';
-import { lastWeeks, oneRepMaxChange, sessionStats, weekLabel, weeklyTotals, weekSpokenLabel } from '@/src/domain/progression';
+import {
+  cardioStats,
+  lastWeeks,
+  oneRepMaxChange,
+  sessionStats,
+  toCardioValues,
+  weekLabel,
+  weeklyTotals,
+  weekSpokenLabel,
+} from '@/src/domain/progression';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { formatShortDate, toTimestamp } from '@/src/utils/date';
+import { useDistanceUnit } from '@/src/hooks/user/use-distance-unit';
 import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
-import { formatWeight, formatWeightValue, spokenWeight, WeightUnit } from '@/src/utils/weight';
+import { DistanceUnit } from '@/src/utils/distance';
+import { formatSetValues } from '@/src/utils/set-format';
+import { formatWeight, spokenWeight, WeightUnit } from '@/src/utils/weight';
 
 const WEEKS = 8;
 const HISTORY_LIMIT = 500;
@@ -27,7 +40,7 @@ type TrainedExercise = {
   change: number | null;
 };
 
-function loadProgress(unit: WeightUnit) {
+function loadProgress(unit: WeightUnit, distanceUnit: DistanceUnit) {
   const now = new Date();
   const since = toTimestamp(lastWeeks(now, WEEKS)[0]);
   const history = WorkoutRepository.getHistory(HISTORY_LIMIT);
@@ -38,12 +51,19 @@ function loadProgress(unit: WeightUnit) {
   );
   const exercises: TrainedExercise[] = WorkoutRepository.getTrainedExercises().map((exercise) => {
     const sessions = WorkoutRepository.getExerciseSessions(exercise.id);
-    const last = sessionStats(sessions[0]?.sets ?? []);
+    const lastSets = sessions[0]?.sets ?? [];
+    const last = sessionStats(lastSets);
+    const cardio = cardioStats(lastSets);
     return {
       id: exercise.id,
       name: exercise.name,
       lastDone: exercise.last_done,
-      lastBest: last.topSet ? `${formatWeightValue(last.topSet.weight, unit)} × ${last.topSet.reps}` : `${last.maxReps} reps`,
+      lastBest:
+        cardio.durationSeconds > 0
+          ? formatSetValues({ weight: null, reps: null, ...toCardioValues(cardio) }, unit, distanceUnit)
+          : last.topSet
+            ? formatSetValues(last.topSet, unit, distanceUnit)
+            : `${last.maxReps} reps`,
       change: oneRepMaxChange(sessions, since),
     };
   });
@@ -57,14 +77,17 @@ function loadProgress(unit: WeightUnit) {
 
 export default function ProgressScreen() {
   const insets = useSafeAreaInsets();
+  // L'onglet reste monté : le nouveau rendu au retour sur l'onglet relit les unités, changées entre-temps dans les réglages
+  useIsFocused();
   const unit = useWeightUnit();
+  const distanceUnit = useDistanceUnit();
   const [data, setData] = useState<ReturnType<typeof loadProgress> | null>(null);
 
   // Recharge au retour sur l'onglet : une séance a pu être terminée, ou l'unité changée, entre-temps
   useFocusEffect(
     useCallback(() => {
-      setData(loadProgress(unit));
-    }, [unit]),
+      setData(loadProgress(unit, distanceUnit));
+    }, [unit, distanceUnit]),
   );
 
   if (!data) {

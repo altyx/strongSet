@@ -10,9 +10,12 @@ import { Card } from '@/src/components/ui/card';
 import { muscleLabel } from '@/src/constants/muscles';
 import { palette, radius, spacing } from '@/src/constants/theme';
 import {
+  cardioRecords,
+  cardioStats,
   exerciseRecords,
   oneRepMaxChange,
   sessionStats,
+  toCardioValues,
   weekLabel,
   weeklyProgress,
   weekSpokenLabel,
@@ -20,13 +23,17 @@ import {
 import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { formatShortDate } from '@/src/utils/date';
+import { distanceUnitName, formatDistance, formatSpeed, toDistanceUnit } from '@/src/utils/distance';
+import { formatDuration, formatMinutes } from '@/src/utils/duration';
+import { useDistanceUnit } from '@/src/hooks/user/use-distance-unit';
 import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
 import { formatDecimal } from '@/src/utils/number';
-import { formatWeight, formatWeightValue, WeightUnit } from '@/src/utils/weight';
+import { formatSetValues } from '@/src/utils/set-format';
+import { formatWeight } from '@/src/utils/weight';
 
 const WEEKS = 8;
 
-type Metric = 'force' | 'volume' | 'series';
+type Metric = 'force' | 'volume' | 'series' | 'distance' | 'duration';
 
 function loadProgress(exerciseId: number) {
   const now = new Date();
@@ -38,6 +45,7 @@ function loadProgress(exerciseId: number) {
     sessions,
     weeks,
     records: exerciseRecords(sessions),
+    cardioRecords: cardioRecords(sessions),
     // Exercice sans charge (ex. tractions au poids du corps) : la force se suit en répétitions max
     bodyweight: sessions.every((session) => sessionStats(session.sets).bestOneRepMax === null),
     change: oneRepMaxChange(sessions, weeks[0].weekStart),
@@ -45,16 +53,16 @@ function loadProgress(exerciseId: number) {
 }
 
 const dateLabel = (timestamp: number) => formatShortDate(new Date(timestamp * 1000));
-const formatSet = (weight: number | null, reps: number | null, unit: WeightUnit) =>
-  weight === null ? `${reps} reps` : `${formatWeightValue(weight, unit)} × ${reps}`;
 
 // Progression d'un exercice : courbe sur 8 semaines, records personnels et historique des séances
 export default function ExerciseProgressScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const unit = useWeightUnit();
+  const distanceUnit = useDistanceUnit();
   const [data] = useState(() => loadProgress(Number(id)));
-  const [metric, setMetric] = useState<Metric>('force');
+  const cardio = data.exercise?.tracking === 'duration_distance';
+  const [metric, setMetric] = useState<Metric>(cardio ? 'distance' : 'force');
 
   const { now, exercise, sessions, weeks, records, bodyweight, change } = data;
   const title = exercise?.name ?? 'Exercice';
@@ -113,24 +121,69 @@ export default function ExerciseProgressScreen() {
       value: String(latest.setCount),
       delta: null,
     },
+    // Cardio : totaux par semaine, barre vide les semaines sans séance
+    distance: {
+      label: 'Distance cette semaine',
+      values: weeks.map((week) => (week.setCount > 0 ? toDistanceUnit(week.distanceMeters, distanceUnit) : null)),
+      value: formatDistance(latest.distanceMeters, distanceUnit),
+      delta: null,
+    },
+    duration: {
+      label: 'Durée cette semaine',
+      values: weeks.map((week) => (week.setCount > 0 ? Math.round(week.durationSeconds / 60) : null)),
+      value: formatMinutes(latest.durationSeconds),
+      delta: null,
+    },
   }[metric];
 
   // Valeur d'une barre lue par le lecteur d'écran : charge dans l'unité choisie, sinon nombre de reps ou de séries
-  const spokenChartValue = (value: number) =>
-    metric === 'volume' || (metric === 'force' && !bodyweight) ? formatWeight(value, unit) : formatDecimal(value);
+  const spokenChartValue = (value: number) => {
+    if (metric === 'distance') {
+      return `${formatDecimal(Math.round(value * 100) / 100)} ${distanceUnitName(distanceUnit)}`;
+    }
+    if (metric === 'duration') {
+      return `${value} minutes`;
+    }
+    return metric === 'volume' || (metric === 'force' && !bodyweight) ? formatWeight(value, unit) : formatDecimal(value);
+  };
 
-  const tabs: { key: Metric; label: string }[] = [
-    { key: 'force', label: bodyweight ? 'Reps' : 'Force' },
-    ...(bodyweight ? [] : [{ key: 'volume' as const, label: 'Volume' }]),
-    { key: 'series', label: 'Séries' },
+  const tabs: { key: Metric; label: string }[] = cardio
+    ? [
+        { key: 'distance', label: 'Distance' },
+        { key: 'duration', label: 'Durée' },
+      ]
+    : [
+        { key: 'force', label: bodyweight ? 'Reps' : 'Force' },
+        ...(bodyweight ? [] : [{ key: 'volume' as const, label: 'Volume' }]),
+        { key: 'series', label: 'Séries' },
+      ];
+
+  const cardioTiles = [
+    data.cardioRecords.longestDistance && {
+      label: 'Distance max (séance)',
+      value: formatDistance(data.cardioRecords.longestDistance.meters, distanceUnit),
+      at: data.cardioRecords.longestDistance.at,
+    },
+    data.cardioRecords.longestDuration && {
+      label: 'Durée max (séance)',
+      value: formatDuration(data.cardioRecords.longestDuration.seconds),
+      at: data.cardioRecords.longestDuration.at,
+    },
+    data.cardioRecords.bestSpeed && {
+      label: 'Vitesse moyenne max',
+      value: formatSpeed(data.cardioRecords.bestSpeed.kmh, distanceUnit),
+      at: data.cardioRecords.bestSpeed.at,
+    },
   ];
-
-  const recordTiles = [
+  const weightTiles = [
     records.bestOneRepMax && { label: '1RM estimé', value: formatWeight(records.bestOneRepMax.value, unit), at: records.bestOneRepMax.at },
-    records.heaviestSet && { label: 'Charge max', value: formatSet(records.heaviestSet.weight, records.heaviestSet.reps, unit), at: records.heaviestSet.at },
+    records.heaviestSet && { label: 'Charge max', value: formatSetValues(records.heaviestSet, unit, distanceUnit), at: records.heaviestSet.at },
     records.bestVolume && { label: 'Volume max (séance)', value: formatWeight(records.bestVolume.value, unit), at: records.bestVolume.at },
     records.maxReps && { label: 'Répétitions max', value: `${records.maxReps.reps}`, at: records.maxReps.at },
-  ].filter((tile): tile is { label: string; value: string; at: number } => Boolean(tile));
+  ];
+  const recordTiles = (cardio ? cardioTiles : weightTiles).filter(
+    (tile): tile is { label: string; value: string; at: number } => Boolean(tile),
+  );
 
   return (
     <View style={styles.screen}>
@@ -202,16 +255,25 @@ export default function ExerciseProgressScreen() {
           <ThemedText type="heading">Historique</ThemedText>
           {sessions.map((session, index) => {
             const stats = sessionStats(session.sets);
+            // Cardio : le total de la séance ; sinon la meilleure série
+            const best = cardio
+              ? formatSetValues({ weight: null, reps: null, ...toCardioValues(cardioStats(session.sets)) }, unit, distanceUnit)
+              : stats.topSet
+                ? formatSetValues(stats.topSet, unit, distanceUnit)
+                : `${stats.maxReps} reps`;
             return (
               <View key={`${session.workout_id}-${index}`} style={styles.historyRow}>
                 <View style={styles.flex}>
                   <ThemedText type="defaultSemiBold">{dateLabel(session.started_at)}</ThemedText>
-                  <ThemedText type="caption" numberOfLines={1}>
-                    {session.sets.map((set) => formatSet(set.weight, set.reps, unit)).join(' · ')}
-                  </ThemedText>
+                  {/* Cardio en une seule série (cas courant) : le détail répéterait le total */}
+                  {(!cardio || session.sets.length > 1) && (
+                    <ThemedText type="caption" numberOfLines={1}>
+                      {session.sets.map((set) => formatSetValues(set, unit, distanceUnit)).join(cardio ? ' + ' : ' · ')}
+                    </ThemedText>
+                  )}
                 </View>
                 <ThemedText type="metric" style={styles.historyBest}>
-                  {stats.topSet ? formatSet(stats.topSet.weight, stats.topSet.reps, unit) : `${stats.maxReps} reps`}
+                  {best}
                 </ThemedText>
               </View>
             );

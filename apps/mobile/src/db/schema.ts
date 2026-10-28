@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS exercises (
     -- Consignes d'exécution (position, mouvement, conseil)
     description  TEXT,
     equipment    TEXT,
+    -- Ce que l'on saisit pour une série : charge et répétitions, ou durée et distance (cardio)
+    tracking     TEXT NOT NULL DEFAULT 'weight_reps' CHECK (tracking IN ('weight_reps', 'duration_distance')),
     sync_status  TEXT DEFAULT 'local',
     version      INTEGER DEFAULT 1
 );
@@ -97,6 +99,9 @@ CREATE TABLE IF NOT EXISTS sets (
     -- Charge en kg, NULL tant qu'elle n'est pas saisie (0 pour le poids du corps)
     weight              REAL,
     reps                INTEGER,
+    -- Exercices de cardio (tracking = duration_distance) : durée en secondes et distance en mètres, NULL sinon
+    duration_seconds    INTEGER,
+    distance_meters     INTEGER,
     -- normal, warmup (échauffement : hors volume, records et progression), drop (dégressive), failure (à l'échec)
     type                TEXT NOT NULL DEFAULT 'normal' CHECK (type IN ('normal', 'warmup', 'drop', 'failure')),
     -- NULL tant que la série n'est pas validée

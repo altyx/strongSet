@@ -12,8 +12,8 @@ afterEach(() => {
   mockDb.close();
 });
 
-// Bibliothèque par défaut : ids 1 à 170
-const DEFAULT_EXERCISE_COUNT = 170;
+// Bibliothèque par défaut : ids 1 à 183
+const DEFAULT_EXERCISE_COUNT = 183;
 
 it('count compte les exercices de la bibliothèque', () => {
   expect(ExerciseRepository.count()).toBe(DEFAULT_EXERCISE_COUNT);
@@ -78,7 +78,7 @@ it('associe chaque variante à ses muscles', () => {
 
 it('getMuscles liste les muscles par défaut', () => {
   expect(ExerciseRepository.getMuscles().map((muscle) => muscle.name)).toEqual([
-    'Chest', 'Triceps', 'Biceps', 'Back', 'Shoulders', 'Quadriceps', 'Calves', 'Glutes', 'Hamstrings', 'Abs', 'Forearms',
+    'Chest', 'Triceps', 'Biceps', 'Back', 'Shoulders', 'Quadriceps', 'Calves', 'Glutes', 'Hamstrings', 'Abs', 'Forearms', 'Cardio',
   ]);
 });
 
@@ -90,6 +90,7 @@ it('create ajoute un exercice avec son matériel et ses muscles', () => {
     id,
     name: 'Tirage maison',
     equipment: 'Autre',
+    tracking: 'weight_reps',
     description: null,
     muscles: ['Biceps', 'Back'],
   });

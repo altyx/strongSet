@@ -17,7 +17,9 @@ import { WorkoutRepository } from '@/src/repositories/workout/workout-repository
 import { Workout } from '@/src/repositories/workout/workout-type';
 import { formatLongDate } from '@/src/utils/date';
 import { formatDuration } from '@/src/utils/duration';
+import { useDistanceUnit } from '@/src/hooks/user/use-distance-unit';
 import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
+import { formatSetValues } from '@/src/utils/set-format';
 import { formatWeight, formatWeightValue } from '@/src/utils/weight';
 
 function loadSummary(workout: Workout) {
@@ -42,6 +44,7 @@ export default function WorkoutSummaryScreen() {
   const justFinished = finished === '1';
   const insets = useSafeAreaInsets();
   const unit = useWeightUnit();
+  const distanceUnit = useDistanceUnit();
   const [workout, setWorkout] = useState(() => WorkoutRepository.getWorkout(Number(id)));
   const [summary, setSummary] = useState(() => (workout ? loadSummary(workout) : null));
   const [note, setNote] = useState(workout?.note ?? '');
@@ -200,7 +203,7 @@ export default function WorkoutSummaryScreen() {
                       {labels[index]}
                     </ThemedText>
                     <ThemedText style={styles.setValue}>
-                      {set.weight === null ? `${set.reps} reps` : `${formatWeight(set.weight, unit)} × ${set.reps}`}
+                      {formatSetValues(set, unit, distanceUnit, true)}
                     </ThemedText>
                   </View>
                 ))}

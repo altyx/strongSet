@@ -8,6 +8,8 @@ const set = (weight: number | null, reps: number | null, completed = true, type:
   type,
   weight,
   reps,
+  duration_seconds: null,
+  distance_meters: null,
   completed_at: completed ? 1 : null,
 });
 
@@ -19,10 +21,10 @@ const workout: Workout = {
   started_at: 1000,
   finished_at: 1000 + 54 * 60,
   exercises: [
-    { id: 1, exercise_id: 1, name: 'Bench Press', position: 0, rest_seconds: null, exercise_note: null, sets: [set(75, 6), set(80, 5), set(80, 3), set(85, 1, false)] },
-    { id: 2, exercise_id: 4, name: 'Pull-ups', position: 1, rest_seconds: null, exercise_note: null, sets: [set(null, 10), set(null, 8)] },
-    { id: 3, exercise_id: 5, name: 'Shoulder Press', position: 2, rest_seconds: null, exercise_note: null, sets: [set(40, 8, false)] },
-    { id: 4, exercise_id: null, name: 'Exercice supprimé', position: 3, rest_seconds: null, exercise_note: null, sets: [set(20, 10)] },
+    { id: 1, exercise_id: 1, name: 'Bench Press', tracking: 'weight_reps', position: 0, rest_seconds: null, exercise_note: null, sets: [set(75, 6), set(80, 5), set(80, 3), set(85, 1, false)] },
+    { id: 2, exercise_id: 4, name: 'Pull-ups', tracking: 'weight_reps', position: 1, rest_seconds: null, exercise_note: null, sets: [set(null, 10), set(null, 8)] },
+    { id: 3, exercise_id: 5, name: 'Shoulder Press', tracking: 'weight_reps', position: 2, rest_seconds: null, exercise_note: null, sets: [set(40, 8, false)] },
+    { id: 4, exercise_id: null, name: 'Exercice supprimé', tracking: 'weight_reps', position: 3, rest_seconds: null, exercise_note: null, sets: [set(20, 10)] },
   ],
 };
 
@@ -79,6 +81,7 @@ describe('séries d’échauffement', () => {
         id: 1,
         exercise_id: 1,
         name: 'Bench Press',
+        tracking: 'weight_reps',
         position: 0,
         rest_seconds: null,
         exercise_note: null,

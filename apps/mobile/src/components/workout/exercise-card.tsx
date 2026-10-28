@@ -8,6 +8,7 @@ import { SET_COLUMNS, SetRow } from '@/src/components/workout/set-row';
 import { setLabels } from '@/src/constants/set-types';
 import { palette } from '@/src/constants/theme';
 import { SetValues, WorkoutExercise, WorkoutSet } from '@/src/repositories/workout/workout-type';
+import { DistanceUnit } from '@/src/utils/distance';
 import { WeightUnit } from '@/src/utils/weight';
 
 type ExerciseCardProps = {
@@ -16,6 +17,7 @@ type ExerciseCardProps = {
   previous: SetValues[];
   defaultReps: number;
   unit: WeightUnit;
+  distanceUnit: DistanceUnit;
   currentSetId: number | null;
   onChangeSet: (set: WorkoutSet, values: SetValues) => void;
   onToggleSet: (set: WorkoutSet, index: number, entered: SetValues) => void;
@@ -31,6 +33,7 @@ export function ExerciseCard({
   previous,
   defaultReps,
   unit,
+  distanceUnit,
   currentSetId,
   onChangeSet,
   onToggleSet,
@@ -41,6 +44,7 @@ export function ExerciseCard({
   const doneCount = exercise.sets.filter((set) => set.completed_at !== null).length;
   const allDone = exercise.sets.length > 0 && doneCount === exercise.sets.length;
   const labels = setLabels(exercise.sets.map((set) => set.type));
+  const cardio = exercise.tracking === 'duration_distance';
 
   return (
     <Card variant={allDone ? 'default' : 'outlined'} style={styles.card}>
@@ -78,10 +82,10 @@ export function ExerciseCard({
           Précédent
         </ThemedText>
         <ThemedText type="label" tone="tertiary" style={[styles.center, { width: SET_COLUMNS.weight }]}>
-          {unit}
+          {cardio ? 'Durée' : unit}
         </ThemedText>
         <ThemedText type="label" tone="tertiary" style={[styles.center, { width: SET_COLUMNS.reps }]}>
-          Reps
+          {cardio ? distanceUnit : 'Reps'}
         </ThemedText>
         <View style={{ width: SET_COLUMNS.check }} />
       </View>
@@ -90,12 +94,14 @@ export function ExerciseCard({
         {exercise.sets.map((set, index) => (
           <SetRow
             // Remonte la ligne quand les valeurs enregistrées changent (ex. complétées à la validation)
-            key={`${set.id}-${set.weight}-${set.reps}`}
+            key={`${set.id}-${set.weight}-${set.reps}-${set.duration_seconds}-${set.distance_meters}`}
             label={labels[index]}
             set={set}
+            tracking={exercise.tracking}
             previous={previous[index]}
             defaultReps={defaultReps}
             unit={unit}
+            distanceUnit={distanceUnit}
             isCurrent={set.id === currentSetId}
             onChange={(values) => onChangeSet(set, values)}
             onToggle={(entered) => onToggleSet(set, index, entered)}

@@ -11,6 +11,7 @@ const MUSCLE_LABELS: Record<string, string> = {
   Hamstrings: 'Ischios',
   Abs: 'Abdominaux',
   Forearms: 'Avant-bras',
+  Cardio: 'Cardio',
 };
 
 // Un muscle ajouté par l'utilisateur garde son nom tel quel

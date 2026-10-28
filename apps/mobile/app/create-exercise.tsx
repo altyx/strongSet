@@ -8,6 +8,7 @@ import { Button } from '@/src/components/ui/button';
 import { EQUIPMENT_OPTIONS } from '@/src/constants/equipment';
 import { muscleLabel } from '@/src/constants/muscles';
 import { palette, radius, spacing, typography } from '@/src/constants/theme';
+import { Tracking, TRACKING_OPTIONS } from '@/src/constants/tracking';
 import { validateNewExercise } from '@/src/domain/exercise-library';
 import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 
@@ -34,6 +35,7 @@ export default function CreateExerciseModal() {
   const [name, setName] = useState('');
   const [muscleIds, setMuscleIds] = useState<number[]>([]);
   const [equipment, setEquipment] = useState<string | null>(null);
+  const [tracking, setTracking] = useState<Tracking>('weight_reps');
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -48,7 +50,7 @@ export default function CreateExerciseModal() {
       setError(message);
       return;
     }
-    ExerciseRepository.create({ name, equipment, muscleIds, description });
+    ExerciseRepository.create({ name, equipment, muscleIds, description, tracking });
     router.back();
   };
 
@@ -72,6 +74,21 @@ export default function CreateExerciseModal() {
             accessibilityLabel="Nom de l'exercice"
             style={styles.input}
           />
+        </View>
+
+        <View style={styles.field}>
+          <ThemedText type="label">Saisie des séries</ThemedText>
+          <View style={styles.chips} accessibilityRole="radiogroup">
+            {TRACKING_OPTIONS.map((option) => (
+              <Chip
+                key={option.value}
+                label={option.label}
+                selected={tracking === option.value}
+                onPress={() => setTracking(option.value)}
+                role="radio"
+              />
+            ))}
+          </View>
         </View>
 
         <View style={styles.field}>

@@ -1,4 +1,5 @@
 import { SetType } from '@/src/repositories/workout/workout-type';
+import { formatDuration } from '@/src/utils/duration';
 
 // Une série validée d'une séance terminée, à plat (export CSV)
 export interface ExportedSet {
@@ -11,11 +12,14 @@ export interface ExportedSet {
   // kg ; null pour une série au poids du corps sans charge saisie
   weight: number | null;
   reps: number | null;
+  // Cardio : secondes et mètres, null sinon
+  duration_seconds: number | null;
+  distance_meters: number | null;
 }
 
 // Séparateur « ; » et virgule décimale : le fichier s'ouvre directement en colonnes dans un tableur réglé en français
 const SEPARATOR = ';';
-const HEADER = ['Date', 'Heure', 'Séance', 'Exercice', 'Série', 'Type', 'Charge (kg)', 'Répétitions', 'Note de séance'];
+const HEADER = ['Date', 'Heure', 'Séance', 'Exercice', 'Série', 'Type', 'Charge (kg)', 'Répétitions', 'Durée', 'Distance (km)', 'Note de séance'];
 
 const TYPE_LABELS: Record<SetType, string> = {
   normal: 'Normale',
@@ -27,6 +31,8 @@ const TYPE_LABELS: Record<SetType, string> = {
 function escapeCell(value: string) {
   return /[;"\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
+
+const decimal = (value: number) => String(value).replace('.', ',');
 
 const pad = (value: number) => String(value).padStart(2, '0');
 
@@ -44,8 +50,10 @@ export function buildSetsCsv(sets: ExportedSet[]): string {
       set.exercise_name ?? '',
       String(set.set_number),
       TYPE_LABELS[set.type],
-      set.weight === null ? '' : String(set.weight).replace('.', ','),
+      set.weight === null ? '' : decimal(set.weight),
       set.reps === null ? '' : String(set.reps),
+      set.duration_seconds == null ? '' : formatDuration(set.duration_seconds),
+      set.distance_meters == null ? '' : decimal(set.distance_meters / 1000),
       set.workout_note ?? '',
     ]
       .map(escapeCell)
