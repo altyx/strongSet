@@ -18,6 +18,7 @@ import { Backup } from '@/src/repositories/export/export-repository';
 import { pickBackup } from '@/src/services/backup';
 import { shareBackupJson, shareSetsCsv } from '@/src/services/export';
 import { cancelRestEnd } from '@/src/services/rest-notification';
+import { DistanceUnit } from '@/src/utils/distance';
 import { WeightUnit } from '@/src/utils/weight';
 
 // Valeurs de l'onboarding, si les préférences n'ont jamais été enregistrées
@@ -35,10 +36,45 @@ const LEGAL_LINKS = [
   { document: 'confidentialite', label: 'Politique de confidentialité' },
 ] as const;
 
-const UNITS: { value: WeightUnit; label: string }[] = [
+const WEIGHT_UNITS: { value: WeightUnit; label: string }[] = [
   { value: 'kg', label: 'Kilos (kg)' },
   { value: 'lb', label: 'Livres (lb)' },
 ];
+
+const DISTANCE_UNITS: { value: DistanceUnit; label: string }[] = [
+  { value: 'km', label: 'Kilomètres (km)' },
+  { value: 'mi', label: 'Miles (mi)' },
+];
+
+type UnitChoiceProps<T extends string> = {
+  label: string;
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+};
+
+// Choix d'une unité, deux boutons côte à côte
+function UnitChoice<T extends string>({ label, options, value, onChange }: UnitChoiceProps<T>) {
+  return (
+    <View style={styles.units} accessibilityRole="radiogroup" accessibilityLabel={label}>
+      {options.map((option) => {
+        const selected = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            onPress={() => onChange(option.value)}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: selected }}
+            style={[styles.unit, selected && styles.unitSelected]}>
+            <ThemedText type="defaultSemiBold" tone={selected ? 'onAccent' : 'secondary'}>
+              {option.label}
+            </ThemedText>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
 // Réglages enregistrés à chaque changement, sans bouton de validation
 export default function SettingsScreen() {
@@ -105,7 +141,6 @@ export default function SettingsScreen() {
     );
   };
 
-  const unit = settings.weightUnit ?? 'kg';
 
   return (
     <ScrollView
@@ -159,24 +194,24 @@ export default function SettingsScreen() {
 
       <View style={styles.section}>
         <ThemedText type="label">Unité de charge</ThemedText>
-        <View style={styles.units} accessibilityRole="radiogroup" accessibilityLabel="Unité de charge">
-          {UNITS.map((option) => {
-            const selected = option.value === unit;
-            return (
-              <Pressable
-                key={option.value}
-                onPress={() => update({ weightUnit: option.value })}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: selected }}
-                style={[styles.unit, selected && styles.unitSelected]}>
-                <ThemedText type="defaultSemiBold" tone={selected ? 'onAccent' : 'secondary'}>
-                  {option.label}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </View>
+        <UnitChoice
+          label="Unité de charge"
+          options={WEIGHT_UNITS}
+          value={settings.weightUnit ?? 'kg'}
+          onChange={(weightUnit) => update({ weightUnit })}
+        />
         <ThemedText type="caption">Les charges restent enregistrées en kilos : changer d&apos;unité ne perd rien.</ThemedText>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="label">Unité de distance</ThemedText>
+        <UnitChoice
+          label="Unité de distance"
+          options={DISTANCE_UNITS}
+          value={settings.distanceUnit ?? 'km'}
+          onChange={(distanceUnit) => update({ distanceUnit })}
+        />
+        <ThemedText type="caption">Pour le cardio. Les distances restent enregistrées en mètres.</ThemedText>
       </View>
 
       <View style={styles.section}>

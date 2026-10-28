@@ -7,7 +7,7 @@ import { SET_TYPE_INFO } from '@/src/constants/set-types';
 import { fontFamily, palette, radius } from '@/src/constants/theme';
 import { Tracking } from '@/src/constants/tracking';
 import { SetValues, WorkoutSet } from '@/src/repositories/workout/workout-type';
-import { formatDistanceValue, parseDistance } from '@/src/utils/distance';
+import { distanceUnitName, DistanceUnit, formatDistanceValue, parseDistance } from '@/src/utils/distance';
 import { formatDuration, parseDuration } from '@/src/utils/duration';
 import { parseDecimal, parseInteger } from '@/src/utils/number';
 import { formatSetValues } from '@/src/utils/set-format';
@@ -25,8 +25,9 @@ type SetRowProps = {
   // Série correspondante de la dernière séance : affichée en indication et en placeholder
   previous?: SetValues;
   defaultReps: number;
-  // Unité de saisie et d'affichage ; les valeurs reçues et renvoyées restent en kg
+  // Unités de saisie et d'affichage ; les valeurs reçues et renvoyées restent en kg et en mètres
   unit: WeightUnit;
+  distanceUnit: DistanceUnit;
   // Première série non validée de la séance : mise en avant
   isCurrent: boolean;
   onChange: (values: SetValues) => void;
@@ -36,11 +37,11 @@ type SetRowProps = {
   onOptions: () => void;
 };
 
-function formatPrevious(unit: WeightUnit, previous?: SetValues) {
+function formatPrevious(unit: WeightUnit, distanceUnit: DistanceUnit, previous?: SetValues) {
   if (!previous?.reps && !previous?.duration_seconds) {
     return '—';
   }
-  return formatSetValues(previous, unit);
+  return formatSetValues(previous, unit, distanceUnit);
 }
 
 // Texte d'un champ à partir de la valeur enregistrée, vide si elle n'est pas saisie
@@ -51,13 +52,13 @@ const toText = (value: number | null | undefined, format: (value: number) => str
  * Les champs gardent leur texte en local pendant la saisie et ne l'enregistrent qu'à la perte du focus.
  * Le parent remonte la ligne (via sa `key`) quand les valeurs enregistrées changent.
  */
-export function SetRow({ label, set, tracking, previous, defaultReps, unit, isCurrent, onChange, onToggle, onOptions }: SetRowProps) {
+export function SetRow({ label, set, tracking, previous, defaultReps, unit, distanceUnit, isCurrent, onChange, onToggle, onOptions }: SetRowProps) {
   const cardio = tracking === 'duration_distance';
   // Cardio : le premier champ est la durée, le second la distance ; sinon la charge et les répétitions
   const savedFirstText = cardio
     ? toText(set.duration_seconds, formatDuration)
     : toText(set.weight, (weight) => formatWeightValue(weight, unit));
-  const savedSecondText = cardio ? toText(set.distance_meters, formatDistanceValue) : toText(set.reps, String);
+  const savedSecondText = cardio ? toText(set.distance_meters, (meters) => formatDistanceValue(meters, distanceUnit)) : toText(set.reps, String);
   const [firstText, setFirstText] = useState(savedFirstText);
   const [secondText, setSecondText] = useState(savedSecondText);
   const done = set.completed_at !== null;
@@ -73,7 +74,7 @@ export function SetRow({ label, set, tracking, previous, defaultReps, unit, isCu
         weight: null,
         reps: null,
         duration_seconds: firstText === savedFirstText ? set.duration_seconds : parseDuration(firstText),
-        distance_meters: secondText === savedSecondText ? set.distance_meters : parseDistance(secondText),
+        distance_meters: secondText === savedSecondText ? set.distance_meters : parseDistance(secondText, distanceUnit),
       };
     }
     const weight = parseDecimal(firstText);
@@ -100,9 +101,9 @@ export function SetRow({ label, set, tracking, previous, defaultReps, unit, isCu
         firstPlaceholder: previous?.duration_seconds != null ? formatDuration(previous.duration_seconds) : 'min',
         firstKeyboard: 'numbers-and-punctuation' as const,
         firstLabel: `Durée, ${name}, en minutes ou minutes:secondes`,
-        secondPlaceholder: previous?.distance_meters != null ? formatDistanceValue(previous.distance_meters) : 'km',
+        secondPlaceholder: previous?.distance_meters != null ? formatDistanceValue(previous.distance_meters, distanceUnit) : distanceUnit,
         secondKeyboard: 'decimal-pad' as const,
-        secondLabel: `Distance, ${name}, en kilomètres`,
+        secondLabel: `Distance, ${name}, en ${distanceUnitName(distanceUnit)}`,
       }
     : {
         firstPlaceholder: previous?.weight != null ? formatWeightValue(previous.weight, unit) : unit,
@@ -127,7 +128,7 @@ export function SetRow({ label, set, tracking, previous, defaultReps, unit, isCu
         <ThemedText style={[styles.numberText, typeInfo.color !== null && { color: typeInfo.color }]}>{label}</ThemedText>
       </Pressable>
       <ThemedText type="caption" style={styles.previous} numberOfLines={1}>
-        {formatPrevious(unit, previous)}
+        {formatPrevious(unit, distanceUnit, previous)}
       </ThemedText>
       <TextInput
         value={firstText}

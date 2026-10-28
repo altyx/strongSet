@@ -8,6 +8,7 @@ import { SET_COLUMNS, SetRow } from '@/src/components/workout/set-row';
 import { setLabels } from '@/src/constants/set-types';
 import { palette } from '@/src/constants/theme';
 import { SetValues, WorkoutExercise, WorkoutSet } from '@/src/repositories/workout/workout-type';
+import { DistanceUnit } from '@/src/utils/distance';
 import { WeightUnit } from '@/src/utils/weight';
 
 type ExerciseCardProps = {
@@ -16,6 +17,7 @@ type ExerciseCardProps = {
   previous: SetValues[];
   defaultReps: number;
   unit: WeightUnit;
+  distanceUnit: DistanceUnit;
   currentSetId: number | null;
   onChangeSet: (set: WorkoutSet, values: SetValues) => void;
   onToggleSet: (set: WorkoutSet, index: number, entered: SetValues) => void;
@@ -31,6 +33,7 @@ export function ExerciseCard({
   previous,
   defaultReps,
   unit,
+  distanceUnit,
   currentSetId,
   onChangeSet,
   onToggleSet,
@@ -82,7 +85,7 @@ export function ExerciseCard({
           {cardio ? 'Durée' : unit}
         </ThemedText>
         <ThemedText type="label" tone="tertiary" style={[styles.center, { width: SET_COLUMNS.reps }]}>
-          {cardio ? 'km' : 'Reps'}
+          {cardio ? distanceUnit : 'Reps'}
         </ThemedText>
         <View style={{ width: SET_COLUMNS.check }} />
       </View>
@@ -98,6 +101,7 @@ export function ExerciseCard({
             previous={previous[index]}
             defaultReps={defaultReps}
             unit={unit}
+            distanceUnit={distanceUnit}
             isCurrent={set.id === currentSetId}
             onChange={(values) => onChangeSet(set, values)}
             onToggle={(entered) => onToggleSet(set, index, entered)}

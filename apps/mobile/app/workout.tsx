@@ -18,6 +18,7 @@ import { RestTimer } from '@/src/components/workout/rest-timer';
 import { palette, radius, spacing } from '@/src/constants/theme';
 import { buildWorkoutExercise, resolveSetValues } from '@/src/domain/workout-plan';
 import { useUserSettings } from '@/src/hooks/user/use-user-settings';
+import { useDistanceUnit } from '@/src/hooks/user/use-distance-unit';
 import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
 import { ExerciseListItem, ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
@@ -57,6 +58,7 @@ export default function WorkoutScreen() {
   const editing = id !== undefined;
   const insets = useSafeAreaInsets();
   const unit = useWeightUnit();
+  const distanceUnit = useDistanceUnit();
   const { getPreferences } = useUserSettings();
   const preferences = getPreferences();
   const restSeconds = preferences?.restBetweenSeries ?? DEFAULT_REST_SECONDS;
@@ -383,6 +385,7 @@ export default function WorkoutScreen() {
               previous={previous}
               defaultReps={defaultReps}
               unit={unit}
+              distanceUnit={distanceUnit}
               currentSetId={currentSetId}
               onChangeSet={changeSet}
               onToggleSet={(set, index, entered) => toggleSet(exercise, set, entered, previous[index])}

@@ -23,8 +23,9 @@ import {
 import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { formatShortDate } from '@/src/utils/date';
-import { formatDistance } from '@/src/utils/distance';
+import { distanceUnitName, formatDistance, formatSpeed, toDistanceUnit } from '@/src/utils/distance';
 import { formatDuration, formatMinutes } from '@/src/utils/duration';
+import { useDistanceUnit } from '@/src/hooks/user/use-distance-unit';
 import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
 import { formatDecimal } from '@/src/utils/number';
 import { formatSetValues } from '@/src/utils/set-format';
@@ -58,6 +59,7 @@ export default function ExerciseProgressScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const unit = useWeightUnit();
+  const distanceUnit = useDistanceUnit();
   const [data] = useState(() => loadProgress(Number(id)));
   const cardio = data.exercise?.tracking === 'duration_distance';
   const [metric, setMetric] = useState<Metric>(cardio ? 'distance' : 'force');
@@ -122,8 +124,8 @@ export default function ExerciseProgressScreen() {
     // Cardio : totaux par semaine, barre vide les semaines sans séance
     distance: {
       label: 'Distance cette semaine',
-      values: weeks.map((week) => (week.setCount > 0 ? week.distanceMeters / 1000 : null)),
-      value: formatDistance(latest.distanceMeters),
+      values: weeks.map((week) => (week.setCount > 0 ? toDistanceUnit(week.distanceMeters, distanceUnit) : null)),
+      value: formatDistance(latest.distanceMeters, distanceUnit),
       delta: null,
     },
     duration: {
@@ -137,7 +139,7 @@ export default function ExerciseProgressScreen() {
   // Valeur d'une barre lue par le lecteur d'écran : charge dans l'unité choisie, sinon nombre de reps ou de séries
   const spokenChartValue = (value: number) => {
     if (metric === 'distance') {
-      return `${formatDecimal(value)} kilomètres`;
+      return `${formatDecimal(Math.round(value * 100) / 100)} ${distanceUnitName(distanceUnit)}`;
     }
     if (metric === 'duration') {
       return `${value} minutes`;
@@ -159,7 +161,7 @@ export default function ExerciseProgressScreen() {
   const cardioTiles = [
     data.cardioRecords.longestDistance && {
       label: 'Distance max (séance)',
-      value: formatDistance(data.cardioRecords.longestDistance.meters),
+      value: formatDistance(data.cardioRecords.longestDistance.meters, distanceUnit),
       at: data.cardioRecords.longestDistance.at,
     },
     data.cardioRecords.longestDuration && {
@@ -169,13 +171,13 @@ export default function ExerciseProgressScreen() {
     },
     data.cardioRecords.bestSpeed && {
       label: 'Vitesse moyenne max',
-      value: `${formatDecimal(data.cardioRecords.bestSpeed.kmh)} km/h`,
+      value: formatSpeed(data.cardioRecords.bestSpeed.kmh, distanceUnit),
       at: data.cardioRecords.bestSpeed.at,
     },
   ];
   const weightTiles = [
     records.bestOneRepMax && { label: '1RM estimé', value: formatWeight(records.bestOneRepMax.value, unit), at: records.bestOneRepMax.at },
-    records.heaviestSet && { label: 'Charge max', value: formatSetValues(records.heaviestSet, unit), at: records.heaviestSet.at },
+    records.heaviestSet && { label: 'Charge max', value: formatSetValues(records.heaviestSet, unit, distanceUnit), at: records.heaviestSet.at },
     records.bestVolume && { label: 'Volume max (séance)', value: formatWeight(records.bestVolume.value, unit), at: records.bestVolume.at },
     records.maxReps && { label: 'Répétitions max', value: `${records.maxReps.reps}`, at: records.maxReps.at },
   ];
@@ -255,9 +257,9 @@ export default function ExerciseProgressScreen() {
             const stats = sessionStats(session.sets);
             // Cardio : le total de la séance ; sinon la meilleure série
             const best = cardio
-              ? formatSetValues({ weight: null, reps: null, ...toCardioValues(cardioStats(session.sets)) }, unit)
+              ? formatSetValues({ weight: null, reps: null, ...toCardioValues(cardioStats(session.sets)) }, unit, distanceUnit)
               : stats.topSet
-                ? formatSetValues(stats.topSet, unit)
+                ? formatSetValues(stats.topSet, unit, distanceUnit)
                 : `${stats.maxReps} reps`;
             return (
               <View key={`${session.workout_id}-${index}`} style={styles.historyRow}>
@@ -266,7 +268,7 @@ export default function ExerciseProgressScreen() {
                   {/* Cardio en une seule série (cas courant) : le détail répéterait le total */}
                   {(!cardio || session.sets.length > 1) && (
                     <ThemedText type="caption" numberOfLines={1}>
-                      {session.sets.map((set) => formatSetValues(set, unit)).join(cardio ? ' + ' : ' · ')}
+                      {session.sets.map((set) => formatSetValues(set, unit, distanceUnit)).join(cardio ? ' + ' : ' · ')}
                     </ThemedText>
                   )}
                 </View>

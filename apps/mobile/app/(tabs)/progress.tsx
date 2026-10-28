@@ -1,3 +1,4 @@
+import { useIsFocused } from '@react-navigation/native';
 import { router, useFocusEffect } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native/icons';
 import { useCallback, useState } from 'react';
@@ -20,7 +21,9 @@ import {
 } from '@/src/domain/progression';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { formatShortDate, toTimestamp } from '@/src/utils/date';
+import { useDistanceUnit } from '@/src/hooks/user/use-distance-unit';
 import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
+import { DistanceUnit } from '@/src/utils/distance';
 import { formatSetValues } from '@/src/utils/set-format';
 import { formatWeight, spokenWeight, WeightUnit } from '@/src/utils/weight';
 
@@ -37,7 +40,7 @@ type TrainedExercise = {
   change: number | null;
 };
 
-function loadProgress(unit: WeightUnit) {
+function loadProgress(unit: WeightUnit, distanceUnit: DistanceUnit) {
   const now = new Date();
   const since = toTimestamp(lastWeeks(now, WEEKS)[0]);
   const history = WorkoutRepository.getHistory(HISTORY_LIMIT);
@@ -57,9 +60,9 @@ function loadProgress(unit: WeightUnit) {
       lastDone: exercise.last_done,
       lastBest:
         cardio.durationSeconds > 0
-          ? formatSetValues({ weight: null, reps: null, ...toCardioValues(cardio) }, unit)
+          ? formatSetValues({ weight: null, reps: null, ...toCardioValues(cardio) }, unit, distanceUnit)
           : last.topSet
-            ? formatSetValues(last.topSet, unit)
+            ? formatSetValues(last.topSet, unit, distanceUnit)
             : `${last.maxReps} reps`,
       change: oneRepMaxChange(sessions, since),
     };
@@ -74,14 +77,17 @@ function loadProgress(unit: WeightUnit) {
 
 export default function ProgressScreen() {
   const insets = useSafeAreaInsets();
+  // L'onglet reste monté : le nouveau rendu au retour sur l'onglet relit les unités, changées entre-temps dans les réglages
+  useIsFocused();
   const unit = useWeightUnit();
+  const distanceUnit = useDistanceUnit();
   const [data, setData] = useState<ReturnType<typeof loadProgress> | null>(null);
 
   // Recharge au retour sur l'onglet : une séance a pu être terminée, ou l'unité changée, entre-temps
   useFocusEffect(
     useCallback(() => {
-      setData(loadProgress(unit));
-    }, [unit]),
+      setData(loadProgress(unit, distanceUnit));
+    }, [unit, distanceUnit]),
   );
 
   if (!data) {
