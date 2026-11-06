@@ -1,7 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { Activity, Dumbbell, Play, Plus, Settings } from 'lucide-react-native/icons';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WorkoutHistoryRow } from '@/src/components/history/workout-history-row';
@@ -15,7 +15,7 @@ import { IconButton } from '@/src/components/ui/icon-button';
 import { StatTile } from '@/src/components/ui/stat-tile';
 import { ElapsedTime } from '@/src/components/workout/elapsed-time';
 import { RestCountdown } from '@/src/components/workout/rest-countdown';
-import { fontFamily, palette, radius, spacing } from '@/src/constants/theme';
+import { fontFamily, radius, spacing } from '@/src/constants/theme';
 import { ActiveRest } from '@/src/domain/rest';
 import { buildWorkoutExercises } from '@/src/domain/workout-plan';
 import { useUserSettings } from '@/src/hooks/user/use-user-settings';
@@ -26,6 +26,7 @@ import { WorkoutRepository } from '@/src/repositories/workout/workout-repository
 import { Workout, WorkoutSummary } from '@/src/repositories/workout/workout-type';
 import { getActiveRest } from '@/src/services/rest-notification';
 import { formatLongDate, getWeekDays, isSameDay, startOfWeek, toTimestamp } from '@/src/utils/date';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 type HomeData = {
   today: Date;
@@ -65,6 +66,8 @@ function loadHomeData(): HomeData {
 }
 
 export default function HomeScreen() {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const insets = useSafeAreaInsets();
   const { getPreferences } = useUserSettings();
   const [data, setData] = useState<HomeData | null>(null);
@@ -251,7 +254,7 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   screen: {
     flex: 1,
     backgroundColor: palette.background,
@@ -338,4 +341,4 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-});
+}));

@@ -3,7 +3,7 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronDown, Plus } from 'lucide-react-native/icons';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ExercisePicker } from '@/src/components/templates/exercise-picker';
@@ -15,7 +15,7 @@ import { ExerciseCard } from '@/src/components/workout/exercise-card';
 import { ExerciseOptionsSheet } from '@/src/components/workout/exercise-options-sheet';
 import { SetOptionsSheet } from '@/src/components/workout/set-options-sheet';
 import { RestTimer } from '@/src/components/workout/rest-timer';
-import { palette, radius, spacing } from '@/src/constants/theme';
+import { radius, spacing } from '@/src/constants/theme';
 import { buildWorkoutExercise, resolveSetValues } from '@/src/domain/workout-plan';
 import { useUserSettings } from '@/src/hooks/user/use-user-settings';
 import { useDistanceUnit } from '@/src/hooks/user/use-distance-unit';
@@ -25,6 +25,7 @@ import { WorkoutRepository } from '@/src/repositories/workout/workout-repository
 import { SetType, SetValues, Workout, WorkoutExercise, WorkoutSet } from '@/src/repositories/workout/workout-type';
 import { clearRest, getActiveRest, startRest } from '@/src/services/rest-notification';
 import { formatLongDate } from '@/src/utils/date';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 const DEFAULT_REST_SECONDS = 90;
 const DEFAULT_REPS = 10;
@@ -54,6 +55,8 @@ function loadPreviousSets(workout: Workout | null, editing: boolean) {
  * Les modifications sont enregistrées au fur et à mesure ; « Enregistrer » ne fait que le ménage final.
  */
 export default function WorkoutScreen() {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const editing = id !== undefined;
   const insets = useSafeAreaInsets();
@@ -466,7 +469,7 @@ export default function WorkoutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   screen: {
     flex: 1,
     backgroundColor: palette.background,
@@ -538,4 +541,4 @@ const styles = StyleSheet.create({
     right: spacing.md,
     borderRadius: radius.xl,
   },
-});
+}));

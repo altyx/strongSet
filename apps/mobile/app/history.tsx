@@ -1,17 +1,19 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WorkoutHistoryRow } from '@/src/components/history/workout-history-row';
 import { ThemedText } from '@/src/components/themed-text';
-import { palette, spacing } from '@/src/constants/theme';
+import { spacing } from '@/src/constants/theme';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { WorkoutSummary } from '@/src/repositories/workout/workout-type';
+import { makeStyles } from '@/src/theme/theme-provider';
 
 const HISTORY_LIMIT = 200;
 
 export default function HistoryScreen() {
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const [workouts, setWorkouts] = useState<WorkoutSummary[]>([]);
 
@@ -39,7 +41,7 @@ export default function HistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   screen: {
     flex: 1,
     backgroundColor: palette.background,
@@ -55,4 +57,4 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingTop: spacing.xxl * 2,
   },
-});
+}));

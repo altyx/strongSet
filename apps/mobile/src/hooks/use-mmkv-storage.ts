@@ -11,6 +11,8 @@ export const STORAGE_KEYS = {
   HAS_SEEN_TUTORIAL: 'has_seen_tutorial',
   // Repos en cours de la séance active (voir src/services/rest-notification.ts)
   ACTIVE_REST: 'active_rest',
+  // Apparence choisie dans les réglages (voir src/theme/theme-provider.tsx)
+  THEME_PREFERENCE: 'theme_preference',
 } as const;
 
 let storage: ReturnType<typeof createMMKV> | null = null;

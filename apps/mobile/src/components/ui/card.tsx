@@ -1,6 +1,7 @@
-import { StyleSheet, View, type ViewProps } from 'react-native';
+import { View, type ViewProps } from 'react-native';
 
-import { palette, radius } from '@/src/constants/theme';
+import { radius } from '@/src/constants/theme';
+import { makeStyles } from '@/src/theme/theme-provider';
 
 type CardProps = ViewProps & {
   // outlined : carte mise en avant (bordure visible), ex. la séance du jour
@@ -8,10 +9,11 @@ type CardProps = ViewProps & {
 };
 
 export function Card({ variant = 'default', style, ...rest }: CardProps) {
+  const styles = useStyles();
   return <View style={[styles.base, variant === 'outlined' && styles.outlined, style]} {...rest} />;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   base: {
     padding: 16,
     borderRadius: radius.xl,
@@ -22,4 +24,4 @@ const styles = StyleSheet.create({
   outlined: {
     borderColor: palette.border,
   },
-});
+}));

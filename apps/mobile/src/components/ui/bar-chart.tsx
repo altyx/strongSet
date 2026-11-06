@@ -1,7 +1,7 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
-import { palette } from '@/src/constants/theme';
+import { makeStyles } from '@/src/theme/theme-provider';
 
 type BarChartProps = {
   // Une valeur par barre ; null = pas de donnée (barre vide)
@@ -18,6 +18,7 @@ type BarChartProps = {
  * pour rendre visibles de petites variations, comme un 1RM qui passe de 85 à 92,5 kg.
  */
 export function BarChart({ values, labels, accessibilityLabel, height = 150 }: BarChartProps) {
+  const styles = useStyles();
   const present = values.filter((value): value is number => value !== null && value > 0);
   const max = present.length > 0 ? Math.max(...present) : 0;
   const min = present.length > 0 ? Math.min(...present) : 0;
@@ -52,7 +53,7 @@ export function BarChart({ values, labels, accessibilityLabel, height = 150 }: B
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   chart: {
     flexDirection: 'row',
     gap: 8,
@@ -81,4 +82,4 @@ const styles = StyleSheet.create({
   labelCurrent: {
     color: palette.textSecondary,
   },
-});
+}));

@@ -1,20 +1,22 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/src/components/themed-text';
 import { Button } from '@/src/components/ui/button';
 import { EQUIPMENT_OPTIONS } from '@/src/constants/equipment';
 import { muscleLabel } from '@/src/constants/muscles';
-import { palette, radius, spacing, typography } from '@/src/constants/theme';
+import { radius, spacing, typography } from '@/src/constants/theme';
 import { Tracking, TRACKING_OPTIONS } from '@/src/constants/tracking';
 import { validateNewExercise } from '@/src/domain/exercise-library';
 import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 type ChipProps = { label: string; selected: boolean; onPress: () => void; role: 'checkbox' | 'radio' };
 
 function Chip({ label, selected, onPress, role }: ChipProps) {
+  const styles = useStyles();
   return (
     <Pressable
       onPress={onPress}
@@ -30,6 +32,8 @@ function Chip({ label, selected, onPress, role }: ChipProps) {
 
 // Création d'un exercice de la bibliothèque (modale)
 export default function CreateExerciseModal() {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const insets = useSafeAreaInsets();
   const [muscles] = useState(() => ExerciseRepository.getMuscles());
   const [name, setName] = useState('');
@@ -151,7 +155,7 @@ export default function CreateExerciseModal() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   screen: {
     flex: 1,
     backgroundColor: palette.background,
@@ -222,4 +226,4 @@ const styles = StyleSheet.create({
   action: {
     flex: 1,
   },
-});
+}));

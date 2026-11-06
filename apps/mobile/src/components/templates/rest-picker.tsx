@@ -1,8 +1,9 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
-import { palette, radius } from '@/src/constants/theme';
+import { radius } from '@/src/constants/theme';
 import { formatDuration } from '@/src/utils/duration';
+import { makeStyles } from '@/src/theme/theme-provider';
 
 const REST_OPTIONS = [60, 90, 120, 150, 180];
 
@@ -12,6 +13,7 @@ function restLabel(seconds: number) {
 }
 
 export function RestPicker({ value, onChange }: { value: number; onChange: (seconds: number) => void }) {
+  const styles = useStyles();
   return (
     <View style={styles.container}>
       <ThemedText type="caption">Repos entre les séries</ThemedText>
@@ -36,7 +38,7 @@ export function RestPicker({ value, onChange }: { value: number; onChange: (seco
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   container: {
     gap: 8,
   },
@@ -58,4 +60,4 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 13,
   },
-});
+}));

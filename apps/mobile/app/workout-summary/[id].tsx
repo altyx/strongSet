@@ -1,7 +1,7 @@
 import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Pencil, Trash2, Trophy } from 'lucide-react-native/icons';
 import { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/src/components/themed-text';
@@ -10,7 +10,7 @@ import { Card } from '@/src/components/ui/card';
 import { StatTile } from '@/src/components/ui/stat-tile';
 import { muscleLabel } from '@/src/constants/muscles';
 import { SET_TYPE_INFO, setLabels } from '@/src/constants/set-types';
-import { fontFamily, palette, radius, spacing, typography } from '@/src/constants/theme';
+import { fontFamily, radius, spacing, typography } from '@/src/constants/theme';
 import { findWeightRecords, setsPerMuscle, summarizeWorkout, volumeChange } from '@/src/domain/workout-summary';
 import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
@@ -21,6 +21,7 @@ import { useDistanceUnit } from '@/src/hooks/user/use-distance-unit';
 import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
 import { formatSetValues } from '@/src/utils/set-format';
 import { formatWeight, formatWeightValue } from '@/src/utils/weight';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 function loadSummary(workout: Workout) {
   const exerciseIds = workout.exercises.flatMap((exercise) => (exercise.exercise_id === null ? [] : [exercise.exercise_id]));
@@ -40,6 +41,8 @@ function loadSummary(workout: Workout) {
  * sinon depuis l'historique (en-tête de navigation avec retour).
  */
 export default function WorkoutSummaryScreen() {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const { id, finished } = useLocalSearchParams<{ id: string; finished?: string }>();
   const justFinished = finished === '1';
   const insets = useSafeAreaInsets();
@@ -198,7 +201,7 @@ export default function WorkoutSummaryScreen() {
                   <View key={set.id} style={styles.setLine}>
                     <ThemedText
                       type="caption"
-                      style={[styles.setNumber, SET_TYPE_INFO[set.type].color !== null && { color: SET_TYPE_INFO[set.type].color! }]}
+                      style={[styles.setNumber, SET_TYPE_INFO[set.type].color !== null && { color: palette[SET_TYPE_INFO[set.type].color!] }]}
                       accessibilityLabel={set.type === 'normal' ? undefined : SET_TYPE_INFO[set.type].label}>
                       {labels[index]}
                     </ThemedText>
@@ -247,7 +250,7 @@ export default function WorkoutSummaryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   screen: {
     flex: 1,
     backgroundColor: palette.background,
@@ -298,7 +301,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255, 90, 31, 0.35)',
+    borderColor: palette.accentBorder,
     backgroundColor: palette.surface,
   },
   recordBadge: {
@@ -378,4 +381,4 @@ const styles = StyleSheet.create({
     borderTopColor: palette.surfaceRaised,
     backgroundColor: palette.background,
   },
-});
+}));
