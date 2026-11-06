@@ -1,15 +1,17 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/src/components/themed-text';
-import { palette, spacing } from '@/src/constants/theme';
+import { spacing } from '@/src/constants/theme';
 import { LEGAL_UPDATED_AT, PRIVACY, TERMS } from '@/src/constants/legal';
+import { makeStyles } from '@/src/theme/theme-provider';
 
 const DOCUMENTS = { cgu: TERMS, confidentialite: PRIVACY };
 
 // CGU (/legal/cgu) ou politique de confidentialité (/legal/confidentialite)
 export default function LegalScreen() {
+  const styles = useStyles();
   const { document } = useLocalSearchParams<{ document: string }>();
   const insets = useSafeAreaInsets();
   const content = document === 'confidentialite' ? DOCUMENTS.confidentialite : DOCUMENTS.cgu;
@@ -34,7 +36,7 @@ export default function LegalScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   screen: {
     flex: 1,
     backgroundColor: palette.background,
@@ -46,4 +48,4 @@ const styles = StyleSheet.create({
   section: {
     gap: spacing.sm,
   },
-});
+}));

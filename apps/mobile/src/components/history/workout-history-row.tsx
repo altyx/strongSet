@@ -1,17 +1,20 @@
 import { router } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native/icons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
-import { fontFamily, palette, radius } from '@/src/constants/theme';
+import { fontFamily, radius } from '@/src/constants/theme';
 import { WorkoutSummary } from '@/src/repositories/workout/workout-type';
 import { formatShortDate } from '@/src/utils/date';
 import { formatMinutes } from '@/src/utils/duration';
 import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
 import { formatWeight } from '@/src/utils/weight';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 // Une séance terminée ; ouvre son récap
 export function WorkoutHistoryRow({ workout }: { workout: WorkoutSummary }) {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const unit = useWeightUnit();
   const date = new Date(workout.started_at * 1000);
   const details = [
@@ -45,7 +48,7 @@ export function WorkoutHistoryRow({ workout }: { workout: WorkoutSummary }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -74,4 +77,4 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-});
+}));

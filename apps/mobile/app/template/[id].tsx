@@ -1,14 +1,14 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Plus, Trash2 } from 'lucide-react-native/icons';
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ExercisePicker } from '@/src/components/templates/exercise-picker';
 import { TemplateExerciseCard } from '@/src/components/templates/template-exercise-card';
 import { ThemedText } from '@/src/components/themed-text';
 import { Button } from '@/src/components/ui/button';
-import { palette, radius, spacing, typography } from '@/src/constants/theme';
+import { radius, spacing, typography } from '@/src/constants/theme';
 import {
   DraftDefaults,
   DraftExercise,
@@ -20,12 +20,15 @@ import {
 } from '@/src/domain/template-draft';
 import { useUserSettings } from '@/src/hooks/user/use-user-settings';
 import { TemplateRepository } from '@/src/repositories/template/template-repository';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 /**
  * Création (`/template/new`) ou modification (`/template/<id>`) d'un programme.
  * Rien n'est enregistré avant « Enregistrer » : quitter l'écran abandonne les changements.
  */
 export default function TemplateEditorScreen() {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const isNew = id === 'new';
   const insets = useSafeAreaInsets();
@@ -154,7 +157,7 @@ export default function TemplateEditorScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   screen: {
     flex: 1,
     backgroundColor: palette.background,
@@ -195,4 +198,4 @@ const styles = StyleSheet.create({
   error: {
     textAlign: 'center',
   },
-});
+}));

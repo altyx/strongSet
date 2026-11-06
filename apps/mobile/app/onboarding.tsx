@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { ArrowRight, Check, Dumbbell } from 'lucide-react-native/icons';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RestPicker } from '@/src/components/templates/rest-picker';
@@ -10,11 +10,14 @@ import { Button } from '@/src/components/ui/button';
 import { Card } from '@/src/components/ui/card';
 import { Stepper } from '@/src/components/ui/stepper';
 import { TERMS_VERSION } from '@/src/constants/legal';
-import { palette, radius, spacing, typography } from '@/src/constants/theme';
+import { radius, spacing, typography } from '@/src/constants/theme';
 import { useUserSettings } from '@/src/hooks/user/use-user-settings';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 // Premier lancement : prénom, valeurs par défaut des séances et acceptation des CGU
 export default function Onboarding() {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const insets = useSafeAreaInsets();
   const { savePreferences } = useUserSettings();
   const [name, setName] = useState('');
@@ -117,7 +120,7 @@ export default function Onboarding() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   screen: {
     flex: 1,
     backgroundColor: palette.background,
@@ -187,4 +190,4 @@ const styles = StyleSheet.create({
     borderTopColor: palette.surface,
     backgroundColor: palette.background,
   },
-});
+}));

@@ -1,8 +1,9 @@
 import { Minus, Plus } from 'lucide-react-native/icons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
-import { palette, radius } from '@/src/constants/theme';
+import { radius } from '@/src/constants/theme';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 type StepperProps = {
   label: string;
@@ -14,6 +15,8 @@ type StepperProps = {
 
 // Valeur entière ajustée avec − / +, bornée entre min et max
 export function Stepper({ label, value, onChange, min = 1, max = 99 }: StepperProps) {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   return (
     <View style={styles.container}>
       <ThemedText type="caption">{label}</ThemedText>
@@ -49,7 +52,7 @@ export function Stepper({ label, value, onChange, min = 1, max = 99 }: StepperPr
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   container: {
     flex: 1,
     gap: 8,
@@ -74,4 +77,4 @@ const styles = StyleSheet.create({
     minWidth: 40,
     textAlign: 'center',
   },
-});
+}));

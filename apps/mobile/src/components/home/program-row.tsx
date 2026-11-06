@@ -1,10 +1,11 @@
 import { Play } from 'lucide-react-native/icons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
-import { fontFamily, palette, radius } from '@/src/constants/theme';
+import { fontFamily, radius } from '@/src/constants/theme';
 import { Template } from '@/src/repositories/template/template-type';
 import { initials } from '@/src/utils/text';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 type ProgramRowProps = {
   template: Template;
@@ -14,6 +15,8 @@ type ProgramRowProps = {
 };
 
 export function ProgramRow({ template, onPress, onStart }: ProgramRowProps) {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const exerciseCount = template.exercises.length;
 
   return (
@@ -49,7 +52,7 @@ export function ProgramRow({ template, onPress, onStart }: ProgramRowProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -86,4 +89,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: palette.accent,
   },
-});
+}));

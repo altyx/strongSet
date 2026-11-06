@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/src/components/themed-text';
@@ -8,7 +8,7 @@ import { BarChart } from '@/src/components/ui/bar-chart';
 import { ExerciseDescription } from '@/src/components/exercises/exercise-description';
 import { Card } from '@/src/components/ui/card';
 import { muscleLabel } from '@/src/constants/muscles';
-import { palette, radius, spacing } from '@/src/constants/theme';
+import { radius, spacing } from '@/src/constants/theme';
 import {
   cardioRecords,
   cardioStats,
@@ -30,6 +30,7 @@ import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
 import { formatDecimal } from '@/src/utils/number';
 import { formatSetValues } from '@/src/utils/set-format';
 import { formatWeight } from '@/src/utils/weight';
+import { makeStyles } from '@/src/theme/theme-provider';
 
 const WEEKS = 8;
 
@@ -56,6 +57,7 @@ const dateLabel = (timestamp: number) => formatShortDate(new Date(timestamp * 10
 
 // Progression d'un exercice : courbe sur 8 semaines, records personnels et historique des séances
 export default function ExerciseProgressScreen() {
+  const styles = useStyles();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const unit = useWeightUnit();
@@ -284,7 +286,7 @@ export default function ExerciseProgressScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   screen: {
     flex: 1,
     backgroundColor: palette.background,
@@ -360,4 +362,4 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 24,
   },
-});
+}));

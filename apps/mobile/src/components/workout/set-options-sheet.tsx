@@ -5,8 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/src/components/themed-text';
 import { SET_TYPE_INFO, SET_TYPES } from '@/src/constants/set-types';
-import { fontFamily, palette, radius, spacing } from '@/src/constants/theme';
+import { fontFamily, radius, spacing } from '@/src/constants/theme';
 import { SetType, WorkoutSet } from '@/src/repositories/workout/workout-type';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 type SetOptionsSheetProps = {
   // Série dont on choisit le type ; null = feuille fermée
@@ -20,6 +21,8 @@ type SetOptionsSheetProps = {
 
 // Feuille du bas ouverte en touchant le numéro d'une série
 export function SetOptionsSheet({ set, label, onClose, onSelectType, onDelete }: SetOptionsSheetProps) {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const insets = useSafeAreaInsets();
   // Garde la dernière série affichée pendant l'animation de fermeture
   const [shown, setShown] = useState<{ set: WorkoutSet; label: string } | null>(null);
@@ -63,7 +66,7 @@ export function SetOptionsSheet({ set, label, onClose, onSelectType, onDelete }:
             {SET_TYPES.map((type) => {
               const info = SET_TYPE_INFO[type];
               const selected = type === current;
-              const color = info.color ?? palette.text;
+              const color = info.color ? palette[info.color] : palette.text;
               return (
                 <Pressable
                   key={type}
@@ -72,7 +75,7 @@ export function SetOptionsSheet({ set, label, onClose, onSelectType, onDelete }:
                   accessibilityState={{ checked: selected }}
                   accessibilityLabel={`${info.label} : ${info.description}`}
                   style={({ pressed }) => [styles.option, selected && styles.optionSelected, pressed && styles.pressed]}>
-                  <View style={[styles.badge, { borderColor: info.color ?? palette.border }]}>
+                  <View style={[styles.badge, { borderColor: info.color ? palette[info.color] : palette.border }]}>
                     <ThemedText style={[styles.badgeText, { color }]}>{info.letter ?? '1'}</ThemedText>
                   </View>
                   <View style={styles.optionText}>
@@ -100,14 +103,14 @@ export function SetOptionsSheet({ set, label, onClose, onSelectType, onDelete }:
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: palette.scrim,
   },
   sheet: {
     gap: spacing.lg,
@@ -171,4 +174,4 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.8,
   },
-});
+}));

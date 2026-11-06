@@ -1,12 +1,13 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
 import { muscleLabel } from '@/src/constants/muscles';
-import { fontFamily, palette, radius } from '@/src/constants/theme';
+import { fontFamily, radius } from '@/src/constants/theme';
 import { ExerciseListItem } from '@/src/repositories/exercise/exercise-repository';
 import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
 import { initials } from '@/src/utils/text';
 import { formatWeight, spokenWeight } from '@/src/utils/weight';
+import { makeStyles } from '@/src/theme/theme-provider';
 
 type ExerciseRowProps = {
   exercise: ExerciseListItem;
@@ -15,6 +16,7 @@ type ExerciseRowProps = {
 };
 
 export function ExerciseRow({ exercise, bestWeight }: ExerciseRowProps) {
+  const styles = useStyles();
   const unit = useWeightUnit();
   const meta = [exercise.equipment, exercise.muscles.map(muscleLabel).join(', ')].filter(Boolean).join(' · ');
 
@@ -47,7 +49,7 @@ export function ExerciseRow({ exercise, bestWeight }: ExerciseRowProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -86,4 +88,4 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
   },
-});
+}));
