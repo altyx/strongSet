@@ -6,10 +6,10 @@ import { Button } from '@/src/components/ui/button';
 import { Card } from '@/src/components/ui/card';
 import { SET_COLUMNS, SetRow } from '@/src/components/workout/set-row';
 import { setLabels } from '@/src/constants/set-types';
-import { palette } from '@/src/constants/theme';
 import { SetValues, WorkoutExercise, WorkoutSet } from '@/src/repositories/workout/workout-type';
 import { DistanceUnit } from '@/src/utils/distance';
 import { WeightUnit } from '@/src/utils/weight';
+import { useTheme } from '@/src/theme/theme-provider';
 
 type ExerciseCardProps = {
   exercise: WorkoutExercise;
@@ -41,6 +41,7 @@ export function ExerciseCard({
   onAddSet,
   onOptions,
 }: ExerciseCardProps) {
+  const { colors: palette } = useTheme();
   const doneCount = exercise.sets.filter((set) => set.completed_at !== null).length;
   const allDone = exercise.sets.length > 0 && doneCount === exercise.sets.length;
   const labels = setLabels(exercise.sets.map((set) => set.type));

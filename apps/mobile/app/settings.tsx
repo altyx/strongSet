@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { ArchiveRestore, ChevronRight, Database, FileSpreadsheet } from 'lucide-react-native/icons';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NotificationSetting } from '@/src/components/settings/notification-setting';
@@ -11,7 +11,7 @@ import { ThemedText } from '@/src/components/themed-text';
 import { Button } from '@/src/components/ui/button';
 import { Card } from '@/src/components/ui/card';
 import { Stepper } from '@/src/components/ui/stepper';
-import { palette, radius, spacing, typography } from '@/src/constants/theme';
+import { radius, spacing, typography } from '@/src/constants/theme';
 import { useUserSettings } from '@/src/hooks/user/use-user-settings';
 import { UserSettings } from '@/src/hooks/user/user-settings.type';
 import { BackupRepository } from '@/src/repositories/backup/backup-repository';
@@ -21,6 +21,7 @@ import { shareBackupJson, shareSetsCsv } from '@/src/services/export';
 import { clearRest } from '@/src/services/rest-notification';
 import { DistanceUnit } from '@/src/utils/distance';
 import { WeightUnit } from '@/src/utils/weight';
+import { makeStyles, useTheme, type ThemePreference } from '@/src/theme/theme-provider';
 
 // Valeurs de l'onboarding, si les préférences n'ont jamais été enregistrées
 const DEFAULT_SETTINGS: UserSettings = {
@@ -42,20 +43,27 @@ const WEIGHT_UNITS: { value: WeightUnit; label: string }[] = [
   { value: 'lb', label: 'Livres (lb)' },
 ];
 
+const THEMES: { value: ThemePreference; label: string }[] = [
+  { value: 'system', label: 'Système' },
+  { value: 'light', label: 'Clair' },
+  { value: 'dark', label: 'Sombre' },
+];
+
 const DISTANCE_UNITS: { value: DistanceUnit; label: string }[] = [
   { value: 'km', label: 'Kilomètres (km)' },
   { value: 'mi', label: 'Miles (mi)' },
 ];
 
-type UnitChoiceProps<T extends string> = {
+type ChoiceGroupProps<T extends string> = {
   label: string;
   options: { value: T; label: string }[];
   value: T;
   onChange: (value: T) => void;
 };
 
-// Choix d'une unité, deux boutons côte à côte
-function UnitChoice<T extends string>({ label, options, value, onChange }: UnitChoiceProps<T>) {
+// Choix exclusif (unité, apparence), boutons côte à côte
+function ChoiceGroup<T extends string>({ label, options, value, onChange }: ChoiceGroupProps<T>) {
+  const styles = useStyles();
   return (
     <View style={styles.units} accessibilityRole="radiogroup" accessibilityLabel={label}>
       {options.map((option) => {
@@ -79,8 +87,11 @@ function UnitChoice<T extends string>({ label, options, value, onChange }: UnitC
 
 // Réglages enregistrés à chaque changement, sans bouton de validation
 export default function SettingsScreen() {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const insets = useSafeAreaInsets();
   const { getPreferences, savePreferences } = useUserSettings();
+  const { preference: themePreference, setPreference: setThemePreference } = useTheme();
   const [settings, setSettings] = useState<UserSettings>(() => ({ ...DEFAULT_SETTINGS, ...getPreferences() }));
   const [name, setName] = useState(settings.name);
   const [exporting, setExporting] = useState(false);
@@ -199,8 +210,14 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
+        <ThemedText type="label">Apparence</ThemedText>
+        <ChoiceGroup label="Apparence" options={THEMES} value={themePreference} onChange={setThemePreference} />
+        <ThemedText type="caption">« Système » suit le mode clair ou sombre du téléphone.</ThemedText>
+      </View>
+
+      <View style={styles.section}>
         <ThemedText type="label">Unité de charge</ThemedText>
-        <UnitChoice
+        <ChoiceGroup
           label="Unité de charge"
           options={WEIGHT_UNITS}
           value={settings.weightUnit ?? 'kg'}
@@ -211,7 +228,7 @@ export default function SettingsScreen() {
 
       <View style={styles.section}>
         <ThemedText type="label">Unité de distance</ThemedText>
-        <UnitChoice
+        <ChoiceGroup
           label="Unité de distance"
           options={DISTANCE_UNITS}
           value={settings.distanceUnit ?? 'km'}
@@ -277,7 +294,7 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   screen: {
     flex: 1,
     backgroundColor: palette.background,
@@ -337,4 +354,4 @@ const styles = StyleSheet.create({
   unitSelected: {
     backgroundColor: palette.accent,
   },
-});
+}));

@@ -1,12 +1,13 @@
 /**
  * Design tokens « Graphite & Ember ».
  * Référence visuelle : https://claude.ai/artifact/LePmEsCKMmAvHYzgbehzVt (planche « Système visuel »).
- * L'app est en thème sombre uniquement pour l'instant.
+ * Deux palettes aux mêmes clés : sombre (référence) et claire. Les écrans lisent la palette active
+ * via useTheme() ou makeStyles() (src/theme/theme-provider.tsx), jamais une palette en dur.
  */
 
 import type { TextStyle } from 'react-native';
 
-export const palette = {
+export const darkPalette = {
   background: '#0B0C0E',
   surface: '#15171A',
   surfaceRaised: '#1E2125',
@@ -16,6 +17,7 @@ export const palette = {
   textTertiary: '#7C838C',
   accent: '#FF5A1F',
   accentSoft: 'rgba(255, 90, 31, 0.14)',
+  accentBorder: 'rgba(255, 90, 31, 0.35)',
   // Texte posé sur l'accent : foncé, le blanc ne passe pas le contraste 4.5:1
   onAccent: '#0B0C0E',
   // Actions destructives (supprimer, retirer) : rouge distinct de l'accent orange
@@ -24,7 +26,39 @@ export const palette = {
   warmup: '#F5B83D',
   run: '#5AB8FF',
   runSoft: 'rgba(90, 184, 255, 0.14)',
-} as const;
+  // Voile derrière les feuilles modales
+  scrim: 'rgba(0, 0, 0, 0.6)',
+  // Couleur des ombres portées (boxShadow)
+  shadow: 'rgba(0, 0, 0, 0.45)',
+};
+
+export type Palette = typeof darkPalette;
+
+// Mêmes rôles que la palette sombre ; accent et couleurs d'état assombris pour garder 4.5:1 sur fond clair
+export const lightPalette: Palette = {
+  background: '#F3F4F6',
+  surface: '#FFFFFF',
+  surfaceRaised: '#E9EBEE',
+  border: '#D9DCE1',
+  text: '#121417',
+  textSecondary: '#4F5661',
+  textTertiary: '#656C76',
+  accent: '#C2410C',
+  accentSoft: 'rgba(194, 65, 12, 0.10)',
+  accentBorder: 'rgba(194, 65, 12, 0.35)',
+  // Sur l'orange foncé du thème clair, c'est le blanc qui passe 4.5:1
+  onAccent: '#FFFFFF',
+  danger: '#C62828',
+  warmup: '#9A6200',
+  run: '#0B6BB8',
+  runSoft: 'rgba(11, 107, 184, 0.10)',
+  scrim: 'rgba(0, 0, 0, 0.4)',
+  shadow: 'rgba(16, 24, 40, 0.16)',
+};
+
+export type ColorScheme = 'light' | 'dark';
+
+export const palettes: Record<ColorScheme, Palette> = { light: lightPalette, dark: darkPalette };
 
 // Noms des polices chargées dans app/_layout.tsx (une famille par graisse)
 export const fontFamily = {
@@ -55,18 +89,3 @@ export const typography = {
 export const radius = { sm: 10, md: 14, lg: 16, xl: 22, pill: 999 } as const;
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
-
-// Conservé pour useThemeColor et les écrans pas encore migrés : les deux modes pointent vers la palette sombre.
-const themeColors = {
-  text: palette.text,
-  background: palette.background,
-  tint: palette.accent,
-  icon: palette.textSecondary,
-  tabIconDefault: palette.textSecondary,
-  tabIconSelected: palette.accent,
-};
-
-export const Colors = {
-  light: themeColors,
-  dark: themeColors,
-};

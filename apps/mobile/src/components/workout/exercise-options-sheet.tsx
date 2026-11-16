@@ -5,8 +5,9 @@ import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/src/components/themed-text';
-import { palette, radius, spacing, typography } from '@/src/constants/theme';
+import { radius, spacing, typography } from '@/src/constants/theme';
 import { WorkoutExercise } from '@/src/repositories/workout/workout-type';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 type ExerciseOptionsSheetProps = {
   // Exercice dont on affiche les options ; null = feuille fermée
@@ -32,6 +33,8 @@ export function ExerciseOptionsSheet({
   onReplace,
   onRemove,
 }: ExerciseOptionsSheetProps) {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const insets = useSafeAreaInsets();
   const [note, setNote] = useState('');
   // Garde le dernier exercice affiché pendant l'animation de fermeture
@@ -123,14 +126,14 @@ export function ExerciseOptionsSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: palette.scrim,
   },
   sheet: {
     gap: spacing.lg,
@@ -179,4 +182,4 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.4,
   },
-});
+}));

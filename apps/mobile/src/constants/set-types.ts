@@ -1,12 +1,12 @@
-import { palette } from '@/src/constants/theme';
+import type { Palette } from '@/src/constants/theme';
 import { SetType } from '@/src/repositories/workout/workout-type';
 
 type SetTypeInfo = {
   label: string;
   // Lettre affichée à la place du numéro de série ; null = numéro
   letter: string | null;
-  // null = couleur de série normale
-  color: string | null;
+  // Couleur de la palette active ; null = couleur de série normale
+  color: keyof Palette | null;
   description: string;
 };
 
@@ -18,11 +18,11 @@ export const SET_TYPE_INFO: Record<SetType, SetTypeInfo> = {
   warmup: {
     label: 'Échauffement',
     letter: 'É',
-    color: palette.warmup,
+    color: 'warmup',
     description: 'Hors volume, records et progression',
   },
-  drop: { label: 'Dégressive', letter: null, color: palette.run, description: 'Charge réduite juste après une série' },
-  failure: { label: 'À l’échec', letter: null, color: palette.danger, description: 'Jusqu’à ne plus pouvoir faire de répétition' },
+  drop: { label: 'Dégressive', letter: null, color: 'run', description: 'Charge réduite juste après une série' },
+  failure: { label: 'À l’échec', letter: null, color: 'danger', description: 'Jusqu’à ne plus pouvoir faire de répétition' },
 };
 
 /**

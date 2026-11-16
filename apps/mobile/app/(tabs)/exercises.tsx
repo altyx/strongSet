@@ -1,16 +1,17 @@
 import { router, useFocusEffect } from 'expo-router';
 import { Plus, Search } from 'lucide-react-native/icons';
 import { useCallback, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ExerciseRow } from '@/src/components/exercises/exercise-row';
 import { ThemedText } from '@/src/components/themed-text';
 import { muscleLabel } from '@/src/constants/muscles';
-import { palette, radius, spacing, typography } from '@/src/constants/theme';
+import { radius, spacing, typography } from '@/src/constants/theme';
 import { filterExercises } from '@/src/domain/exercise-library';
 import { ExerciseListItem, ExerciseRepository, Muscle } from '@/src/repositories/exercise/exercise-repository';
 import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 type LibraryData = {
   exercises: ExerciseListItem[];
@@ -33,6 +34,8 @@ function loadLibrary(): LibraryData {
 }
 
 export default function ExercisesScreen() {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const insets = useSafeAreaInsets();
   const [data, setData] = useState<LibraryData | null>(null);
   const [query, setQuery] = useState('');
@@ -131,7 +134,7 @@ export default function ExercisesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   screen: {
     flex: 1,
     gap: spacing.lg,
@@ -204,9 +207,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: palette.accent,
-    boxShadow: '0 12px 28px rgba(0, 0, 0, 0.45)',
+    boxShadow: `0 12px 28px ${palette.shadow}`,
   },
   pressed: {
     opacity: 0.85,
   },
-});
+}));

@@ -3,9 +3,11 @@ import { Dumbbell, House, TrendingUp } from 'lucide-react-native/icons';
 import React from 'react';
 
 import { HapticTab } from '@/src/components/haptic-tab';
-import { fontFamily, palette } from '@/src/constants/theme';
+import { fontFamily } from '@/src/constants/theme';
+import { useTheme } from '@/src/theme/theme-provider';
 
 export default function TabLayout() {
+  const { colors: palette } = useTheme();
   return (
     <Tabs
       screenOptions={{

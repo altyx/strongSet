@@ -1,9 +1,10 @@
 import { Flame } from 'lucide-react-native/icons';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
 import { Card } from '@/src/components/ui/card';
-import { fontFamily, palette } from '@/src/constants/theme';
+import { fontFamily } from '@/src/constants/theme';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 const DAY_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
@@ -15,6 +16,8 @@ export type WeekDay = {
 };
 
 export function WeekStrip({ days }: { days: WeekDay[] }) {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const workoutCount = days.filter((day) => day.hasWorkout).length;
 
   return (
@@ -54,7 +57,7 @@ export function WeekStrip({ days }: { days: WeekDay[] }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   card: {
     gap: 12,
   },
@@ -99,4 +102,4 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 20,
   },
-});
+}));

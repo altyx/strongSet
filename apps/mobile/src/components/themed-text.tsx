@@ -1,11 +1,9 @@
-import { StyleSheet, Text, type TextProps } from 'react-native';
+import { Text, type TextProps } from 'react-native';
 
-import { palette, typography } from '@/src/constants/theme';
-import { useThemeColor } from '@/src/hooks/use-theme-color';
+import { typography } from '@/src/constants/theme';
+import { makeStyles } from '@/src/theme/theme-provider';
 
 export type ThemedTextProps = TextProps & {
-  lightColor?: string;
-  darkColor?: string;
   type?:
     | 'default'
     | 'defaultSemiBold'
@@ -18,32 +16,20 @@ export type ThemedTextProps = TextProps & {
     | 'display'
     | 'metric';
   // Couleur du texte dans la palette ; prime sur la couleur par défaut de la variante
-  tone?: keyof typeof tones;
+  tone?: Tone;
 };
 
-const tones = {
-  primary: palette.text,
-  secondary: palette.textSecondary,
-  tertiary: palette.textTertiary,
-  accent: palette.accent,
-  onAccent: palette.onAccent,
-};
+type Tone = 'primary' | 'secondary' | 'tertiary' | 'accent' | 'onAccent';
 
-export function ThemedText({
-  style,
-  lightColor,
-  darkColor,
-  type = 'default',
-  tone,
-  ...rest
-}: ThemedTextProps) {
-  const themeColor = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
-  const color = tone ? tones[tone] : themeColor;
+export function ThemedText({ style, type = 'default', tone, ...rest }: ThemedTextProps) {
+  const styles = useStyles();
+  const toneStyle = tone ? styles[`tone_${tone}`] : undefined;
 
-  return <Text style={[{ color }, styles[type], tone && { color }, style]} {...rest} />;
+  return <Text style={[styles.base, styles[type], toneStyle, style]} {...rest} />;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
+  base: { color: palette.text },
   default: typography.body,
   defaultSemiBold: typography.bodyStrong,
   title: typography.title,
@@ -55,4 +41,9 @@ const styles = StyleSheet.create({
   link: { ...typography.bodyStrong, color: palette.accent },
   display: typography.display,
   metric: typography.metric,
-});
+  tone_primary: { color: palette.text },
+  tone_secondary: { color: palette.textSecondary },
+  tone_tertiary: { color: palette.textTertiary },
+  tone_accent: { color: palette.accent },
+  tone_onAccent: { color: palette.onAccent },
+}));

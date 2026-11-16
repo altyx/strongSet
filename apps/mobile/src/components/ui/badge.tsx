@@ -1,7 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
-import { fontFamily, palette } from '@/src/constants/theme';
+import { fontFamily, type Palette } from '@/src/constants/theme';
+import { useTheme } from '@/src/theme/theme-provider';
 
 type BadgeProps = {
   label: string;
@@ -10,12 +11,14 @@ type BadgeProps = {
 };
 
 const tones = {
-  accent: { background: palette.accentSoft, color: palette.accent },
-  run: { background: palette.runSoft, color: palette.run },
-};
+  accent: { background: 'accentSoft', color: 'accent' },
+  run: { background: 'runSoft', color: 'run' },
+} as const satisfies Record<string, { background: keyof Palette; color: keyof Palette }>;
 
 export function Badge({ label, tone = 'accent' }: BadgeProps) {
-  const { background, color } = tones[tone];
+  const { colors } = useTheme();
+  const background = colors[tones[tone].background];
+  const color = colors[tones[tone].color];
 
   return (
     <View style={[styles.badge, { backgroundColor: background }]}>

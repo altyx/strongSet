@@ -5,18 +5,20 @@ import { AppState, Linking, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/src/components/themed-text';
 import { Button } from '@/src/components/ui/button';
 import { Card } from '@/src/components/ui/card';
-import { palette, spacing } from '@/src/constants/theme';
+import { spacing } from '@/src/constants/theme';
 import {
   getNotificationAccess,
   NotificationAccess,
   requestNotificationAccess,
 } from '@/src/services/rest-notification';
+import { useTheme } from '@/src/theme/theme-provider';
 
 /**
  * État de l'autorisation des notifications de fin de repos, avec l'action possible : demander l'autorisation tant
  * que le système le permet, sinon ouvrir les réglages de l'app dans ceux du téléphone (après un refus sur iOS).
  */
 export function NotificationSetting() {
+  const { colors: palette } = useTheme();
   const [access, setAccess] = useState<NotificationAccess | null>(null);
 
   const refresh = useCallback(() => {

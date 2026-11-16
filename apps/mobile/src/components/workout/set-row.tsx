@@ -1,10 +1,10 @@
 import { Check } from 'lucide-react-native/icons';
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
 import { SET_TYPE_INFO } from '@/src/constants/set-types';
-import { fontFamily, palette, radius } from '@/src/constants/theme';
+import { fontFamily, radius } from '@/src/constants/theme';
 import { Tracking } from '@/src/constants/tracking';
 import { SetValues, WorkoutSet } from '@/src/repositories/workout/workout-type';
 import { distanceUnitName, DistanceUnit, formatDistanceValue, parseDistance } from '@/src/utils/distance';
@@ -12,6 +12,7 @@ import { formatDuration, parseDuration } from '@/src/utils/duration';
 import { parseDecimal, parseInteger } from '@/src/utils/number';
 import { formatSetValues } from '@/src/utils/set-format';
 import { formatWeightValue, fromUnit, WeightUnit } from '@/src/utils/weight';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 // Colonnes partagées avec l'en-tête du tableau (ExerciseCard)
 export const SET_COLUMNS = { number: 28, weight: 68, reps: 56, check: 44 } as const;
@@ -53,6 +54,8 @@ const toText = (value: number | null | undefined, format: (value: number) => str
  * Le parent remonte la ligne (via sa `key`) quand les valeurs enregistrées changent.
  */
 export function SetRow({ label, set, tracking, previous, defaultReps, unit, distanceUnit, isCurrent, onChange, onToggle, onOptions }: SetRowProps) {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const cardio = tracking === 'duration_distance';
   // Cardio : le premier champ est la durée, le second la distance ; sinon la charge et les répétitions
   const savedFirstText = cardio
@@ -124,8 +127,8 @@ export function SetRow({ label, set, tracking, previous, defaultReps, unit, dist
         accessibilityLabel={name}
         accessibilityHint="Changer le type de série ou la supprimer"
         hitSlop={6}
-        style={[styles.number, typeInfo.color !== null && { borderColor: typeInfo.color }]}>
-        <ThemedText style={[styles.numberText, typeInfo.color !== null && { color: typeInfo.color }]}>{label}</ThemedText>
+        style={[styles.number, typeInfo.color !== null && { borderColor: palette[typeInfo.color] }]}>
+        <ThemedText style={[styles.numberText, typeInfo.color !== null && { color: palette[typeInfo.color] }]}>{label}</ThemedText>
       </Pressable>
       <ThemedText type="caption" style={styles.previous} numberOfLines={1}>
         {formatPrevious(unit, distanceUnit, previous)}
@@ -166,7 +169,7 @@ export function SetRow({ label, set, tracking, previous, defaultReps, unit, dist
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -231,4 +234,4 @@ const styles = StyleSheet.create({
     borderColor: palette.accent,
     backgroundColor: palette.accent,
   },
-});
+}));

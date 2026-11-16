@@ -2,13 +2,13 @@ import { useIsFocused } from '@react-navigation/native';
 import { router, useFocusEffect } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native/icons';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/src/components/themed-text';
 import { BarChart } from '@/src/components/ui/bar-chart';
 import { Card } from '@/src/components/ui/card';
-import { palette, radius, spacing } from '@/src/constants/theme';
+import { radius, spacing } from '@/src/constants/theme';
 import {
   cardioStats,
   lastWeeks,
@@ -26,6 +26,7 @@ import { useWeightUnit } from '@/src/hooks/user/use-weight-unit';
 import { DistanceUnit } from '@/src/utils/distance';
 import { formatSetValues } from '@/src/utils/set-format';
 import { formatWeight, spokenWeight, WeightUnit } from '@/src/utils/weight';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 const WEEKS = 8;
 const HISTORY_LIMIT = 500;
@@ -76,6 +77,8 @@ function loadProgress(unit: WeightUnit, distanceUnit: DistanceUnit) {
 }
 
 export default function ProgressScreen() {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const insets = useSafeAreaInsets();
   // L'onglet reste monté : le nouveau rendu au retour sur l'onglet relit les unités, changées entre-temps dans les réglages
   useIsFocused();
@@ -164,7 +167,7 @@ export default function ProgressScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   screen: {
     flex: 1,
     backgroundColor: palette.background,
@@ -208,4 +211,4 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-});
+}));

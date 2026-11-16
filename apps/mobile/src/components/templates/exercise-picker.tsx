@@ -1,13 +1,14 @@
 import { Search, X } from 'lucide-react-native/icons';
 import { useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, Modal, Pressable, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
 import { IconButton } from '@/src/components/ui/icon-button';
 import { muscleLabel } from '@/src/constants/muscles';
-import { palette, radius, spacing, typography } from '@/src/constants/theme';
+import { radius, spacing, typography } from '@/src/constants/theme';
 import { filterExercises } from '@/src/domain/exercise-library';
 import { ExerciseListItem, ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 type ExercisePickerProps = {
   visible: boolean;
@@ -18,6 +19,8 @@ type ExercisePickerProps = {
 
 // Feuille modale pour choisir un exercice de la bibliothèque
 export function ExercisePicker({ visible, title = 'Ajouter un exercice', onSelect, onClose }: ExercisePickerProps) {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   const [query, setQuery] = useState('');
   const [exercises, setExercises] = useState<ExerciseListItem[]>([]);
 
@@ -80,7 +83,7 @@ export function ExercisePicker({ visible, title = 'Ajouter un exercice', onSelec
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   sheet: {
     flex: 1,
     gap: spacing.lg,
@@ -131,4 +134,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingTop: spacing.xl,
   },
-});
+}));

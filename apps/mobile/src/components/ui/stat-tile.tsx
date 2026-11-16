@@ -1,7 +1,8 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
-import { palette, radius } from '@/src/constants/theme';
+import { radius } from '@/src/constants/theme';
+import { makeStyles } from '@/src/theme/theme-provider';
 
 type StatTileProps = {
   label: string;
@@ -11,6 +12,7 @@ type StatTileProps = {
 };
 
 export function StatTile({ label, value, suffix }: StatTileProps) {
+  const styles = useStyles();
   return (
     <View style={styles.tile} accessible accessibilityLabel={`${label} : ${value}${suffix ? ` ${suffix}` : ''}`}>
       <ThemedText type="caption">{label}</ThemedText>
@@ -22,7 +24,7 @@ export function StatTile({ label, value, suffix }: StatTileProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   tile: {
     flex: 1,
     gap: 4,
@@ -33,4 +35,4 @@ const styles = StyleSheet.create({
   suffix: {
     fontSize: 20,
   },
-});
+}));

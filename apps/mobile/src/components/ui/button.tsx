@@ -1,8 +1,9 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { Pressable, StyleSheet, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
-import { palette, radius, typography } from '@/src/constants/theme';
+import { radius, typography, type Palette } from '@/src/constants/theme';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 type ButtonProps = Omit<PressableProps, 'style' | 'children'> & {
   title: string;
@@ -15,10 +16,10 @@ type ButtonProps = Omit<PressableProps, 'style' | 'children'> & {
 };
 
 const labelColors = {
-  primary: palette.onAccent,
-  secondary: palette.text,
-  ghost: palette.textSecondary,
-};
+  primary: 'onAccent',
+  secondary: 'text',
+  ghost: 'textSecondary',
+} as const satisfies Record<string, keyof Palette>;
 
 export function Button({
   title,
@@ -29,7 +30,9 @@ export function Button({
   style,
   ...rest
 }: ButtonProps) {
-  const color = labelColors[variant];
+  const styles = useStyles();
+  const { colors } = useTheme();
+  const color = colors[labelColors[variant]];
 
   return (
     <Pressable
@@ -53,7 +56,7 @@ export function Button({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   base: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -91,4 +94,4 @@ const styles = StyleSheet.create({
     fontFamily: typography.heading.fontFamily,
     fontSize: 17,
   },
-});
+}));

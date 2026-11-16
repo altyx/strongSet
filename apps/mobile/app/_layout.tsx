@@ -1,16 +1,17 @@
-import { DarkTheme, ThemeProvider, type Theme } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
 import {Stack, useRouter} from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import 'react-native-reanimated';
 
 import { loadAppFonts } from '@/src/constants/fonts';
-import { fontFamily, palette } from '@/src/constants/theme';
+import { fontFamily, type ColorScheme, type Palette } from '@/src/constants/theme';
 import { initializeDatabase } from '@/src/db/database';
 import {initializeMMKVStorage, STORAGE_KEYS, useMMKVStorage} from '@/src/hooks/use-mmkv-storage';
 import {UserSettings} from "@/src/hooks/user/user-settings.type";
 import { configureNotifications } from '@/src/services/rest-notification';
+import { AppThemeProvider, useTheme } from '@/src/theme/theme-provider';
 
 SplashScreen.setOptions({
   duration: 1000,
@@ -24,25 +25,29 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-// Thème sombre de navigation (en-têtes, fonds des écrans) aligné sur la palette
-const navigationTheme: Theme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    primary: palette.accent,
-    background: palette.background,
-    card: palette.background,
-    text: palette.text,
-    border: palette.surfaceRaised,
-  },
-  fonts: {
-    ...DarkTheme.fonts,
-    regular: { fontFamily: fontFamily.regular, fontWeight: '400' },
-    medium: { fontFamily: fontFamily.medium, fontWeight: '500' },
-    bold: { fontFamily: fontFamily.semibold, fontWeight: '600' },
-    heavy: { fontFamily: fontFamily.bold, fontWeight: '700' },
-  },
-};
+// Thème de navigation (en-têtes, fonds des écrans) aligné sur la palette active
+function navigationTheme(scheme: ColorScheme, palette: Palette): Theme {
+  const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
+  return {
+    ...base,
+    dark: scheme === 'dark',
+    colors: {
+      ...base.colors,
+      primary: palette.accent,
+      background: palette.background,
+      card: palette.background,
+      text: palette.text,
+      border: palette.border,
+    },
+    fonts: {
+      ...base.fonts,
+      regular: { fontFamily: fontFamily.regular, fontWeight: '400' },
+      medium: { fontFamily: fontFamily.medium, fontWeight: '500' },
+      bold: { fontFamily: fontFamily.semibold, fontWeight: '600' },
+      heavy: { fontFamily: fontFamily.bold, fontWeight: '700' },
+    },
+  };
+}
 
 export default function RootLayout() {
   const router = useRouter();
@@ -84,7 +89,18 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={navigationTheme}>
+    <AppThemeProvider>
+      <AppNavigator />
+    </AppThemeProvider>
+  );
+}
+
+function AppNavigator() {
+  const { colors, scheme } = useTheme();
+  const theme = useMemo(() => navigationTheme(scheme, colors), [scheme, colors]);
+
+  return (
+    <ThemeProvider value={theme}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           {/* Pas de retour possible : l'onboarding remplace l'accueil tant qu'il n'est pas terminé */}
@@ -105,7 +121,7 @@ export default function RootLayout() {
             options={{ presentation: 'modal', title: 'Nouvel exercice' }}
           />
         </Stack>
-        <StatusBar style="light" />
+        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
   );
 }

@@ -1,10 +1,11 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { ThemedText } from '@/src/components/themed-text';
-import { fontFamily, palette, radius } from '@/src/constants/theme';
+import { fontFamily, radius } from '@/src/constants/theme';
 import { formatDuration } from '@/src/utils/duration';
+import { makeStyles } from '@/src/theme/theme-provider';
 
 type RestTimerProps = {
   // Fin du repos, en millisecondes (Date.now())
@@ -17,6 +18,7 @@ type RestTimerProps = {
 };
 
 export function RestTimer({ endsAt, duration, onAdjust, onEnd }: RestTimerProps) {
+  const styles = useStyles();
   const [now, setNow] = useState(() => Date.now());
   const remaining = Math.max(0, Math.ceil((endsAt - now) / 1000));
 
@@ -73,7 +75,7 @@ export function RestTimer({ endsAt, duration, onAdjust, onEnd }: RestTimerProps)
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   container: {
     gap: 12,
     padding: 14,
@@ -82,7 +84,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.border,
     backgroundColor: palette.surfaceRaised,
-    boxShadow: '0 16px 40px rgba(0, 0, 0, 0.5)',
+    boxShadow: `0 16px 40px ${palette.shadow}`,
   },
   row: {
     flexDirection: 'row',
@@ -127,4 +129,4 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: palette.accent,
   },
-});
+}));

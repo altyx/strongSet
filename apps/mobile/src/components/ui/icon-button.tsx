@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { Pressable, StyleSheet, type PressableProps } from 'react-native';
+import { Pressable, type PressableProps } from 'react-native';
+import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
-import { palette } from '@/src/constants/theme';
 
 type IconButtonProps = Omit<PressableProps, 'style' | 'children'> & {
   icon: LucideIcon;
@@ -10,6 +10,8 @@ type IconButtonProps = Omit<PressableProps, 'style' | 'children'> & {
 };
 
 export function IconButton({ icon: Icon, ...rest }: IconButtonProps) {
+  const styles = useStyles();
+  const { colors: palette } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -22,7 +24,7 @@ export function IconButton({ icon: Icon, ...rest }: IconButtonProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((palette) => ({
   base: {
     width: 44,
     height: 44,
@@ -36,4 +38,4 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.7,
   },
-});
+}));
