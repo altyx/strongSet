@@ -43,6 +43,8 @@ CREATE TABLE IF NOT EXISTS exercises (
     equipment    TEXT,
     -- Ce que l'on saisit pour une série : charge et répétitions, ou durée et distance (cardio)
     tracking     TEXT NOT NULL DEFAULT 'weight_reps' CHECK (tracking IN ('weight_reps', 'duration_distance')),
+    -- Supprimé de la bibliothèque alors qu'il a déjà des séances : caché, mais sa progression reste consultable
+    deleted_at   INTEGER,
     sync_status  TEXT DEFAULT 'local',
     version      INTEGER DEFAULT 1
 );

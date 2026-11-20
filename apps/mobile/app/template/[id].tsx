@@ -132,7 +132,7 @@ export default function TemplateEditorScreen() {
           <Button title="Ajouter un exercice" variant="ghost" icon={Plus} onPress={() => setPickerVisible(true)} />
         </View>
 
-        {template && <Button title="Supprimer le programme" variant="ghost" icon={Trash2} onPress={remove} />}
+        {template && <Button title="Supprimer le programme" variant="danger" icon={Trash2} onPress={remove} />}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>

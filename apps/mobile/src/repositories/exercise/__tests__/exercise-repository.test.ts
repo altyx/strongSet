@@ -1,4 +1,6 @@
 import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
+import { TemplateRepository } from '@/src/repositories/template/template-repository';
+import { WorkoutRepository } from '@/src/repositories/workout/workout-repository';
 import { createTestDatabase, type TestDatabase } from '@/src/test-utils/test-database';
 
 let mockDb: TestDatabase;
@@ -92,6 +94,7 @@ it('create ajoute un exercice avec son matériel et ses muscles', () => {
     equipment: 'Autre',
     tracking: 'weight_reps',
     description: null,
+    deleted_at: null,
     muscles: ['Biceps', 'Back'],
   });
   expect(ExerciseRepository.count()).toBe(DEFAULT_EXERCISE_COUNT + 1);
@@ -129,5 +132,111 @@ describe('descriptions', () => {
     const empty = ExerciseRepository.create({ name: 'B', equipment: null, muscleIds: [1], description: '   ' });
     expect(ExerciseRepository.getById(withText)?.description).toBe('Mon conseil');
     expect(ExerciseRepository.getById(empty)?.description).toBeNull();
+  });
+});
+
+describe('modification et suppression', () => {
+  const createCustom = () =>
+    ExerciseRepository.create({ name: 'Tirage maison', equipment: 'Autre', muscleIds: [4], description: 'Ancienne' });
+
+  // Séance terminée avec une série validée de l'exercice, dans un programme qui le contient
+  const useInWorkoutAndTemplate = (exerciseId: number, name: string) => {
+    const templateId = TemplateRepository.createTemplate({
+      name: 'Dos',
+      exercises: [
+        { exercise_id: exerciseId, target_sets: 3, target_reps: 10, rest_seconds: null },
+        { exercise_id: 2, target_sets: 3, target_reps: 10, rest_seconds: null },
+      ],
+    });
+    const workoutId = WorkoutRepository.startWorkout({
+      template_id: templateId,
+      name: 'Dos',
+      exercises: [{ exercise_id: exerciseId, name, sets: [{ weight: 50, reps: 10 }] }],
+    });
+    const set = WorkoutRepository.getWorkout(workoutId)!.exercises[0].sets[0];
+    WorkoutRepository.setCompleted(set.id, true);
+    WorkoutRepository.finishWorkout(workoutId);
+    return { templateId, workoutId };
+  };
+
+  it('existsByName laisse un exercice garder son propre nom', () => {
+    const id = createCustom();
+    expect(ExerciseRepository.existsByName('tirage MAISON', id)).toBe(false);
+    expect(ExerciseRepository.existsByName('Squat', id)).toBe(true);
+  });
+
+  it('getMuscleIds renvoie les ids des muscles', () => {
+    expect(ExerciseRepository.getMuscleIds(1)).toEqual([1, 2]);
+  });
+
+  it('update modifie les champs, remplace les muscles et renomme la copie dans les séances', () => {
+    const id = createCustom();
+    const { workoutId } = useInWorkoutAndTemplate(id, 'Tirage maison');
+
+    ExerciseRepository.update(id, {
+      name: '  Tirage horizontal maison ',
+      equipment: null,
+      muscleIds: [4, 3],
+      description: '   ',
+      tracking: 'weight_reps',
+    });
+
+    expect(ExerciseRepository.getById(id)).toEqual({
+      id,
+      name: 'Tirage horizontal maison',
+      equipment: null,
+      tracking: 'weight_reps',
+      description: null,
+      deleted_at: null,
+      muscles: ['Biceps', 'Back'],
+    });
+    expect(WorkoutRepository.getWorkout(workoutId)!.exercises[0].name).toBe('Tirage horizontal maison');
+  });
+
+  it('getUsage compte les séances et les programmes', () => {
+    const id = createCustom();
+    expect(ExerciseRepository.getUsage(id)).toEqual({ workoutCount: 0, templateCount: 0 });
+    useInWorkoutAndTemplate(id, 'Tirage maison');
+    expect(ExerciseRepository.getUsage(id)).toEqual({ workoutCount: 1, templateCount: 1 });
+  });
+
+  it('delete d’un exercice déjà fait : retiré de la bibliothèque et des programmes, progression gardée', () => {
+    const id = createCustom();
+    const { templateId, workoutId } = useInWorkoutAndTemplate(id, 'Tirage maison');
+    jest.spyOn(Date, 'now').mockReturnValue(1_770_000_000_000);
+
+    ExerciseRepository.delete(id);
+    jest.restoreAllMocks();
+
+    // Hors de la bibliothèque, du compteur et des noms pris
+    expect(ExerciseRepository.getAll().some((exercise) => exercise.id === id)).toBe(false);
+    expect(ExerciseRepository.count()).toBe(DEFAULT_EXERCISE_COUNT);
+    expect(ExerciseRepository.existsByName('Tirage maison')).toBe(false);
+    expect(TemplateRepository.getTemplate(templateId)!.exercises.map((exercise) => exercise.id)).toEqual([2]);
+    // Fiche, séance et progression toujours là
+    expect(ExerciseRepository.getById(id)).toMatchObject({ name: 'Tirage maison', deleted_at: 1_770_000_000, muscles: ['Back'] });
+    expect(WorkoutRepository.getWorkout(workoutId)!.exercises[0]).toMatchObject({ exercise_id: id, name: 'Tirage maison' });
+    expect(WorkoutRepository.getExerciseSessions(id)).toHaveLength(1);
+    expect(WorkoutRepository.getTrainedExercises().map((exercise) => exercise.id)).toContain(id);
+  });
+
+  it('delete d’un exercice jamais fait : effacé, et retiré des programmes', () => {
+    const id = createCustom();
+    const templateId = TemplateRepository.createTemplate({
+      name: 'Dos',
+      exercises: [{ exercise_id: id, target_sets: 3, target_reps: 10, rest_seconds: null }],
+    });
+
+    ExerciseRepository.delete(id);
+
+    expect(ExerciseRepository.getById(id)).toBeNull();
+    expect(ExerciseRepository.getMuscleIds(id)).toEqual([]);
+    expect(TemplateRepository.getTemplate(templateId)!.exercises).toEqual([]);
+  });
+
+  it('delete fonctionne aussi pour un exercice de la bibliothèque par défaut', () => {
+    ExerciseRepository.delete(1);
+    expect(ExerciseRepository.getById(1)).toBeNull();
+    expect(ExerciseRepository.count()).toBe(DEFAULT_EXERCISE_COUNT - 1);
   });
 });

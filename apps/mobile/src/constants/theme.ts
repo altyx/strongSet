@@ -12,6 +12,8 @@ export const darkPalette = {
   surface: '#15171A',
   surfaceRaised: '#1E2125',
   border: '#2A2E33',
+  // Contour des boutons secondaires : plus marqué que border, pour ne pas paraître désactivé
+  borderStrong: '#454B53',
   text: '#F4F5F6',
   textSecondary: '#A3A9B1',
   textTertiary: '#7C838C',
@@ -40,6 +42,7 @@ export const lightPalette: Palette = {
   surface: '#FFFFFF',
   surfaceRaised: '#E9EBEE',
   border: '#D9DCE1',
+  borderStrong: '#AEB4BC',
   text: '#121417',
   textSecondary: '#4F5661',
   textTertiary: '#656C76',

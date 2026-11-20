@@ -7,7 +7,8 @@ import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
 type ButtonProps = Omit<PressableProps, 'style' | 'children'> & {
   title: string;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  // danger : action destructive (supprimer), contour et libellé rouges
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   // Icône Lucide affichée avant le libellé, colorée selon la variante
   icon?: LucideIcon;
   // Remplit l'icône (ex. Play) au lieu de ne dessiner que son contour
@@ -19,6 +20,7 @@ const labelColors = {
   primary: 'onAccent',
   secondary: 'text',
   ghost: 'textSecondary',
+  danger: 'danger',
 } as const satisfies Record<string, keyof Palette>;
 
 export function Button({
@@ -74,12 +76,16 @@ const useStyles = makeStyles((palette) => ({
   secondary: {
     backgroundColor: palette.surfaceRaised,
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: palette.borderStrong,
   },
   ghost: {
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: palette.border,
+    borderColor: palette.borderStrong,
+  },
+  danger: {
+    borderWidth: 1,
+    borderColor: palette.danger,
   },
   pressed: {
     opacity: 0.85,

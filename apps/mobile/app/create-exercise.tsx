@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,16 +13,17 @@ import { validateNewExercise } from '@/src/domain/exercise-library';
 import { ExerciseRepository } from '@/src/repositories/exercise/exercise-repository';
 import { makeStyles, useTheme } from '@/src/theme/theme-provider';
 
-type ChipProps = { label: string; selected: boolean; onPress: () => void; role: 'checkbox' | 'radio' };
+type ChipProps = { label: string; selected: boolean; onPress: () => void; role: 'checkbox' | 'radio'; disabled?: boolean };
 
-function Chip({ label, selected, onPress, role }: ChipProps) {
+function Chip({ label, selected, onPress, role, disabled = false }: ChipProps) {
   const styles = useStyles();
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       accessibilityRole={role}
-      accessibilityState={{ checked: selected }}
-      style={[styles.chip, selected && styles.chipSelected]}>
+      accessibilityState={{ checked: selected, disabled }}
+      style={[styles.chip, selected && styles.chipSelected, disabled && styles.chipDisabled]}>
       <ThemedText type="defaultSemiBold" tone={selected ? 'onAccent' : 'secondary'} style={styles.chipText}>
         {label}
       </ThemedText>
@@ -30,36 +31,56 @@ function Chip({ label, selected, onPress, role }: ChipProps) {
   );
 }
 
-// Création d'un exercice de la bibliothèque (modale)
+// Exercice à modifier (ouvert avec `id`), lu une fois à l'ouverture
+function loadExercise(id: number | null) {
+  const exercise = id === null ? null : ExerciseRepository.getById(id);
+  if (id === null || !exercise) {
+    return null;
+  }
+  return { exercise, muscleIds: ExerciseRepository.getMuscleIds(id), usage: ExerciseRepository.getUsage(id) };
+}
+
+// Création d'un exercice de la bibliothèque (modale), ou modification quand l'écran est ouvert avec `id`
 export default function CreateExerciseModal() {
   const styles = useStyles();
   const { colors: palette } = useTheme();
   const insets = useSafeAreaInsets();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const [editing] = useState(() => loadExercise(id === undefined ? null : Number(id)));
   const [muscles] = useState(() => ExerciseRepository.getMuscles());
-  const [name, setName] = useState('');
-  const [muscleIds, setMuscleIds] = useState<number[]>([]);
-  const [equipment, setEquipment] = useState<string | null>(null);
-  const [tracking, setTracking] = useState<Tracking>('weight_reps');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState(editing?.exercise.name ?? '');
+  const [muscleIds, setMuscleIds] = useState<number[]>(editing?.muscleIds ?? []);
+  const [equipment, setEquipment] = useState<string | null>(editing?.exercise.equipment ?? null);
+  const [tracking, setTracking] = useState<Tracking>(editing?.exercise.tracking ?? 'weight_reps');
+  const [description, setDescription] = useState(editing?.exercise.description ?? '');
   const [error, setError] = useState<string | null>(null);
+  // Les séries déjà faites sont en kg × reps ou en durée + distance : la saisie ne change plus après une séance
+  const trackingLocked = (editing?.usage.workoutCount ?? 0) > 0;
 
   const toggleMuscle = (id: number) => {
     setMuscleIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
     setError(null);
   };
 
-  const create = () => {
-    const message = validateNewExercise(name, muscleIds, ExerciseRepository.existsByName(name));
+  const save = () => {
+    const message = validateNewExercise(name, muscleIds, ExerciseRepository.existsByName(name, editing?.exercise.id));
     if (message) {
       setError(message);
       return;
     }
-    ExerciseRepository.create({ name, equipment, muscleIds, description, tracking });
+    const values = { name, equipment, muscleIds, description, tracking };
+    if (editing) {
+      ExerciseRepository.update(editing.exercise.id, values);
+    } else {
+      ExerciseRepository.create(values);
+    }
     router.back();
   };
 
+
   return (
     <View style={styles.screen}>
+      <Stack.Screen options={{ title: editing ? "Modifier l'exercice" : 'Nouvel exercice' }} />
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 120 }]}
         keyboardShouldPersistTaps="handled"
@@ -74,7 +95,7 @@ export default function CreateExerciseModal() {
             }}
             placeholder="Ex. Développé couché"
             placeholderTextColor={palette.textTertiary}
-            autoFocus
+            autoFocus={!editing}
             accessibilityLabel="Nom de l'exercice"
             style={styles.input}
           />
@@ -90,9 +111,15 @@ export default function CreateExerciseModal() {
                 selected={tracking === option.value}
                 onPress={() => setTracking(option.value)}
                 role="radio"
+                disabled={trackingLocked && tracking !== option.value}
               />
             ))}
           </View>
+          {trackingLocked && (
+            <ThemedText type="caption">
+              Déjà utilisé en séance : la saisie des séries ne peut plus changer.
+            </ThemedText>
+          )}
         </View>
 
         <View style={styles.field}>
@@ -148,7 +175,7 @@ export default function CreateExerciseModal() {
         )}
         <View style={styles.actions}>
           <Button title="Annuler" variant="secondary" onPress={() => router.back()} style={styles.action} />
-          <Button title="Créer" onPress={create} style={styles.action} />
+          <Button title={editing ? 'Enregistrer' : 'Créer'} onPress={save} style={styles.action} />
         </View>
       </View>
     </View>
@@ -200,6 +227,9 @@ const useStyles = makeStyles((palette) => ({
   chipSelected: {
     borderColor: palette.accent,
     backgroundColor: palette.accent,
+  },
+  chipDisabled: {
+    opacity: 0.4,
   },
   chipText: {
     fontSize: 14,

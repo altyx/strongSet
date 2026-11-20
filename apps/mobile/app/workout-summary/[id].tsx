@@ -231,7 +231,7 @@ export default function WorkoutSummaryScreen() {
 
         <View style={styles.actions}>
           <Button title="Modifier la séance" variant="secondary" icon={Pencil} onPress={editWorkout} />
-          <Button title="Supprimer la séance" variant="ghost" icon={Trash2} onPress={deleteWorkout} />
+          <Button title="Supprimer la séance" variant="danger" icon={Trash2} onPress={deleteWorkout} />
         </View>
       </ScrollView>
 
