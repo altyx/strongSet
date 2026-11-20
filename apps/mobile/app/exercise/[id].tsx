@@ -1,10 +1,12 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Pencil, Trash2 } from 'lucide-react-native/icons';
+import { useCallback, useState } from 'react';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/src/components/themed-text';
 import { BarChart } from '@/src/components/ui/bar-chart';
+import { Button } from '@/src/components/ui/button';
 import { ExerciseDescription } from '@/src/components/exercises/exercise-description';
 import { Card } from '@/src/components/ui/card';
 import { muscleLabel } from '@/src/constants/muscles';
@@ -55,6 +57,29 @@ function loadProgress(exerciseId: number) {
 
 const dateLabel = (timestamp: number) => formatShortDate(new Date(timestamp * 1000));
 
+const plural = (count: number, singular: string, pluralForm: string) => `${count} ${count > 1 ? pluralForm : singular}`;
+
+// Confirme la suppression en disant ce qu'elle change, puis revient à l'écran précédent
+function confirmDelete(exercise: { id: number; name: string }) {
+  const { workoutCount, templateCount } = ExerciseRepository.getUsage(exercise.id);
+  const consequences = [
+    templateCount > 0 && `Il sera retiré de ${plural(templateCount, 'programme', 'programmes')}.`,
+    workoutCount > 0 &&
+      `${workoutCount > 1 ? 'Ses séances restent' : 'Sa séance reste'} dans l'historique et sa progression reste consultable dans Progrès.`,
+  ].filter(Boolean);
+  Alert.alert(`Supprimer « ${exercise.name} » ?`, consequences.join('\n\n') || undefined, [
+    { text: 'Annuler', style: 'cancel' },
+    {
+      text: 'Supprimer',
+      style: 'destructive',
+      onPress: () => {
+        ExerciseRepository.delete(exercise.id);
+        router.back();
+      },
+    },
+  ]);
+}
+
 // Progression d'un exercice : courbe sur 8 semaines, records personnels et historique des séances
 export default function ExerciseProgressScreen() {
   const styles = useStyles();
@@ -62,7 +87,13 @@ export default function ExerciseProgressScreen() {
   const insets = useSafeAreaInsets();
   const unit = useWeightUnit();
   const distanceUnit = useDistanceUnit();
-  const [data] = useState(() => loadProgress(Number(id)));
+  const [data, setData] = useState(() => loadProgress(Number(id)));
+  // Au retour de la modification : nom, muscles et consignes à jour
+  useFocusEffect(
+    useCallback(() => {
+      setData(loadProgress(Number(id)));
+    }, [id]),
+  );
   const cardio = data.exercise?.tracking === 'duration_distance';
   const [metric, setMetric] = useState<Metric>(cardio ? 'distance' : 'force');
 
@@ -73,6 +104,23 @@ export default function ExerciseProgressScreen() {
     ? [exercise.equipment, exercise.muscles.map(muscleLabel).join(', ')].filter(Boolean).join(' · ')
     : '';
   const description = exercise?.description ? <ExerciseDescription description={exercise.description} /> : null;
+  // Un exercice supprimé ne se modifie plus : sa fiche ne sert qu'à consulter sa progression
+  const actions = !exercise ? null : exercise.deleted_at !== null ? (
+    <ThemedText type="caption" style={styles.deletedNote}>
+      Exercice supprimé de la bibliothèque : sa progression reste consultable, mais il ne peut plus être ajouté à une
+      séance ou à un programme.
+    </ThemedText>
+  ) : (
+    <View style={styles.actions}>
+      <Button
+        title="Modifier l'exercice"
+        variant="secondary"
+        icon={Pencil}
+        onPress={() => router.push({ pathname: '/create-exercise', params: { id: exercise.id } })}
+      />
+      <Button title="Supprimer l'exercice" variant="danger" icon={Trash2} onPress={() => confirmDelete(exercise)} />
+    </View>
+  );
 
   // Exercice jamais fait : la fiche montre seulement les consignes
   if (sessions.length === 0) {
@@ -88,6 +136,7 @@ export default function ExerciseProgressScreen() {
               La progression de cet exercice apparaîtra après votre première séance terminée.
             </ThemedText>
           </Card>
+          {actions}
         </ScrollView>
       </View>
     );
@@ -281,6 +330,8 @@ export default function ExerciseProgressScreen() {
             );
           })}
         </View>
+
+        {actions}
       </ScrollView>
     </View>
   );
@@ -290,6 +341,12 @@ const useStyles = makeStyles((palette) => ({
   screen: {
     flex: 1,
     backgroundColor: palette.background,
+  },
+  actions: {
+    gap: spacing.md,
+  },
+  deletedNote: {
+    textAlign: 'center',
   },
   emptyCard: {
     gap: spacing.sm,

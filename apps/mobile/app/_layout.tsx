@@ -68,10 +68,8 @@ export default function RootLayout() {
         setIsReady(true);
 
         if (user?.isOnboarded !== true) {
-          const timer = setTimeout(() => {
-            router.replace('/onboarding');
-          }, 0);
-          return () => clearTimeout(timer);
+          // Au tour suivant : le Stack doit être monté (après setIsReady) pour pouvoir naviguer
+          setTimeout(() => router.replace('/onboarding'), 0);
         }
       } catch (error) {
         console.error('Failed to initialize app:', error);
